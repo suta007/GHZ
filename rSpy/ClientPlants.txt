@@ -1,0 +1,11 @@
+workspace.ClientPlants
+
+workspace.ClientPlants.Carrot1  -> Attribute FullyGrown = ture
+                                -> Attribute HarvestablePlant = ture
+                                -> Attribute Uuid =
+                                
+                                
+workspace.ClientPlants.Corn2    -> Attribute FullyGrown = ture
+                                -> Attribute Uuid = 786df7b8-b6e6-4c4f-b76d-aa2063a66814
+workspace.ClientPlants.Corn2.Fruit1 -> Attribute FullyGrown = ture
+                                    -> Attribute Uuid = 786df7b8-b6e6-4c4f-b76d-aa2063a66814:regrow:1

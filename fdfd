@@ -1,0 +1,542 @@
+local v_u_1 = game:GetService("TweenService")
+local v_u_2 = game:GetService("ReplicatedStorage")
+local v3 = game:GetService("Players")
+game:GetService("UserInputService")
+local v_u_4 = game:GetService("MarketplaceService")
+local v_u_5 = v3.LocalPlayer
+local v6 = require(v_u_2.Plants.Definitions.PlantDataDefinitions)
+local v7 = require(v_u_2.Shop.ShopData.SeedShopData)
+local v_u_8 = require(v_u_2:WaitForChild("UI"):WaitForChild("UIManager"))
+local v_u_9 = require(v_u_2:WaitForChild("UI"):WaitForChild("FloraBookController"))
+local v_u_10 = require(v_u_2:WaitForChild("Player"):WaitForChild("NotificationService"))
+local v_u_11 = v_u_5:WaitForChild("PlayerGui"):WaitForChild("SeedShop")
+local v_u_12 = v_u_2:WaitForChild("RemoteEvents")
+local v_u_13 = {}
+local v_u_14 = v_u_11:WaitForChild("Frame"):WaitForChild("ScrollingFrame")
+local v_u_15 = v_u_11:WaitForChild("Frame"):WaitForChild("TopBar")
+local v16 = v_u_14:WaitForChild("ItemTemplate")
+local v17 = v_u_14:WaitForChild("ItemTemplate_Padding")
+local v18 = require(v_u_2.Plants.Definitions.TierHelper)
+local v_u_19 = game:GetService("SoundService"):WaitForChild("SFX"):WaitForChild("UI")
+local v_u_20 = require(v_u_2.Economy.Formatter.NumberFormatter)
+local v_u_21 = nil
+local v_u_22 = 0
+local v_u_23 = nil
+local v_u_24 = nil
+v_u_15:WaitForChild("Close").MouseButton1Click:Connect(function()
+	-- upvalues: (copy) v_u_13
+	v_u_13.Close()
+end)
+local v_u_25 = UDim2.new(1, 0, 0.155, 0)
+local v_u_26 = UDim2.new(1, 0, 0.03, 0)
+local v_u_27 = UDim2.new(0.5, 0, 0.5, 0)
+local v_u_28 = UDim2.new(0.5, 0, 1.04, 0)
+local v_u_29 = v_u_2:WaitForChild("RemoteEvents"):WaitForChild("PurchaseShopItem")
+local v_u_30 = v_u_2:WaitForChild("RemoteEvents"):WaitForChild("PurchaseDevProduct")
+local v_u_31 = v_u_2:WaitForChild("RemoteEvents"):WaitForChild("PurchaseGiftDevProduct")
+local v_u_32 = require(v_u_2.Shop.GiftModalController)
+v_u_4.PromptProductPurchaseFinished:Connect(function(_, _, p33)
+	-- upvalues: (copy) v_u_19, (copy) v_u_32
+	if p33 then
+		local v34 = v_u_19:WaitForChild("Buying")
+		v34.PlaybackSpeed = math.random(90, 110) / 100
+		v34:Play()
+	end
+	v_u_32:Close()
+end)
+local v_u_35 = false
+local v_u_36 = 0
+local function v_u_46(p_u_37)
+	-- upvalues: (ref) v_u_35, (ref) v_u_36, (copy) v_u_14, (copy) v_u_10, (copy) v_u_29, (copy) v_u_13, (copy) v_u_19
+	if v_u_35 then
+		if os.clock() - v_u_36 <= 5 then
+			return
+		end
+		v_u_35 = false
+	end
+	local v38 = nil
+	for _, v39 in ipairs(v_u_14:GetChildren()) do
+		if v39:GetAttribute("ShopItemName") == p_u_37 then
+			v38 = v39
+			break
+		end
+	end
+	if v38 then
+		local v40 = v38:FindFirstChild("MainInfo")
+		if v40 and (v40:FindFirstChild("NoStock") and v40.NoStock.Visible) then
+			v_u_10.Notify("This seed is currently out of stock!", 3)
+			return false
+		end
+	end
+	if v_u_29 then
+		v_u_35 = true
+		v_u_36 = os.clock()
+		v_u_13.IsPurchasing = true
+		local v41, v42, v43 = pcall(function()
+			-- upvalues: (ref) v_u_29, (copy) p_u_37
+			return v_u_29:InvokeServer("SeedShop", p_u_37)
+		end)
+		if v41 and (v42 and typeof(v42) == "table") then
+			local v44 = v_u_19:WaitForChild("Buying")
+			v44.PlaybackSpeed = math.random(90, 110) / 100
+			v44:Play()
+			v_u_13.RestockItems(v42)
+		elseif v41 and not v42 then
+			local v45 = v_u_19:FindFirstChild("FailedPurchase")
+			if v45 then
+				v45:Play()
+			end
+			if v43 == "Not enough shillings" then
+				v_u_10.Notify("You do not have enough to purchase this!", 3)
+			else
+				v_u_10.Notify("Purchase failed! Reason: " .. v43, 3)
+				print("[SeedShopController] Seed purchase failed: " .. v43)
+			end
+		end
+		task.wait(0.03)
+		v_u_35 = false
+		task.defer(function()
+			-- upvalues: (ref) v_u_13
+			v_u_13.IsPurchasing = false
+		end)
+		return v42
+	end
+	warn("Buy remote not found!")
+end
+task.spawn(function()
+	-- upvalues: (copy) v_u_11, (copy) v_u_15
+	while true do
+		if v_u_11.Enabled then
+			local v47 = 300 - workspace:GetServerTimeNow() % 300
+			local v48 = math.ceil(v47)
+			local v49 = math.min(v48, 300)
+			local v50 = v_u_15:WaitForChild("Timer")
+			local v51 = string.format
+			local v52 = v49 / 60
+			v50.Text = v51("%d:%02d", math.floor(v52), v49 % 60)
+		end
+		task.wait(1)
+	end
+end)
+workspace:GetAttributeChangedSignal("SeedShop"):Connect(function()
+	-- upvalues: (copy) v_u_15, (copy) v_u_11, (copy) v_u_12, (copy) v_u_13
+	local v53 = 300 - workspace:GetServerTimeNow() % 300
+	local v54 = math.ceil(v53)
+	local v55 = math.min(v54, 300)
+	local v56 = v_u_15:WaitForChild("Timer")
+	local v57 = string.format
+	local v58 = v55 / 60
+	v56.Text = v57("%d:%02d", math.floor(v58), v55 % 60)
+	if v_u_11.Enabled then
+		local v_u_59 = v_u_12:FindFirstChild("GetShopData")
+		if v_u_59 and v_u_59:IsA("RemoteFunction") then
+			task.spawn(function()
+				-- upvalues: (copy) v_u_59, (ref) v_u_13
+				local v60, v61 = pcall(function()
+					-- upvalues: (ref) v_u_59
+					return v_u_59:InvokeServer("SeedShop")
+				end)
+				if v60 and (v61 and typeof(v61) == "table") then
+					v_u_13.RestockItems(v61)
+				end
+			end)
+		end
+	end
+end)
+local function v_u_64()
+	-- upvalues: (ref) v_u_23, (copy) v_u_1, (ref) v_u_24, (copy) v_u_26, (copy) v_u_27
+	if v_u_23 then
+		local v62 = {
+			["Size"] = v_u_26,
+		}
+		v_u_1:Create(v_u_24, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), v62):Play()
+		local v63 = {
+			["Position"] = v_u_27,
+		}
+		v_u_1:Create(v_u_23, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), v63):Play()
+		v_u_23 = nil
+		v_u_24 = nil
+	end
+end
+local v_u_65 = v_u_24
+local v_u_66 = v_u_23
+for v_u_67, v_u_68 in pairs(v7.ShopData) do
+	local v_u_69 = v6[v_u_67]
+	if v_u_69 then
+		local v70 = v16:Clone()
+		v70.Name = v_u_67
+		v70:SetAttribute("ShopItemName", v_u_68.Name)
+		v70.LayoutOrder = v_u_68.LayoutOrder
+		v70.Parent = v_u_14
+		local v_u_71 = v17:Clone()
+		v_u_71.Name = v_u_67 .. "_Padding"
+		v_u_71.LayoutOrder = v_u_68.LayoutOrder + 0.5
+		v_u_71.Parent = v_u_14
+		local v_u_72 = v70:WaitForChild("MainInfo")
+		v_u_72:WaitForChild("StockText").Text = "..."
+		v_u_72:WaitForChild("NoStock").Visible = true
+		local v_u_73 = v_u_72:WaitForChild("StockText")
+		v_u_72:WaitForChild("SeedName").Text = v_u_68.Name
+		v_u_72:WaitForChild("SeedNameShadow").Text = v_u_68.Name
+		local v_u_74 = v_u_72:WaitForChild("SeedBox"):WaitForChild("ImageWrapper"):WaitForChild("SeedImage")
+		v_u_74.Image = v_u_69.SeedAssetId
+		local v_u_75 = nil
+		local v_u_76 = nil
+		local v_u_77 = false
+		v70.MouseEnter:Connect(function()
+			-- upvalues: (ref) v_u_75, (copy) v_u_1, (copy) v_u_74, (ref) v_u_77, (ref) v_u_76, (copy) v_u_69
+			v_u_75 = v_u_1:Create(
+				v_u_74,
+				TweenInfo.new(0.07, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1, true),
+				{
+					["Rotation"] = 7,
+				}
+			)
+			v_u_75:Play()
+			if not v_u_77 then
+				v_u_76 = task.delay(1, function()
+					-- upvalues: (ref) v_u_77, (ref) v_u_74, (ref) v_u_69, (ref) v_u_1
+					v_u_77 = true
+					v_u_74.Image = v_u_69.ProduceAssetId or v_u_69.SeedAssetId
+					local v_u_78 = UDim2.new(0.9, 0, 0.9, 0)
+					local v79 = {
+						["Size"] = UDim2.new(1.125, 0, 1.125, 0),
+					}
+					local v80 =
+						v_u_1:Create(v_u_74, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), v79)
+					v80:Play()
+					v80.Completed:Connect(function()
+						-- upvalues: (ref) v_u_1, (ref) v_u_74, (copy) v_u_78
+						local v81 = {
+							["Size"] = v_u_78,
+						}
+						v_u_1
+							:Create(v_u_74, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In), v81)
+							:Play()
+					end)
+				end)
+			end
+		end)
+		v70.MouseLeave:Connect(function()
+			-- upvalues: (ref) v_u_76, (ref) v_u_75, (ref) v_u_77, (copy) v_u_74, (copy) v_u_69
+			if v_u_76 then
+				task.cancel(v_u_76)
+			end
+			if v_u_75 then
+				v_u_75:Cancel()
+				v_u_75 = nil
+			end
+			v_u_77 = false
+			v_u_74.Rotation = 0
+			v_u_74.Size = UDim2.new(0.9, 0, 0.9, 0)
+			v_u_74.Image = v_u_69.SeedAssetId
+		end)
+		v_u_72:WaitForChild("PriceText").Text = "$" .. v_u_20:FormatNumberShort(v_u_68.Price)
+		v_u_72:WaitForChild("Rarity").Image = v18:GetImage(v_u_69.Rarity)
+		local v82 = v18:GetStars(v_u_69.Rarity)
+		local v83 = v82.Color
+		local v84 = v_u_72:WaitForChild("Stars"):WaitForChild("Star")
+		if v83 == "Bronze" then
+			v84.Image = "rbxassetid://75963437560225"
+		elseif v83 == "Silver" then
+			v84.Image = "rbxassetid://104552524366406"
+		end
+		v84.Visible = false
+		for _ = 1, v82.Number do
+			local v85 = v84:Clone()
+			v85.Visible = true
+			v85.Parent = v_u_72:WaitForChild("Stars")
+		end
+		local v_u_86 = v70:WaitForChild("ButtonRow")
+		v_u_72.MouseButton1Click:Connect(function()
+			-- upvalues: (ref) v_u_66, (copy) v_u_86, (copy) v_u_64, (copy) v_u_1, (copy) v_u_71, (copy) v_u_25, (copy) v_u_28, (ref) v_u_65
+			local v87 = v_u_66 == v_u_86
+			v_u_64()
+			if not v87 then
+				local v88 = {
+					["Size"] = v_u_25,
+				}
+				v_u_1:Create(v_u_71, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), v88):Play()
+				local v89 = {
+					["Position"] = v_u_28,
+				}
+				v_u_1:Create(v_u_86, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), v89):Play()
+				v_u_66 = v_u_86
+				v_u_65 = v_u_71
+			end
+		end)
+		local v_u_90 = false
+		local v_u_91 = v_u_86:WaitForChild("Buy")
+		local v_u_92 = v_u_86:WaitForChild("Info")
+		local v_u_93 = v_u_86:WaitForChild("Swap")
+		v_u_91:SetAttribute("SkipClickSound", true)
+		v_u_93.MouseButton1Click:Connect(function()
+			-- upvalues: (ref) v_u_90, (copy) v_u_91, (copy) v_u_92, (copy) v_u_93, (copy) v_u_72, (copy) v_u_20, (copy) v_u_68, (copy) v_u_69, (copy) v_u_67, (copy) v_u_4
+			if v_u_90 then
+				v_u_91:SetAttribute("Robux", false)
+				v_u_92:SetAttribute("Robux", false)
+				v_u_93:SetAttribute("Robux", false)
+				v_u_72:WaitForChild("PriceText").Text = "$" .. v_u_20:FormatNumberShort(v_u_68.Price)
+				v_u_90 = false
+				return
+			elseif v_u_69.DevProductId and v_u_69.DevProductId ~= 0 then
+				v_u_91:SetAttribute("Robux", true)
+				v_u_92:SetAttribute("Robux", true)
+				v_u_93:SetAttribute("Robux", true)
+				local v94, v95 = pcall(function()
+					-- upvalues: (ref) v_u_4, (ref) v_u_69
+					return v_u_4:GetProductInfoAsync(v_u_69.DevProductId, Enum.InfoType.Product)
+				end)
+				if v94 and v95 then
+					v_u_72:WaitForChild("PriceText").Text = "R$" .. (v95.PriceInRobux or "???")
+				else
+					v_u_72:WaitForChild("PriceText").Text = "R$???"
+				end
+				v_u_90 = true
+			else
+				warn("[SeedShopController] No valid DevProductId for " .. v_u_67)
+			end
+		end)
+		local v_u_96 = nil
+		local v_u_97 = nil
+		local v_u_98 = false
+		local v_u_99 = false
+		local function v_u_103()
+			-- upvalues: (ref) v_u_99, (copy) v_u_73, (copy) v_u_11, (copy) v_u_46, (copy) v_u_68
+			v_u_99 = true
+			local v100 = string.match
+			local v101 = v_u_73.Text
+			local v102 = tonumber(v100(v101, "%d+")) or 0
+			if v102 > 0 then
+				for _ = 1, v102 do
+					if not (v_u_99 and (v_u_11.Enabled and v_u_46(v_u_68.Name))) then
+						break
+					end
+					task.wait(0.01)
+				end
+			end
+			v_u_99 = false
+		end
+		local function v_u_104()
+			-- upvalues: (ref) v_u_98, (ref) v_u_99, (ref) v_u_96, (ref) v_u_97, (copy) v_u_1, (copy) v_u_91
+			v_u_98 = false
+			v_u_99 = false
+			if v_u_96 then
+				task.cancel(v_u_96)
+				v_u_96 = nil
+			end
+			if v_u_97 then
+				v_u_97:Cancel()
+				v_u_97 = nil
+			end
+			v_u_1
+				:Create(v_u_91, TweenInfo.new(0.1), {
+					["ImageColor3"] = Color3.fromRGB(255, 255, 255),
+				})
+				:Play()
+		end
+		v_u_91.MouseButton1Down:Connect(function()
+			-- upvalues: (copy) v_u_91, (copy) v_u_104, (ref) v_u_98, (ref) v_u_97, (copy) v_u_1, (ref) v_u_96, (copy) v_u_103
+			if not v_u_91:GetAttribute("Robux") then
+				v_u_104()
+				v_u_98 = true
+				v_u_97 = v_u_1:Create(v_u_91, TweenInfo.new(1, Enum.EasingStyle.Linear), {
+					["ImageColor3"] = Color3.fromRGB(150, 150, 150),
+				})
+				v_u_97:Play()
+				v_u_96 = task.delay(1, function()
+					-- upvalues: (ref) v_u_98, (ref) v_u_96, (ref) v_u_103, (ref) v_u_1, (ref) v_u_91
+					if v_u_98 then
+						v_u_98 = false
+						v_u_96 = nil
+						v_u_103()
+						v_u_1
+							:Create(v_u_91, TweenInfo.new(0.1), {
+								["ImageColor3"] = Color3.fromRGB(255, 255, 255),
+							})
+							:Play()
+					end
+				end)
+			end
+		end)
+		v_u_91.MouseButton1Up:Connect(function()
+			-- upvalues: (copy) v_u_91, (copy) v_u_69, (copy) v_u_30, (ref) v_u_98, (copy) v_u_104, (copy) v_u_46, (copy) v_u_68, (copy) v_u_67, (copy) v_u_2
+			if v_u_91:GetAttribute("Robux") then
+				if v_u_69.DevProductId and v_u_69.DevProductId ~= 0 then
+					local v105, v106 = v_u_30:InvokeServer(v_u_69.DevProductId)
+					print(v105, v106)
+				end
+			else
+				local v107 = v_u_98
+				v_u_104()
+				if v107 then
+					v_u_46(v_u_68.Name)
+					if v_u_67 == "Carrot" then
+						task.defer(function()
+							-- upvalues: (ref) v_u_2
+							local v108 = require(v_u_2.Tutorial.TutorialController).GetInstance()
+							if v108 and not v108.Completed then
+								v108:CompleteTask("BoughtSeed")
+							end
+						end)
+					end
+				end
+			end
+		end)
+		v_u_91.MouseLeave:Connect(function()
+			-- upvalues: (copy) v_u_104
+			v_u_104()
+		end)
+		v_u_91:GetAttributeChangedSignal("Robux"):Connect(function()
+			-- upvalues: (copy) v_u_91
+			if v_u_91:GetAttribute("Robux") then
+				v_u_91.Image = "rbxassetid://87553275013007"
+				v_u_91.HoverImage = "rbxassetid://107011311707936"
+				v_u_91.PressedImage = "rbxassetid://137100187853306"
+			else
+				v_u_91.Image = "rbxassetid://122264295069788"
+				v_u_91.HoverImage = "rbxassetid://130636510940265"
+				v_u_91.PressedImage = "rbxassetid://136340403955008"
+			end
+		end)
+		v_u_92:GetAttributeChangedSignal("Robux"):Connect(function()
+			-- upvalues: (copy) v_u_92
+			if v_u_92:GetAttribute("Robux") then
+				v_u_92.Image = "rbxassetid://75477531354755"
+				v_u_92.HoverImage = "rbxassetid://126397457032598"
+				v_u_92.PressedImage = "rbxassetid://136658938466586"
+			else
+				v_u_92.Image = "rbxassetid://74292943235840"
+				v_u_92.HoverImage = "rbxassetid://82610052593615"
+				v_u_92.PressedImage = "rbxassetid://81006866457458"
+			end
+		end)
+		v_u_93:GetAttributeChangedSignal("Robux"):Connect(function()
+			-- upvalues: (copy) v_u_93
+			if v_u_93:GetAttribute("Robux") then
+				v_u_93.Image = "rbxassetid://113575341580793"
+				v_u_93.HoverImage = "rbxassetid://96238525071191"
+				v_u_93.PressedImage = "rbxassetid://104743726543626"
+			else
+				v_u_93.Image = "rbxassetid://82138218952724"
+				v_u_93.HoverImage = "rbxassetid://121013230790255"
+				v_u_93.PressedImage = "rbxassetid://88736875800088"
+			end
+		end)
+		v_u_92.MouseButton1Click:Connect(function()
+			-- upvalues: (copy) v_u_92, (copy) v_u_9, (copy) v_u_67, (copy) v_u_13, (copy) v_u_32, (copy) v_u_31, (copy) v_u_69
+			if v_u_92:GetAttribute("Robux") then
+				v_u_32:GetPlayer(function(p109)
+					-- upvalues: (ref) v_u_31, (ref) v_u_69
+					if p109 then
+						local v110, v111 = v_u_31:InvokeServer(v_u_69.GiftId, p109)
+						print(v110, v111)
+					end
+				end)
+			else
+				local v112 = v_u_9:IsDiscovered(v_u_67)
+				v_u_13.Close()
+				v_u_9:SetPage(v_u_67, true, true, not v112)
+			end
+		end)
+	end
+end
+v16.Visible = false
+v17.Visible = false
+function v_u_13.Open()
+	-- upvalues: (copy) v_u_8, (copy) v_u_11, (copy) v_u_12, (copy) v_u_13, (copy) v_u_5, (ref) v_u_21, (ref) v_u_22
+	v_u_8:CloseAllExclusive("SeedShop")
+	v_u_11.Enabled = true
+	local v_u_113 = v_u_12:FindFirstChild("GetShopData")
+	if v_u_113 and v_u_113:IsA("RemoteFunction") then
+		task.spawn(function()
+			-- upvalues: (copy) v_u_113, (ref) v_u_13
+			local v114, v115 = pcall(function()
+				-- upvalues: (ref) v_u_113
+				return v_u_113:InvokeServer("SeedShop")
+			end)
+			if v114 and (v115 and typeof(v115) == "table") then
+				v_u_13.RestockItems(v115)
+			end
+		end)
+	end
+	if v_u_5.Character and v_u_5.Character:FindFirstChild("HumanoidRootPart") then
+		v_u_21 = v_u_5.Character.HumanoidRootPart.Position
+	end
+	v_u_22 = v_u_22 + 1
+	local v_u_116 = v_u_22
+	task.spawn(function()
+		-- upvalues: (ref) v_u_11, (copy) v_u_116, (ref) v_u_22, (ref) v_u_5, (ref) v_u_21, (ref) v_u_13
+		while v_u_11.Enabled and v_u_116 == v_u_22 do
+			if
+				v_u_5.Character
+				and (
+					v_u_5.Character:FindFirstChild("HumanoidRootPart")
+					and (v_u_21 and (v_u_5.Character.HumanoidRootPart.Position - v_u_21).Magnitude > 7)
+				)
+			then
+				v_u_13.Close()
+				return
+			end
+			task.wait(0.2)
+		end
+	end)
+end
+function v_u_13.Close()
+	-- upvalues: (copy) v_u_11, (ref) v_u_22, (ref) v_u_21, (copy) v_u_64
+	v_u_11.Enabled = false
+	v_u_22 = v_u_22 + 1
+	v_u_21 = nil
+	v_u_64()
+end
+function v_u_13.RestockItems(p117)
+	-- upvalues: (copy) v_u_14
+	if p117 and p117.Items then
+		for _, v118 in v_u_14:GetChildren() do
+			if v118.Name ~= "ItemTemplate" and (not string.find(v118.Name, "_Padding") and v118:IsA("Frame")) then
+				local v119 = v118:FindFirstChild("MainInfo")
+				if v119 then
+					local v120 = v119:FindFirstChild("StockText")
+					local v121 = v119:FindFirstChild("NoStock")
+					local v122 = v118:GetAttribute("ShopItemName")
+					if v122 and (p117.Items[v122] and p117.Items[v122].Amount > 0) then
+						if v120 then
+							v120.Text = p117.Items[v122].Amount .. "x"
+						end
+						if v121 then
+							v121.Visible = false
+						end
+					else
+						if v121 then
+							v121.Visible = true
+						end
+						if v120 then
+							v120.Text = "NO STOCK"
+						end
+					end
+				end
+			end
+		end
+	end
+end
+v_u_12:WaitForChild("OpenShop").OnClientEvent:Connect(function(p123, p124)
+	-- upvalues: (copy) v_u_13, (copy) v_u_12
+	if p123 == "SeedShop" then
+		if p124 then
+			v_u_13.RestockItems(p124)
+		else
+			local v_u_125 = v_u_12:FindFirstChild("GetShopData")
+			if v_u_125 and v_u_125:IsA("RemoteFunction") then
+				local v126, v127 = pcall(function()
+					-- upvalues: (copy) v_u_125
+					return v_u_125:InvokeServer("SeedShop")
+				end)
+				if v126 and (v127 and typeof(v127) == "table") then
+					v_u_13.RestockItems(v127)
+				end
+			end
+		end
+		v_u_13.Open()
+	end
+end)
+return v_u_13

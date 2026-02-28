@@ -1,0 +1,5 @@
+game:GetService("Players").LocalPlayer.Backpack
+game:GetService("Players").LocalPlayer.Backpack["Carrot (0.05 KG)"]
+
+Hold
+workspace.FlyingCat_29["Carrot (0.08 KG)"]

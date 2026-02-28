@@ -1,0 +1,54 @@
+Carrot
+local args = {
+	{
+		{
+			Uuid = "c2e6ef0d-652c-4593-9ab4-fa02bbfc3c54"
+		}
+	}
+}
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("HarvestFruit"):FireServer(unpack(args))
+local args = {
+	{
+		{
+			Uuid = "1d46f4f4-3de2-4c39-acf7-45324ff9be2e"
+		}
+	}
+}
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("HarvestFruit"):FireServer(unpack(args))
+
+local args = {
+	{
+		{
+			Uuid = "25ed3258-d393-4ae2-b07c-47d362f53f70"
+		}
+	}
+}
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("HarvestFruit"):FireServer(unpack(args))
+
+
+
+
+
+Corn
+local args = {
+	{
+		{
+			GrowthAnchorIndex = 1,
+			Uuid = "786df7b8-b6e6-4c4f-b76d-aa2063a66814"
+		}
+	}
+}
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("HarvestFruit"):FireServer(unpack(args))
+
+local args = {
+	{
+		{
+			GrowthAnchorIndex = 1,
+			Uuid = "786df7b8-b6e6-4c4f-b76d-aa2063a66814"
+		}
+	}
+}
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("HarvestFruit"):FireServer(unpack(args))
+786df7b8-b6e6-4c4f-b76d-aa2063a66814
+
+786df7b8-b6e6-4c4f-b76d-aa2063a66814:regrow:1

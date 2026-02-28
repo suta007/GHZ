@@ -1,0 +1,21 @@
+local args = {
+	"Plot1"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ClaimSelectedPlot"):FireServer(unpack(args))
+
+local args = {
+	"stop"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("SetStreamingFocus"):FireServer(unpack(args))
+
+
+workspace.Plots.Plot3.Owner (workspace.Plots.Plot3.Owner.Value)
+
+
+workspace.Plots.Plot3.PlantableArea:GetChildren()[2]
+workspace.Plots.Plot3.PlantableArea.Part   (Size, CFarme)
+
+workspace.Plots.Plot3.Spawn.Spawn (Size, CFarme)
+
+workspace.ClientPlants
+workspace.ClientPlants.Carrot1
