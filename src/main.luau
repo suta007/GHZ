@@ -434,7 +434,7 @@ AutoPlantSeed = function()
 						Vector3.new(PlantPos.X, PlantPos.Y, PlantPos.Z),
 					}
 					PlantSeed:InvokeServer(unpack(args))
-					task.wait(1)
+					task.wait(0.3)
 				end
 				pcall(function()
 					Humanoid:UnequipTools()

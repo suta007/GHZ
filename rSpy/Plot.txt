@@ -19,3 +19,10 @@ workspace.Plots.Plot3.Spawn.Spawn (Size, CFarme)
 
 workspace.ClientPlants
 workspace.ClientPlants.Carrot1
+
+
+ช่วยเขียน code สุ่มพิกัด ปลุกพืชหน่อย
+1. หาสวนขอเราก่อนว่าอยู่ plot ไหน จาก workspace.Plots. {Plot1..Plot6}  .Owner ด้วย Value จะ = ชื่อผู้เล่น
+2. ในสวน (Plot) จะแบ่งออกเป็น 2 part ซ้ายและ ขาว workspace.Plots.Plot3.PlantableArea.Part อันดับแรกจะให้สุ่มว่าจะเอา part ไหน
+3. แต่ละ part จะมี Size และ CFrame
+4. สร้าง code สุ่ม พิกัด โดยแกน y ให้ใช้ค่าที่อ่านได้ +5

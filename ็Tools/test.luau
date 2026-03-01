@@ -7,7 +7,7 @@ local args = {
 }
 local SeedShop = GetShopData:InvokeServer(unpack(args))
 
-for _, Seed in pairs(SeedShop.Items) do
-	print(Seed)
+for Name, Seed in pairs(SeedShop.Items) do
+	print(Name)
 	print(Seed.Amount)
 end
