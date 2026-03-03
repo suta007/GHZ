@@ -1,21 +1,8 @@
 --!nocheck
-local Fluent = loadstring(
-	game:HttpGet(
-		"https://raw.githubusercontent.com/suta007/Lua_EfHub/refs/heads/master/FluentData/Renewed/Fluent.luau",
-		true
-	)
-)()
-local SaveManager = loadstring(
-	game:HttpGet("https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/SaveManager.luau")
-)()
-local InterfaceManager = loadstring(
-	game:HttpGet(
-		"https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/InterfaceManager.luau"
-	)
-)()
-local CollapsibleAddon = loadstring(
-	game:HttpGet("https://raw.githubusercontent.com/suta007/Lua_EfHub/refs/heads/master/Core/CollapsibleSection.lua")
-)()
+local Fluent = loadstring(game:HttpGet("https://raw.githubusercontent.com/suta007/Lua_EfHub/refs/heads/master/FluentData/Renewed/Fluent.luau", true))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/SaveManager.luau"))()
+local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/InterfaceManager.luau"))()
+local CollapsibleAddon = loadstring(game:HttpGet("https://raw.githubusercontent.com/suta007/Lua_EfHub/refs/heads/master/Core/CollapsibleSection.lua"))()
 CollapsibleAddon(Fluent)
 
 local Players = game:GetService("Players")
@@ -46,6 +33,7 @@ local InitializePlotData, GetRandomPlantPosition
 
 local RNG = Random.new()
 local MyPlantableParts = {}
+local MyPlot, MySpawn, MySpawnPoint
 
 local function ShowData(tbl, indent)
 	local lclIndent = indent or 0
@@ -58,7 +46,6 @@ local function ShowData(tbl, indent)
 			else
 				print(spacing .. "[" .. tostring(k) .. "] : " .. tostring(v))
 			end
-			--return
 		end
 	else
 		print(spacing .. tostring(tbl))
@@ -67,31 +54,23 @@ end
 
 InitializePlotData = function()
 	local PlotsFolder = workspace:FindFirstChild("Plots")
-	if not PlotsFolder then
-		return false
-	end
+	if not PlotsFolder then return false end
 
 	for _, plot in ipairs(PlotsFolder:GetChildren()) do
 		local ownerVal = plot:FindFirstChild("Owner")
 
-		-- ถ้าเจอสวนที่ชื่อ Owner ตรงกับเรา
 		if ownerVal and ownerVal.Value == LocalPlayer.Name then
 			local plantableArea = plot:FindFirstChild("PlantableArea")
+			MyPlot = plot
+			MySpawn = MyPlot.Spawn
+			MySpawnPoint = MySpawn:GetPivot()
 			if plantableArea then
-				-- ล้างข้อมูลเก่าทิ้ง (เผื่อเรียกซ้ำ)
 				table.clear(MyPlantableParts)
 
-				-- ดึง Part ซ้าย/ขวา มาเก็บไว้ในตาราง Global
 				for _, part in ipairs(plantableArea:GetChildren()) do
-					if part:IsA("BasePart") then
-						table.insert(MyPlantableParts, part)
-					end
+					if part:IsA("BasePart") then table.insert(MyPlantableParts, part) end
 				end
-				print(
-					"เจอสวนของพี่เอฟแล้ว! บันทึกแปลงผักจำนวน:",
-					#MyPlantableParts,
-					"ชิ้น"
-				)
+				print("เจอสวนของพี่เอฟแล้ว! บันทึกแปลงผักจำนวน:", #MyPlantableParts, "ชิ้น")
 				return true
 			end
 		end
@@ -102,24 +81,24 @@ end
 
 GetRandomPlantPosition = function()
 	if #MyPlantableParts == 0 then
-		if not InitializePlotData() then
-			return nil
-		end
+		if not InitializePlotData() then return nil end
 	end
 
 	local targetPart = MyPlantableParts[math.random(1, #MyPlantableParts)]
 	local size = targetPart.Size
 	local cframe = targetPart.CFrame
 
-	local randomX = RNG:NextNumber(-size.X / 2, size.X / 2)
+	local randomY = RNG:NextNumber(-size.Y / 2, size.Y / 2)
 	local randomZ = RNG:NextNumber(-size.Z / 2, size.Z / 2)
 
-	local localOffset = CFrame.new(randomX, 0, randomZ)
+	local floatDistance = 5
+
+	local localOffset = CFrame.new(floatDistance, randomY, randomZ)
 	local worldCFrame = cframe * localOffset
 
 	-- 🌟 เปลี่ยนจาก CFrame.new เป็น Vector3.new
 	local finalX = worldCFrame.Position.X
-	local finalY = cframe.Position.Y + 5
+	local finalY = cframe.Position.Y
 	local finalZ = worldCFrame.Position.Z
 
 	return Vector3.new(finalX, finalY, finalZ)
@@ -127,60 +106,41 @@ end
 
 SetNoClip = function(state)
 	if state then
-		-- ถ้าสั่งเปิด และยังไม่ได้เชื่อมต่อสัญญาณ ให้เริ่มทำงาน
 		if not noclipConnection then
 			noclipConnection = RunService.Stepped:Connect(function()
 				local char = LocalPlayer.Character
 				if char then
-					-- วนลูปหาชิ้นส่วนทุกชิ้นในตัวละคร แล้วจับปิดการชน (CanCollide = false)
 					for _, part in ipairs(char:GetDescendants()) do
-						if part:IsA("BasePart") and part.CanCollide then
-							part.CanCollide = false
-						end
+						if part:IsA("BasePart") and part.CanCollide then part.CanCollide = false end
 					end
 				end
 			end)
-			-- print("เปิดโหมดทะลุกำแพง")
 		end
 	else
-		-- ถ้าสั่งปิด ให้ตัดการเชื่อมต่อสัญญาณทันที เกมจะคืนค่าการชนกลับมาปกติเอง
 		if noclipConnection then
 			noclipConnection:Disconnect()
 			noclipConnection = nil
-			-- print("ปิดโหมดทะลุกำแพง")
 		end
 	end
 end
--- เพิ่ม yOffset เข้ามา ค่าเริ่มต้นคือ 3 Studs (ลอยเหนือพื้นนิดหน่อย)
+
 TweenToTarget = function(targetCFrame, speed, yOffset)
 	local character = LocalPlayer.Character
-	if not character then
-		return false
-	end
+	if not character then return false end
 
 	local rootPart = character:FindFirstChild("HumanoidRootPart")
-	if not rootPart then
-		return false
-	end
+	if not rootPart then return false end
 
-	-- 1. ตรวจสอบระยะห่างปัจจุบัน (คำนวณจากพิกัดตัวละคร กับ เป้าหมายจริงๆ)
 	local currentDistance = (rootPart.Position - targetCFrame.Position).Magnitude
 
-	-- ถ้าระยะห่างน้อยกว่าหรือเท่ากับ 2 Studs ถือว่าอยู่ในระยะแล้ว ให้หยุดการทำงานแล้วส่งค่า true กลับไปเลย
-	if currentDistance <= 2 then
-		-- print("อยู่ใกล้เป้าหมายแล้ว ไม่ต้องบิน!")
-		return true
-	end
+	if currentDistance <= 5 then return true end
 
-	-- 2. ถ้าอยู่ไกลเกิน 2 Studs ค่อยเริ่มกระบวนการบิน
 	local walkSpeed = speed or 50
 	local height = yOffset or 3
 
-	-- คำนวณจุดหมายปลายทางที่บวกความสูงแล้ว
 	local finalPosition = targetCFrame.Position + Vector3.new(0, height, 0)
 	local finalCFrame = CFrame.new(finalPosition)
 
-	-- คำนวณระยะทางที่จะต้องบินจริง
 	local flyDistance = (rootPart.Position - finalCFrame.Position).Magnitude
 	local tweenTime = flyDistance / walkSpeed
 
@@ -202,9 +162,7 @@ end
 
 SafeTeleport = function(targetCFrame)
 	local character = LocalPlayer.Character
-	if not character then
-		return
-	end
+	if not character then return end
 
 	local humanoid = character:FindFirstChild("Humanoid")
 	local rootPart = character:FindFirstChild("HumanoidRootPart")
@@ -212,40 +170,31 @@ SafeTeleport = function(targetCFrame)
 	-- 1. เคลียร์สถานะท่านั่งและการเดิน
 	if humanoid then
 		if humanoid.Sit then
-			humanoid.Sit = false -- บังคับให้เลิกนั่ง
-			humanoid.Jump = true -- สั่งกระโดด 1 ทีเพื่อหลุดจากวัตถุที่อาจจะติดอยู่
+			humanoid.Sit = false
+			humanoid.Jump = true
 			task.wait(0.05)
 		end
-		-- บังคับเปลี่ยนสถานะให้กลับมายืนปกติ ป้องกันการเอ๋อ
+
 		humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
 	end
 
-	-- 2. รีเซ็ตความเร็วและแรงเหวี่ยงทั้งหมดให้เป็น 0 ป้องกันตัวละครปลิวหลังวาร์ป
 	if rootPart then
 		rootPart.AssemblyLinearVelocity = Vector3.zero
 		rootPart.AssemblyAngularVelocity = Vector3.zero
 	end
 
-	-- 3. สั่งวาร์ป
 	character:PivotTo(targetCFrame)
 
-	-- 4. หน่วงเวลาให้เซิร์ฟเวอร์โหลดฟิสิกส์ของตัวละครในตำแหน่งใหม่ (สำคัญมาก ช่วยแก้โค้ดค้าง)
 	task.wait(0.1)
 end
 
 ParseFruitUuid = function(rawUuid)
-	-- 1. ดึงไอดีหลัก: ใช้ string.split ตัดข้อความด้วยเครื่องหมาย ":" แล้วเอาแค่ท่อนแรกสุด (Index 1)
-	-- ถ้าไม่มี ":" มันก็จะคืนค่า UUID เดิมแบบเต็มๆ กลับมาค่ะ
 	local baseUuid = string.split(rawUuid, ":")[1]
 
-	-- 2. เช็คเลขท้ายสุด: ใช้ string.match ค้นหาตัวเลข (%d+) ที่อยู่หลังเครื่องหมาย ":" และอยู่ท้ายสุดของข้อความ ($)
 	local numberSuffixStr = string.match(rawUuid, ":(%d+)$")
 
-	-- 3. แปลงข้อความเป็นตัวเลข (ถ้าหาเจอ) ถ้าหาไม่เจอจะให้ค่าเป็น nil
 	local finalNumber = nil
-	if numberSuffixStr then
-		finalNumber = tonumber(numberSuffixStr)
-	end
+	if numberSuffixStr then finalNumber = tonumber(numberSuffixStr) end
 
 	return baseUuid, finalNumber
 end
@@ -272,6 +221,19 @@ local Tabs = {
 local Options = Fluent.Options
 Window:SelectTab(1)
 
+local RS = game:GetService("ReplicatedStorage").Shop.ShopData
+
+local function getShopData(path)
+	local names = {}
+	for _, item in pairs(require(RS[path]).ShopData) do
+		table.insert(names, item.Name)
+	end
+	return names
+end
+
+SeedShopTable = getShopData("SeedShopData")
+GearShopTable = getShopData("GearShopData")
+
 ------------------------------------------------------
 -- ระบบปุ่มลอย (Floating Button) สำหรับ Android
 ------------------------------------------------------
@@ -279,7 +241,7 @@ local ToggleGui = Instance.new("ScreenGui")
 local ToggleButton = Instance.new("TextButton")
 
 ToggleGui.Name = "EfHub_Toggle"
-ToggleGui.Parent = game:GetService("CoreGui") -- หรือเปลี่ยนเป็น PlayerGui ถ้าไม่ติด
+ToggleGui.Parent = game:GetService("CoreGui")
 ToggleGui.ResetOnSpawn = false
 
 ToggleButton.Name = "ToggleButton"
@@ -297,8 +259,6 @@ UICorner.Parent = ToggleButton
 
 ToggleButton.MouseButton1Click:Connect(function()
 	pcall(function()
-		-- ซ่อน/แสดง UI แบบตรงๆ ข้ามระบบ Minimize ของ Library ไปเลย
-		-- เช็คดูว่า Fluent เก็บ ScreenGui หรือ Frame หลักไว้ที่ตัวแปรไหน
 		if Window.GUI then
 			Window.GUI.Enabled = not Window.GUI.Enabled
 		elseif Window.Instance then
@@ -311,17 +271,32 @@ end)
 
 local BuySeedSection = Tabs.Buy:AddCollapsibleSection("Buy Seed", false)
 BuySeedSection:AddToggle("tgBuySeedEn", {
-	Title = "Seed",
+	Title = "Auto Buy Seed",
 	Default = false,
 	Callback = function(Value)
 		if Value then
-			if AutoBuySeed then
-				AutoBuySeed()
-			end
+			if AutoBuySeed then AutoBuySeed() end
 		end
-		if QuickSave then
-			QuickSave()
-		end
+		if QuickSave then QuickSave() end
+	end,
+})
+
+BuySeedSection:AddToggle("tgBuyAllSeedEn", {
+	Title = "Auto Buy All Seed",
+	Default = false,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+BuySeedSection:AddDropdown("ddBuySeed", {
+	Title = "Select Seed",
+	Values = SeedShopTable,
+	Multi = true,
+	Default = {},
+	Searchable = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
 	end,
 })
 
@@ -331,22 +306,16 @@ PlantSection:AddToggle("tgPlantEn", {
 	Default = false,
 	Callback = function(Value)
 		if Value then
-			if AutoPlantSeed() then
-				AutoPlantSeed()
-			end
+			if AutoPlantSeed() then AutoPlantSeed() end
 		end
-		if QuickSave then
-			QuickSave()
-		end
+		if QuickSave then QuickSave() end
 	end,
 })
 PlantSection:AddToggle("tgHarvestEn", {
 	Title = "Auto Harvest",
 	Default = false,
 	Callback = function(Value)
-		if QuickSave then
-			QuickSave()
-		end
+		if QuickSave then QuickSave() end
 	end,
 })
 
@@ -355,23 +324,17 @@ SellSection:AddToggle("tgSellFruitEn", {
 	Title = "Sell",
 	Default = false,
 	Callback = function(Value)
-		if QuickSave then
-			QuickSave()
-		end
+		if QuickSave then QuickSave() end
 	end,
 })
 
 AutoBuySeed = function()
-	if not Options.tgBuySeedEn.Value then
-		return
-	end
+	if not Options.tgBuySeedEn.Value then return end
 	local args = {
 		"SeedShop",
 	}
 	local SeedShop = GetShopData:InvokeServer(unpack(args))
-	if not SeedShop then
-		return
-	end
+	if not SeedShop then return end
 	--local carrotAmount = SeedShop.Items["Carrot Seed"].Amount
 	--if carrotAmount < 1 then
 	--	return
@@ -394,14 +357,13 @@ AutoBuySeed = function()
 	end
 
 	--Current Pos: CFrame.new(164.29, 189.98, 348.02)
-	SafeTeleport(CFrame.new(164.29, 189.98, 348.02))
+	--SafeTeleport(CFrame.new(164.29, 189.98, 348.02))
+	SafeTeleport(MySpawnPoint)
 	isBuying = false
 end
 
 AutoPlantSeed = function()
-	if not Options.tgPlantEn.Value then
-		return
-	end
+	if not Options.tgPlantEn.Value then return end
 	pcall(function()
 		Humanoid:UnequipTools()
 	end)
@@ -413,20 +375,19 @@ AutoPlantSeed = function()
 		for _, item in pairs(Backpack:GetChildren()) do
 			--print(item:GetAttribute("BaseName") .. ":" .. tostring(item:GetAttribute("ItemCount")))
 			--if item:GetAttribute("BaseName") == "Carrot Seed" then
-			PlantPos = GetRandomPlantPosition()
+			--PlantPos = GetRandomPlantPosition() * MySpawnPoint.CFrame
 			if item:GetAttribute("Type") == "Seeds" then
 				isPlanting = true
 
-				TweenToTarget(CFrame.new(PlantPos.X, PlantPos.Y, PlantPos.Z), 50, 3)
 				pcall(function()
 					Humanoid:EquipTool(item)
 				end)
 
 				local ItemCount = item:GetAttribute("ItemCount") or 0
 				for i = 1, ItemCount do
-					if not Options.tgPlantEn.Value then
-						break
-					end
+					if not Options.tgPlantEn.Value then break end
+					PlantPos = GetRandomPlantPosition()
+					TweenToTarget(CFrame.new(PlantPos.X + 3, PlantPos.Y, PlantPos.Z), 100, 3)
 					local args = {
 						--"Carrot",
 						item:GetAttribute("PlantType"),
@@ -446,9 +407,7 @@ AutoPlantSeed = function()
 end
 
 AutoHarvest = function()
-	if not Options.tgHarvestEn.Value then
-		return
-	end
+	if not Options.tgHarvestEn.Value then return end
 
 	local ClientPlants = workspace.ClientPlants
 	local Crop = {}
@@ -460,11 +419,9 @@ AutoHarvest = function()
 		end
 		isHarvesting = true
 		for _, fruit in pairs(Crop) do
-			if not Options.tgHarvestEn.Value then
-				break
-			end
+			if not Options.tgHarvestEn.Value then break end
 			if fruit:GetAttribute("FullyGrown") then
-				TweenToTarget(fruit:GetPivot(), 50, 1)
+				TweenToTarget(fruit:GetPivot() * CFrame.new(3, 0, 0), 50, 1)
 				local gUuid, gindex = ParseFruitUuid(fruit:GetAttribute("Uuid"))
 				local args = {}
 				if gindex then
@@ -493,9 +450,7 @@ AutoHarvest = function()
 	end
 end
 AutoSellFruit = function()
-	if not Options.tgSellFruitEn.Value then
-		return
-	end
+	if not Options.tgSellFruitEn.Value then return end
 	local Backpack = LocalPlayer.Backpack
 	print("Sell Check")
 	local gotosell = false
@@ -507,9 +462,7 @@ AutoSellFruit = function()
 			break
 		end
 	end
-	if not gotosell then
-		return
-	end
+	if not gotosell then return end
 	isSelling = true
 	SafeTeleport(CFrame.new(149.40, 205.51, 672.00))
 	task.wait(0.5)
@@ -532,9 +485,7 @@ InterfaceManager:BuildInterfaceSection(Tabs.Settings)
 SaveManager:BuildConfigSection(Tabs.Settings)
 
 QuickSave = function()
-	if not IsLoading then
-		SaveManager:Save("Horizons")
-	end
+	if not IsLoading then SaveManager:Save("Horizons") end
 end
 
 task.spawn(function()
@@ -573,23 +524,19 @@ task.spawn(function()
 			continue
 		end
 		if Options.tgPlantEn.Value then
-			AutoPlantSeed()
-			--task.wait(10)
+			pcall(AutoPlantSeed) --task.wait(10)
 			--print("Plant")
 		end
 		if Options.tgHarvestEn.Value then
-			AutoHarvest()
-			--task.wait(10)
+			pcall(AutoHarvest) --task.wait(10)
 			--print("Harvest")
 		end
 		if Options.tgSellFruitEn.Value then
-			AutoSellFruit()
-			--task.wait(10)
+			pcall(AutoSellFruit) --task.wait(10)
 			--print("Sell")
 		end
 		if Options.tgBuySeedEn.Value then
-			AutoBuySeed()
-			--isPlanting = false
+			pcall(AutoBuySeed) --isPlanting = false
 			--isHarvesting = false
 		end
 		task.wait(30)
