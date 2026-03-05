@@ -1,0 +1,166 @@
+🚀 [ส่งออก] Remote: GetShopData.InvokeServer
+➡️[1] : SeedShop
+🚀 [ส่งออก] Remote: PurchaseShopItem.InvokeServer
+➡️[1] : SeedShop
+➡️[2] : Carrot Seed
+📥 [รับจาก Server] Remote: ReplicaSet
+➡️[1] : 1
+➡️[2] : 
+  ➡️[1] : Money (string)
+➡️[3] : 4545960
+📥 [รับจาก Server] Remote: ReplicaSet
+➡️[1] : 1
+➡️[2] : 
+  ➡️[1] : SeedShop (string)
+➡️[3] : 
+  ➡️[Items]:
+    ➡️[Carrot Seed]:
+      ➡️[MaxAmount] : 8 (number)
+      ➡️[Amount] : 7 (number)
+    ➡️[Corn Seed]:
+      ➡️[MaxAmount] : 2 (number)
+      ➡️[Amount] : 2 (number)
+  ➡️[Seed] : 5908781 (number)
+📥 [รับจาก Server] Remote: ReplicaSet
+➡️[1] : 1
+➡️[2] : 
+  ➡️[1] : GearShop (string)
+➡️[3] : 
+  ➡️[Items]:
+    ➡️[Basic Sprinkler]:
+      ➡️[MaxAmount] : 4 (number)
+      ➡️[Amount] : 4 (number)
+    ➡️[Watering Can]:
+      ➡️[MaxAmount] : 5 (number)
+      ➡️[Amount] : 5 (number)
+    ➡️[Favorite Tool]:
+      ➡️[MaxAmount] : 8 (number)
+      ➡️[Amount] : 8 (number)
+    ➡️[Trowel]:
+      ➡️[MaxAmount] : 1 (number)
+      ➡️[Amount] : 1 (number)
+  ➡️[Seed] : 5908782 (number)
+🚀 [ส่งออก] Remote: GetShopData.InvokeServer
+➡️[1] : SeedShop
+📥 [รับจาก Server] Remote: ReplicaSet
+➡️[1] : 1
+➡️[2] : 
+  ➡️[1] : SeedShop (string)
+➡️[3] : 
+  ➡️[Items]:
+    ➡️[Carrot Seed]:
+      ➡️[MaxAmount] : 23 (number)
+      ➡️[Amount] : 23 (number)
+    ➡️[Corn Seed]:
+      ➡️[MaxAmount] : 3 (number)
+      ➡️[Amount] : 3 (number)
+  ➡️[Seed] : 5908782 (number)
+📥 [รับจาก Server] Remote: ReplicaSet
+➡️[1] : 1
+➡️[2] : 
+  ➡️[1] : GearShop (string)
+➡️[3] : 
+  ➡️[Items]:
+    ➡️[Favorite Tool]:
+      ➡️[MaxAmount] : 6 (number)
+      ➡️[Amount] : 6 (number)
+    ➡️[Watering Can]:
+      ➡️[MaxAmount] : 6 (number)
+      ➡️[Amount] : 6 (number)
+    ➡️[Trowel]:
+      ➡️[MaxAmount] : 3 (number)
+      ➡️[Amount] : 3 (number)
+  ➡️[Seed] : 5908783 (number)
+🚀 [ส่งออก] Remote: GetShopData.InvokeServer
+➡️[1] : SeedShop
+📥 [รับจาก Server] Remote: ReplicaSet
+➡️[1] : 1
+➡️[2] : 
+  ➡️[1] : SeedShop (string)
+➡️[3] : 
+  ➡️[Items]:
+    ➡️[Carrot Seed]:
+      ➡️[MaxAmount] : 9 (number)
+      ➡️[Amount] : 9 (number)
+    ➡️[Corn Seed]:
+      ➡️[MaxAmount] : 3 (number)
+      ➡️[Amount] : 3 (number)
+  ➡️[Seed] : 5908783 (number)
+🚀 [ส่งออก] Remote: GetShopData.InvokeServer
+➡️[1] : GearShop
+🚀 [ส่งออก] Remote: PurchaseShopItem.InvokeServer
+➡️[1] : GearShop
+➡️[2] : Trowel
+📥 [รับจาก Server] Remote: ReplicaSet
+➡️[1] : 1
+➡️[2] : 
+  ➡️[1] : Money (string)
+➡️[3] : 4295960
+📥 [รับจาก Server] Remote: ReplicaSet
+➡️[1] : 1
+➡️[2] : 
+  ➡️[1] : GearShop (string)
+➡️[3] : 
+  ➡️[Items]:
+    ➡️[Favorite Tool]:
+      ➡️[MaxAmount] : 6 (number)
+      ➡️[Amount] : 6 (number)
+    ➡️[Watering Can]:
+      ➡️[MaxAmount] : 6 (number)
+      ➡️[Amount] : 6 (number)
+    ➡️[Trowel]:
+      ➡️[MaxAmount] : 3 (number)
+      ➡️[Amount] : 2 (number)
+  ➡️[Seed] : 5908783 (number)
+
+
+
+
+  local args = {
+	"GearShop","Trowel"
+}
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("PurchaseShopItem"):InvokeServer(unpack(args))
+
+
+local args = {
+	"GearShop",
+}
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("GetShopData"):InvokeServer("SeedShop")
+
+
+🚀 [ส่งออก] Remote: GetShopData.InvokeServer
+➡️[1] : GearShop
+🚀 [ส่งออก] Remote: GetShopData.InvokeServer
+➡️[1] : GearShop
+
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+Pos = Character:GetPivot()
+print("➡️",Pos.Position.X,Pos.Position.Y,Pos.Position.Z)
+
+
+
+Character:PivotTo(CFrame.new(211.63800048828125,205.46646118164062, 608.1752319335938))
+
+
+Pos = Character:GetPivot()
+print("➡️",Pos.Position.X,Pos.Position.Y,Pos.Position.Z)
+➡️ 211.63800048828125 205.46646118164062 608.1752319335938
+
+
+📥 [รับจาก Server] Remote: Notification
+➡️[1] : Your inventory is full! Sell or remove items to make space.
+➡️[2] : 4
+
+
+args[1] = "Your inventory is full! Sell or remove items to make space."
+
+ต้องการหาคำว่า "inventory is full!"
+ใช้ code ยังไง
+
+
+
+
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ClaimQuest"):FireServer("Daily",4)

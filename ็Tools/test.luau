@@ -11,3 +11,8 @@ for Name, Seed in pairs(SeedShop.Items) do
 	print(Name)
 	print(Seed.Amount)
 end
+
+PlantData = require(game:GetService("ReplicatedStorage").Plants.Definitions.PlantDataDefinitions)
+for PlanrName, _ in pairs(PlantData) do
+	print(PlanrName)
+end

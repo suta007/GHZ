@@ -1,0 +1,179 @@
+📥 [รับจาก Server] Remote: Notification
+➡️[1] : Quest Completed: Earn 200,000 Shillings
+➡️[2] : 5
+🚀 [ส่งออก] Remote: RequestQuests.FireServer
+🚀 [ส่งออก] Remote: ClaimQuest.FireServer
+➡️[1] : Daily
+➡️[2] : 4
+🚀 [ส่งออก] Remote: ClaimQuest.FireServer
+➡️[1] : Daily
+➡️[2] : 5
+📥 [รับจาก Server] Remote: ReplicaSet
+➡️[1] : 5
+➡️[2] : 
+  ➡️[1] : Money (string)
+➡️[3] : 4177210
+🚀 [ส่งออก] Remote: ClaimQuest.FireServer
+➡️[1] : Weekly
+➡️[2] : 1
+📥 [รับจาก Server] Remote: ReplicaSet
+➡️[1] : 5
+➡️[2] : 
+  ➡️[1] : Money (string)
+➡️[3] : 4189210
+🚀 [ส่งออก] Remote: ClaimQuest.FireServer
+➡️[1] : Weekly
+➡️[2] : 2
+🚀 [ส่งออก] Remote: ClaimQuest.FireServer
+➡️[1] : Weekly
+➡️[2] : 5
+
+
+
+***************************
+
+
+📥 [รับจาก Server] Remote: Notification
+[1] : Quest Completed: Harvest 15 Apples
+[2] : 5
+dxftkXHOUivFCoXVi:331: invalid argument #3 to 'format' (string expected, got Color3)
+    Stack Begin
+    Script 'LocalScript', Line 331
+    Stack End
+📥 [รับจาก Server] Remote: UpdateQuests
+[1] : 
+  [Weekly]:
+    [ResetCounts]:
+      [1] : 0 (number)
+      [3] : 0 (number)
+      [2] : 0 (number)
+      [5] : 0 (number)
+      [4] : 0 (number)
+    [WeekId] : 2930 (number)
+    [Active]:
+      [1]:
+        [Type] : HarvestCrops (string)
+        [Description] : Harvest 50 Strawberries (string)
+        [Progress] : 21 (number)
+        [AssignedAt] : 1772611143 (number)
+        [RewardType] : Shillings (string)
+        [Goal] : 50 (number)
+        [TargetItem] : Strawberry (string)
+        [RewardAmount] : 12000 (number)
+        [Claimed] : false (boolean)
+        [SessionId] : 8de43081-4d07-4660-a126-09cbcaf7d7c7 (string)
+      [3]:
+        [Type] : HarvestCrops (string)
+        [Description] : Harvest 100 Corn (string)
+        [Progress] : 14 (number)
+        [AssignedAt] : 1772611143 (number)
+        [RewardType] : SeedPack (string)
+        [Goal] : 100 (number)
+        [RewardItem] : Gardener Seed Pack (string)
+        [TargetItem] : Corn (string)
+        [RewardAmount] : 2 (number)
+        [Claimed] : false (boolean)
+        [SessionId] : 9016e2d3-7a36-4d63-8984-dfc1f7cda08e (string)
+      [2]:
+        [Type] : GainShillings (string)
+        [Description] : Earn 200,000 Shillings (string)
+        [Progress] : 50000 (number)
+        [AssignedAt] : 1772611143 (number)
+        [RewardType] : SeedPack (string)
+        [Goal] : 200000 (number)
+        [RewardItem] : Dawn Seed Pack (string)
+        [RewardAmount] : 2 (number)
+        [Claimed] : false (boolean)
+        [SessionId] : 4f76bc72-ac3b-40ad-8b1d-83a58b4eef9b (string)
+      [5]:
+        [Type] : HarvestCrops (string)
+        [Description] : Harvest 15 Apples (string)
+        [Progress] : 15 (number)
+        [AssignedAt] : 1772611143 (number)
+        [TargetItem] : Apple (string)
+        [CompletedAt] : 1772631853 (number)
+        [Goal] : 15 (number)
+        [RewardItem] : Dawn Seed Pack (string)
+        [RewardType] : SeedPack (string)
+        [RewardAmount] : 1 (number)
+        [Claimed] : false (boolean)
+        [SessionId] : e6033d46-46df-492a-b9a3-2f508d427c9a (string)
+      [4]:
+        [Type] : PlantSeeds (string)
+        [Description] : Plant 25 Strawberry Seeds (string)
+        [Progress] : 0 (number)
+        [AssignedAt] : 1772611143 (number)
+        [RewardType] : SeedPack (string)
+        [Goal] : 25 (number)
+        [RewardItem] : Gardener Seed Pack (string)
+        [TargetItem] : Strawberry (string)
+        [RewardAmount] : 2 (number)
+        [Claimed] : false (boolean)
+        [SessionId] : 0564d895-38fd-4a16-bbdd-c3fb72d75bff (string)
+  [Daily]:
+    [DayId] : 20516 (number)
+    [ResetCounts]:
+      [1] : 0 (number)
+      [3] : 0 (number)
+      [2] : 0 (number)
+      [5] : 0 (number)
+      [4] : 0 (number)
+    [Active]:
+      [1]:
+        [Type] : PlantSeeds (string)
+        [Description] : Plant 20 Carrot Seeds (string)
+        [Progress] : 0 (number)
+        [AssignedAt] : 1772611143 (number)
+        [RewardType] : Shillings (string)
+        [Goal] : 20 (number)
+        [TargetItem] : Carrot (string)
+        [RewardAmount] : 800 (number)
+        [Claimed] : false (boolean)
+        [SessionId] : 93a82d9c-f4fa-4a4b-a048-d5c7ec59f0ab (string)
+      [3]:
+        [Type] : PlantSeeds (string)
+        [Description] : Plant 15 Corn Seeds (string)
+        [Progress] : 0 (number)
+        [AssignedAt] : 1772611143 (number)
+        [RewardType] : SeedPack (string)
+        [Goal] : 15 (number)
+        [RewardItem] : Gardener Seed Pack (string)
+        [TargetItem] : Corn (string)
+        [RewardAmount] : 2 (number)
+        [Claimed] : false (boolean)
+        [SessionId] : af37b4e8-f786-42b9-aa20-d0fda9436ab2 (string)
+      [2]:
+        [Type] : PlantSeeds (string)
+        [Description] : Plant 3 Mushroom Seeds (string)
+        [Progress] : 0 (number)
+        [AssignedAt] : 1772611143 (number)
+        [RewardType] : Shillings (string)
+        [Goal] : 3 (number)
+        [TargetItem] : Mushroom (string)
+        [RewardAmount] : 5000 (number)
+        [Claimed] : false (boolean)
+        [SessionId] : 7ec16642-4479-4df3-84eb-3305f4a35c9d (string)
+      [5]:
+        [Type] : HarvestCrops (string)
+        [Description] : Harvest 20 Corn (string)
+        [Progress] : 14 (number)
+        [AssignedAt] : 1772611143 (number)
+        [RewardType] : Shillings (string)
+        [Goal] : 20 (number)
+        [TargetItem] : Corn (string)
+        [RewardAmount] : 1500 (number)
+        [Claimed] : false (boolean)
+        [SessionId] : 1b0c3cfd-948e-449c-aae7-84adb34169a1 (string)
+      [4]:
+        [Type] : HarvestCrops (string)
+        [Description] : Harvest 4 Apples (string)
+        [Progress] : 4 (number)
+        [AssignedAt] : 1772611143 (number)
+        [TargetItem] : Apple (string)
+        [CompletedAt] : 1772631833 (number)
+        [Goal] : 4 (number)
+        [RewardItem] : Dawn Seed Pack (string)
+        [RewardType] : SeedPack (string)
+        [RewardAmount] : 1 (number)
+        [Claimed] : false (boolean)
+        [SessionId] : 732670ab-da46-49a1-92cc-c297171fdb12 (string)
