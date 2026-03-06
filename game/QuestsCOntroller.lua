@@ -19,12 +19,10 @@ local function v_u_20()
 		for v14 = 1, 5 do
 			local v15 = v_u_9:FindFirstChild((tostring(v14)))
 			if v15 then
-				l	 ocal v16 = v13.Active[tostring(v14)]
-			 local v17 = v13.ResetCounts and (v13.ResetCounts[tostring(v14)] or 0) or 0
+				local v16 = v13.Active[tostring(v14)]
+				local v17 = v13.ResetCounts and (v13.ResetCounts[tostring(v14)] or 0) or 0
 				v_u_6.UpdateEntry(v15, v16, v17, v_u_11)
-				if v15:FindFirstChild("RefreshShadow") then
-					v15.RefreshShadow.Visible = false
-				end
+				if v15:FindFirstChild("RefreshShadow") then v15.RefreshShadow.Visible = false end
 			end
 		end
 		local v18 = workspace:GetServerTimeNow()
@@ -35,7 +33,8 @@ end
 local v_u_21 = v_u_12
 local v_u_22 = v_u_11
 for v_u_23 = 1, 5 do
-	local v _u_24 =v_u_9:WaitForChild((tostring(v_u_23)))
+	local v
+	_u_24 = v_u_9:WaitForChild((tostring(v_u_23)))
 	v_u_24.Claim.MouseButton1Click:Connect(function()
 		-- upvalues: (copy) v_u_7, (ref) v_u_22, (copy) v_u_23
 		local v25 = v_u_23
@@ -83,9 +82,7 @@ for _, v28 in v3:GetTagged("QuestOpen") do
 	end)
 	v28.PromptHidden:Connect(function()
 		-- upvalues: (copy) v_u_8
-		if v_u_8.Enabled then
-			v_u_8.Enabled = false
-		end
+		if v_u_8.Enabled then v_u_8.Enabled = false end
 	end)
 end
 v3:GetInstanceAddedSignal("QuestOpen"):Connect(function(p30)
@@ -103,9 +100,7 @@ v3:GetInstanceAddedSignal("QuestOpen"):Connect(function(p30)
 	end)
 	p30.PromptHidden:Connect(function()
 		-- upvalues: (ref) v_u_8
-		if v_u_8.Enabled then
-			v_u_8.Enabled = false
-		end
+		if v_u_8.Enabled then v_u_8.Enabled = false end
 	end)
 end)
 task.spawn(function()

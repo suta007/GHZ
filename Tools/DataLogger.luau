@@ -166,13 +166,14 @@ game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("
 	local Weekly = QuestData.Weekly.Active
 	for index, qWeekly in pairs(Weekly) do
 		if qWeekly.CompletedAt and not qWeekly.Claimed then
-
+			game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ClaimQuest"):FireServer("Weekly",index)
 		end
-
 	end
-)
-	ShowData(Weekly, 1)
-	AddLog("+++++++++++++++++++++")
+
 	local Daily = QuestData.Daily.Active
-	ShowData(Daily, 1)
+		for index, qDaily in pairs(Daily) do
+		if qDaily.CompletedAt and not qDaily.Claimed then
+			game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ClaimQuest"):FireServer("Daily",index)
+		end
+	end
 end)
