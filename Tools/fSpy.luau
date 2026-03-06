@@ -312,7 +312,7 @@ oldNamecall = hookmetamethod(
 )
 
 -- ขาเข้า
-local BacklistRemote = { "WeatherEvent", "GrowthUpdate", "CellDataUpdate", "MutationNotification", "WeatherController", "UpdateQuests" }
+local BacklistRemote = { "WeatherEvent", "GrowthUpdate", "CellDataUpdate", "MutationNotification", "WeatherController" }
 
 local function hookIncoming(remote)
 	if remote:IsA("RemoteEvent") then

@@ -727,7 +727,7 @@ local function hookIncoming(remote)
 			elseif RemoteName == "UpdateQuests" then
 				table.insert(actionQueue, {
 					FuncName = AutoClaimQuest,
-					args = args,
+					args = args[1],
 				})
 			end
 		end)
