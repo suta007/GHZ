@@ -5,6 +5,8 @@ local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.
 local CollapsibleAddon = loadstring(game:HttpGet("https://raw.githubusercontent.com/suta007/Lua_EfHub/refs/heads/master/Core/CollapsibleSection.lua"))()
 CollapsibleAddon(Fluent)
 
+local fVersion = "19-06"
+
 local EncodingService = game:GetService("EncodingService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -219,7 +221,7 @@ end
 
 local Window = Fluent:CreateWindow({
 	Title = "Garden Horizons",
-	SubTitle = "by EfHub",
+	SubTitle = "by EfHub v " .. fVersion,
 	TabWidth = 100,
 	Size = UDim2.fromOffset(1400, 800),
 	Resize = true,
