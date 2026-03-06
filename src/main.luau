@@ -37,6 +37,8 @@ local Pos = {
 	Sell = CFrame.new(149.40, 205.51, 672.00),
 	Quest = CFrame.new(111.52, 205.50, 635.02),
 }
+
+--Control Variable
 local isBuyingSeed, isBuyingGear, isPlanting = false, false, false
 local HarVestCropsList = {}
 local actionQueue = {}
@@ -44,10 +46,10 @@ local isProcessing = false
 local HarvestPause = false
 local isHarvesting = false
 local isQuestClaiming = false
-
+--End of Control Variable
 local QuickSave, GetSelectedItems, TweenToTarget, ParseFruitUuid, SetNoClip, SafeTeleport
 local CheckHarvestCrops, ScanCrops, getCleanFruitName, HarvestCrops
-local AutoBuySeed, AutoBuyGear, AutoSellCrops, AutoClaimQuest, AutoPlantSeed
+local AutoBuySeed, AutoBuyGear, AutoSellCrops, AutoClaimQuest, AutoPlantsSeeds
 
 local processQueue
 
@@ -116,12 +118,12 @@ GetRandomPlantPosition = function()
 	local localOffset = CFrame.new(floatDistance, randomY, randomZ)
 	local worldCFrame = cframe * localOffset
 
-	-- 🌟 เปลี่ยนจาก CFrame.new เป็น Vector3.new
 	local finalX = worldCFrame.Position.X
 	local finalY = cframe.Position.Y
 	local finalZ = worldCFrame.Position.Z
 
-	return Vector3.new(finalX, finalY, finalZ)
+	-- 🌟 เปลี่ยนจาก Vector3.new เป็น CFrame.new ค่ะ
+	return CFrame.new(finalX, finalY, finalZ)
 end
 
 SetNoClip = function(state)
@@ -144,6 +146,8 @@ SetNoClip = function(state)
 	end
 end
 
+MySpawnPoint = MySpawn:GetPivot()
+
 TweenToTarget = function(targetCFrame, speed, yOffset)
 	local character = LocalPlayer.Character
 	if not character then return false end
@@ -153,12 +157,24 @@ TweenToTarget = function(targetCFrame, speed, yOffset)
 
 	local currentDistance = (rootPart.Position - targetCFrame.Position).Magnitude
 
-	if currentDistance <= 5 then return true end
+	if currentDistance <= 12 then return true end
 
 	local walkSpeed = speed or 50
 	local height = yOffset or 3
 
-	local finalPosition = targetCFrame.Position + Vector3.new(0, height, 0)
+	-- 1. แยกพิกัด X, Z ของเป้าหมายออกมาก่อน
+	local finalX = targetCFrame.Position.X
+	local finalZ = targetCFrame.Position.Z
+
+	-- 2. คำนวณค่า Y ปกติ และ ค่า Y ขั้นต่ำที่ยอมรับได้ (จุดเกิด + ระยะลอยตัว)
+	local targetY = targetCFrame.Position.Y + height
+	local minY = MySpawnPoint.Position.Y + height
+
+	-- 3. ใช้ math.max เพื่อเลือกค่า Y ที่สูงกว่าเสมอ (กันตัวละครจมดิน)
+	local finalY = math.max(targetY, minY)
+
+	-- 4. ประกอบร่าง Vector3 และ CFrame ใหม่
+	local finalPosition = Vector3.new(finalX, finalY, finalZ)
 	local finalCFrame = CFrame.new(finalPosition)
 
 	local flyDistance = (rootPart.Position - finalCFrame.Position).Magnitude
@@ -253,8 +269,10 @@ local SeedShopTable = getShopData("SeedShopData")
 local GearShopTable = getShopData("GearShopData")
 
 local PlantDataTable = { "ALL" }
+local SeedDataTable = { "ALL" }
 for PlantName, _ in pairs(require(PlantData)) do
 	table.insert(PlantDataTable, PlantName)
+	table.insert(SeedDataTable, PlantName .. " Seed")
 end
 
 ------------------------------------------------------
@@ -299,6 +317,31 @@ PlantsSection:AddToggle("tgPlantsEnable", {
 		if Value then
 			--if AutoPlantSeed() then AutoPlantSeed() end
 		end
+		if QuickSave then QuickSave() end
+	end,
+})
+PlantsSection:AddButton({
+	Title = "Clear Selected Seeds",
+	Callback = function()
+		Options.ddPlantsSeeds:SetValue({})
+	end,
+})
+PlantsSection:AddDropdown("ddPlantsSeeds", {
+	Title = "Select Seeds",
+	Values = SeedDataTable,
+	Multi = true,
+	Default = {},
+	Searchable = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+PlantsSection:AddDropdown("ddPlantsPos", {
+	Title = "Select Plants Position",
+	Values = { "Player", "Random" },
+	Default = "Player",
+	Callback = function(Value)
 		if QuickSave then QuickSave() end
 	end,
 })
@@ -381,10 +424,10 @@ BuySeedSection:AddToggle("tgBuySeedEnable", {
 BuySeedSection:AddButton({
 	Title = "Clear Selected Seeds",
 	Callback = function()
-		Options.ddBuySeed:SetValue({})
+		Options.ddBuySeeds:SetValue({})
 	end,
 })
-BuySeedSection:AddDropdown("ddBuySeed", {
+BuySeedSection:AddDropdown("ddBuySeeds", {
 	Title = "Select Seeds",
 	Values = SeedShopTable,
 	Multi = true,
@@ -478,10 +521,10 @@ ResetControlVariable = function()
 	isBuyingSeed = false
 	isBuyingGear = false
 	isPlanting = false
-	isSelling = false
 	isProcessing = false
 	HarvestPause = false
 	isHarvesting = false
+	isQuestClaiming = false
 
 	table.clear(HarVestCropsList)
 	table.clear(actionQueue)
@@ -607,7 +650,7 @@ AutoBuySeed = function(Items)
 
 	if not Items then return end
 	isBuyingSeed = true
-	local SeedBuyList = GetSelectedItems(Options.ddBuySeed.Value)
+	local SeedBuyList = GetSelectedItems(Options.ddBuySeeds.Value)
 	SafeTeleport(Pos.SeedShop)
 	task.wait(0.5)
 	for Name, Seed in pairs(Items) do
@@ -644,6 +687,54 @@ AutoBuyGear = function(Items)
 	task.wait(0.3)
 	isBuyingGear = false
 	--retrn
+end
+
+AutoPlantsSeeds = function()
+	if not Options.tgPlantsEnable.Value or isPlanting then return end
+
+	pcall(function()
+		Humanoid:UnequipTools()
+	end)
+	local ddPlantsPos = Options.ddPlantsPos.Value
+	local PlantPos
+	local Backpack = LocalPlayer.Backpack
+	local SeedList = GetSelectedItems(Options.ddPlantsSeeds.Value)
+
+	if Backpack then
+		for _index, item in pairs(Backpack:GetChildren()) do
+			if not Options.tgPlantsEnable.Value then break end
+			if item:GetAttribute("Type") == "Seeds" and (table.find(SeedList, "ALL") or table.find(SeedList, item:GetAttribute("BaseName"))) then
+				isPlanting = true
+				pcall(function()
+					Humanoid:EquipTool(item)
+				end)
+				local ItemCount = item:GetAttribute("ItemCount") or 0
+				for i = 1, ItemCount do
+					if not Options.tgPlantsEnable.Value then
+						isPlanting = false
+						break
+					end
+					if ddPlantsPos == "Player" then
+						PlantPos = Character:GetPivot()
+					elseif ddPlantsPos == "Random" then
+						PlantPos = GetRandomPlantPosition()
+						TweenToTarget(CFrame.new(PlantPos.X + 3, PlantPos.Y, PlantPos.Z), 100, 3)
+					end
+					local args = {
+						item:GetAttribute("PlantType"),
+						--Vector3.new(PlantPos.X, PlantPos.Y, PlantPos.Z),
+						PlantPos.Position,
+					}
+					PlantSeed:InvokeServer(unpack(args))
+					task.wait(0.3)
+				end
+				pcall(function()
+					Humanoid:UnequipTools()
+				end)
+			end
+		end
+		isPlanting = false
+	end
 end
 
 AutoClaimQuest = function(QuestData)
