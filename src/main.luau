@@ -5,7 +5,7 @@ local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.
 local CollapsibleAddon = loadstring(game:HttpGet("https://raw.githubusercontent.com/suta007/Lua_EfHub/refs/heads/master/Core/CollapsibleSection.lua"))()
 CollapsibleAddon(Fluent)
 
-local fVersion = "2569.03.06-22.44"
+local fVersion = "2569.03.06-22.59"
 
 local EncodingService = game:GetService("EncodingService")
 local Players = game:GetService("Players")
@@ -1052,18 +1052,25 @@ end)
 
 SetupTracker = function()
 	local ClientPlants = workspace:FindFirstChild("ClientPlants")
+	if not ClientPlants then return end
 
-	if ClientPlants then
-		ClientPlants.DescendantAdded:Connect(function(newObj)
-			task.wait()
+	ClientPlants.ChildAdded:Connect(function(newPlant)
+		task.wait(0.5)
 
-			if IsFruit(newObj) then
-				if Options.tgHideFruit.Value then SetVisibility(newObj, true) end
-			else
-				if Options.tgHidePlant.Value then SetVisibility(newObj, true) end
+		if newPlant:GetAttribute("PlantType") then
+			if Options.tgHidePlant.Value and not IsFruit(newPlant) then SetVisibility(newPlant, true) end
+
+			for _, part in ipairs(newPlant:GetDescendants()) do
+				if IsFruit(part) then
+					if Options.tgHideFruit.Value then
+						if newPlant:GetAttribute("HarvestablePlant") ~= true then SetVisibility(part, true) end
+					end
+				else
+					if Options.tgHidePlant.Value then SetVisibility(part, true) end
+				end
 			end
-		end)
-	end
+		end
+	end)
 end
 
 SetupTracker()
