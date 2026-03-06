@@ -1,6 +1,4 @@
-local Fluent = loadstring(
-	game:HttpGet("https://github.com/ActualMasterOogway/Fluent-Renewed/releases/latest/download/Fluent.luau")
-)()
+local Fluent = loadstring(game:HttpGet("https://github.com/ActualMasterOogway/Fluent-Renewed/releases/latest/download/Fluent.luau"))()
 
 local Window = Fluent:CreateWindow({
 	Title = "Console Log",
@@ -86,21 +84,15 @@ LogDisplay = Tabs.Main:AddParagraph("LogDisplay", {
 -- 4. ฟังก์ชัน AddLog
 ------------------------------------------------------
 local function AddLog(message)
-	if IsPaused then
-		return
-	end
+	if IsPaused then return end
 	local entry = message
 	-- เก็บลงประวัติทั้งหมด
 	table.insert(FullHistoryTable, entry)
-	if #FullHistoryTable > MaxFullHistory then
-		table.remove(FullHistoryTable, 1)
-	end
+	if #FullHistoryTable > MaxFullHistory then table.remove(FullHistoryTable, 1) end
 
 	-- เก็บลงตารางแสดงผล (จำกัดบรรทัด)
 	table.insert(DisplayTable, entry)
-	if #DisplayTable > MaxLines then
-		table.remove(DisplayTable, 1)
-	end
+	if #DisplayTable > MaxLines then table.remove(DisplayTable, 1) end
 
 	-- อัปเดตหน้าจอ
 	if LogDisplay then
@@ -164,14 +156,23 @@ end
 Tabs.Event:AddButton({
 	Title = "Test",
 	Callback = function()
-		local args = {
-			"SeedShop",
-			"Carrot Seed",
-		}
-		local result = game:GetService("ReplicatedStorage")
-			:WaitForChild("RemoteEvents")
-			:WaitForChild("PurchaseShopItem")
-			:InvokeServer(unpack(args))
-		ShowData(result, 1)
+		game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestQuests"):FireServer()
 	end,
 })
+
+game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("UpdateQuests").OnClientEvent:Connect(function(QuestData)
+	ShowData(QuestData, 1)
+
+	local Weekly = QuestData.Weekly.Active
+	for index, qWeekly in pairs(Weekly) do
+		if qWeekly.CompletedAt and not qWeekly.Claimed then
+
+		end
+
+	end
+)
+	ShowData(Weekly, 1)
+	AddLog("+++++++++++++++++++++")
+	local Daily = QuestData.Daily.Active
+	ShowData(Daily, 1)
+end)

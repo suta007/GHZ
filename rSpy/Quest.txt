@@ -177,3 +177,7 @@ dxftkXHOUivFCoXVi:331: invalid argument #3 to 'format' (string expected, got Col
         [RewardAmount] : 1 (number)
         [Claimed] : false (boolean)
         [SessionId] : 732670ab-da46-49a1-92cc-c297171fdb12 (string)
+
+
+
+        game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestQuests"):FireServer()
