@@ -35,19 +35,21 @@ local Pos = {
 	Sell = CFrame.new(149.40, 205.51, 672.00),
 	Quest = CFrame.new(111.52, 205.50, 635.02),
 }
-local isBuyingSeed, isBuyingGear, isPlanting, isSelling = false, false, false, false
+local isBuyingSeed, isBuyingGear, isPlanting = false, false, false
 local HarVestCropsList = {}
 local actionQueue = {}
 local isProcessing = false
 local HarvestPause = false
 local isHarvesting = false
+local isQuestClaiming = false
 
 local QuickSave, GetSelectedItems, TweenToTarget, ParseFruitUuid, SetNoClip, SafeTeleport
 local CheckHarvestCrops, ScanCrops, getCleanFruitName, HarvestCrops
-local AutoBuySeed, AutoBuyGear, AutoPlantSeed, AutoHarvest, AutoSellCrops
+local AutoBuySeed, AutoBuyGear, AutoSellCrops, AutoClaimQuest, AutoPlantSeed
+
 local processQueue
 
-local InitializePlotData, GetRandomPlantPosition
+local InitializePlotData, GetRandomPlantPosition, ResetControlVariable
 
 local RemoteNotification, RemoteReplicaSet
 
@@ -230,8 +232,8 @@ local Window = Fluent:CreateWindow({
 local Tabs = {
 	Main = Window:AddTab({ Title = "Main", Icon = "house" }),
 	Shop = Window:AddTab({ Title = "Shop", Icon = "shopping-cart" }),
-	Plot = Window:AddTab({ Title = "Plot", Icon = "tree-pine" }),
-	Sell = Window:AddTab({ Title = "Sell", Icon = "dollar-sign" }),
+	Auto = Window:AddTab({ Title = "Automatic", Icon = "bot" }),
+	Misc = Window:AddTab({ Title = "Misc", Icon = "component" }),
 	Settings = Window:AddTab({ Title = "Settings", Icon = "settings" }),
 }
 local Options = Fluent.Options
@@ -345,6 +347,15 @@ HarvestSection:AddDropdown("ddHarvestMutants", {
 	end,
 })
 
+local SellSection = Tabs.Main:AddCollapsibleSection("Sell", false)
+SellSection:AddToggle("tgSellCropsEnable", {
+	Title = "Sell",
+	Default = false,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
 local function tempBuySeed()
 	local SeedShop = GetShopData:InvokeServer("SeedShop")
 	if not SeedShop then return end
@@ -420,12 +431,20 @@ BuyGearSection:AddDropdown("ddBuyGear", {
 	end,
 })
 
-local SellSection = Tabs.Sell:AddCollapsibleSection("Sell", false)
-SellSection:AddToggle("tgSellCropsEnable", {
-	Title = "Sell",
+local QuestSection = Tabs.Auto:AddCollapsibleSection("Quest", false)
+QuestSection:AddToggle("tgQuestEnable", {
+	Title = "Auto Claim Quest",
 	Default = false,
 	Callback = function(Value)
+		if Value then RemoteEvents:WaitForChild("RequestQuests"):FireServer() end
 		if QuickSave then QuickSave() end
+	end,
+})
+--รีเซ็ท ตัวแปรที่ใช้ควบคุม
+Tabs.Misc:AddButton({
+	Title = "Reset Control Variable",
+	Callback = function()
+		if ResetControlVariable then ResetControlVariable() end
 	end,
 })
 
@@ -451,6 +470,19 @@ GetSelectedItems = function(DropdownValue)
 		end
 	end
 	return Items
+end
+
+ResetControlVariable = function()
+	isBuyingSeed = false
+	isBuyingGear = false
+	isPlanting = false
+	isSelling = false
+	isProcessing = false
+	HarvestPause = false
+	isHarvesting = false
+
+	table.clear(HarVestCropsList)
+	table.clear(actionQueue)
 end
 
 task.spawn(function()
@@ -612,6 +644,22 @@ AutoBuyGear = function(Items)
 	--retrn
 end
 
+AutoClaimQuest = function(QuestData)
+	if not Options.tgQuestEnable.Value or isQuestClaiming or not QuestData then return end
+
+	isQuestClaiming = true
+	local Daily = QuestData.Daily.Active
+	for index, qDaily in pairs(Daily) do
+		if qDaily.CompletedAt and not qDaily.Claimed then game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ClaimQuest"):FireServer("Daily", index) end
+	end
+
+	local Weekly = QuestData.Weekly.Active
+	for index, qWeekly in pairs(Weekly) do
+		if qWeekly.CompletedAt and not qWeekly.Claimed then game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ClaimQuest"):FireServer("Weekly", index) end
+	end
+	isQuestClaiming = false
+end
+
 processQueue = function()
 	if isProcessing then return end
 	isProcessing = true
@@ -676,6 +724,11 @@ local function hookIncoming(remote)
 				RemoteReplicaSet(args)
 			elseif RemoteName == "Notification" then
 				RemoteNotification(args)
+			elseif RemoteName == "UpdateQuests" then
+				table.insert(actionQueue, {
+					FuncName = AutoClaimQuest,
+					args = args,
+				})
 			end
 		end)
 	end
