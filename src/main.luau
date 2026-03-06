@@ -314,9 +314,9 @@ PlantsSection:AddToggle("tgPlantsEnable", {
 	Title = "Auto Plants",
 	Default = false,
 	Callback = function(Value)
-		if Value then
-			--if AutoPlantSeed() then AutoPlantSeed() end
-		end
+		if Value then table.insert(actionQueue, {
+			FuncName = AutoPlantsSeeds,
+		}) end
 		if QuickSave then QuickSave() end
 	end,
 })
