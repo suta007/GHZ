@@ -5,7 +5,7 @@ local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.
 local CollapsibleAddon = loadstring(game:HttpGet("https://raw.githubusercontent.com/suta007/Lua_EfHub/refs/heads/master/Core/CollapsibleSection.lua"))()
 CollapsibleAddon(Fluent)
 
-local fVersion = "19-06"
+local fVersion = "2569.03.06-22.44"
 
 local EncodingService = game:GetService("EncodingService")
 local Players = game:GetService("Players")
@@ -28,6 +28,9 @@ local VirtualUser = game:GetService("VirtualUser")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local noclipConnection = nil
+
+local Terrain = workspace.Terrain
+local Lighting = game:GetService("Lighting")
 
 local IsLoading = true
 local Pos = {
@@ -56,6 +59,9 @@ local processQueue
 local InitializePlotData, GetRandomPlantPosition, ResetControlVariable
 
 local RemoteNotification, RemoteReplicaSet
+local ApplyAntiLag, RestoreAntiLag, SetVisibility, HidePlant, HideFruit, IsFruit
+
+local isAntiLag = false
 
 local RNG = Random.new()
 local MyPlantableParts = {}
@@ -101,6 +107,154 @@ InitializePlotData = function()
 end
 
 InitializePlotData()
+
+local SettingCache = {
+	GlobalShadows = Lighting.GlobalShadows,
+	FogEnd = Lighting.FogEnd,
+	Brightness = Lighting.Brightness,
+	EnvDiffuse = Lighting.EnvironmentDiffuseScale,
+	EnvSpecular = Lighting.EnvironmentSpecularScale,
+	OutdoorAmbient = Lighting.OutdoorAmbient,
+	-- Terrain
+	WaterWaveSize = Terrain.WaterWaveSize,
+	WaterWaveSpeed = Terrain.WaterWaveSpeed,
+	WaterReflectance = Terrain.WaterReflectance,
+	WaterTransparency = Terrain.WaterTransparency,
+}
+ApplyAntiLag = function()
+	-- Lighting
+	Lighting.GlobalShadows = false
+	Lighting.FogEnd = 9e9
+	Lighting.Brightness = 2
+	Lighting.EnvironmentDiffuseScale = 0
+	Lighting.EnvironmentSpecularScale = 0
+	Lighting.OutdoorAmbient = Color3.new(0, 0, 0)
+
+	-- Terrain Water
+	Terrain.WaterWaveSize = 0
+	Terrain.WaterWaveSpeed = 0
+	Terrain.WaterReflectance = 0
+	Terrain.WaterTransparency = 1
+
+	-- Workspace optimize
+	for i, v in ipairs(workspace:GetDescendants()) do
+		if i % 200 == 0 then task.wait() end
+
+		if v:IsA("BasePart") then
+			v.Material = Enum.Material.SmoothPlastic
+			v.Reflectance = 0
+		elseif v:IsA("ParticleEmitter") then
+			v.Enabled = false
+		elseif v:IsA("Decal") or v:IsA("Texture") then
+			v.Transparency = 1
+		end
+	end
+
+	-- Rendering quality (safe)
+	pcall(function()
+		settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+	end)
+end
+
+RestoreAntiLag = function()
+	-- คืนค่า Lighting
+	Lighting.GlobalShadows = SettingCache.GlobalShadows
+	Lighting.FogEnd = SettingCache.FogEnd
+	Lighting.Brightness = SettingCache.Brightness
+	Lighting.EnvironmentDiffuseScale = SettingCache.EnvDiffuse
+	Lighting.EnvironmentSpecularScale = SettingCache.EnvSpecular
+	Lighting.OutdoorAmbient = SettingCache.OutdoorAmbient
+
+	-- คืนค่า Terrain
+	Terrain.WaterWaveSize = SettingCache.WaterWaveSize
+	Terrain.WaterWaveSpeed = SettingCache.WaterWaveSpeed
+	Terrain.WaterReflectance = SettingCache.WaterReflectance
+	Terrain.WaterTransparency = SettingCache.WaterTransparency
+
+	-- คืนค่าวัตถุใน Workspace
+	for i, v in ipairs(workspace:GetDescendants()) do
+		if i % 200 == 0 then task.wait() end
+
+		if v:IsA("BasePart") then
+			v.Material = Enum.Material.Plastic
+			v.Reflectance = 0
+		elseif v:IsA("ParticleEmitter") then
+			v.Enabled = true
+		elseif v:IsA("Decal") or v:IsA("Texture") then
+			v.Transparency = 0
+		end
+	end
+
+	pcall(function()
+		settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic
+	end)
+
+	print("SutaHub: Graphics Restored!")
+end
+
+SetVisibility = function(obj, isHidden)
+	if obj:IsA("BasePart") or obj:IsA("MeshPart") or obj:IsA("Decal") or obj:IsA("Texture") then
+		if isHidden then
+			-- ใช้คีย์เวิร์ดเดิม OriginalTrans
+			if not obj:GetAttribute("OriginalTrans") then obj:SetAttribute("OriginalTrans", obj.Transparency) end
+			obj.Transparency = 1
+		else
+			local orig = obj:GetAttribute("OriginalTrans")
+			if orig then obj.Transparency = orig end
+		end
+	elseif obj:IsA("ParticleEmitter") or obj:IsA("Sparkles") or obj:IsA("Fire") or obj:IsA("Trail") then
+		if isHidden then
+			-- ใช้คีย์เวิร์ดเดิม OriginalEnabled
+			if obj:GetAttribute("OriginalEnabled") == nil then obj:SetAttribute("OriginalEnabled", obj.Enabled) end
+			obj.Enabled = false
+		else
+			local orig = obj:GetAttribute("OriginalEnabled")
+			if orig ~= nil then obj.Enabled = orig end
+		end
+	end
+end
+
+IsFruit = function(obj)
+	local current = obj
+
+	while current and current ~= workspace do
+		if current:GetAttribute("FruitTemplateName") then return true end
+
+		if current.Name == "ClientPlants" then break end
+
+		current = current.Parent
+	end
+
+	return false
+end
+
+HidePlant = function(state)
+	local ClientPlants = workspace:FindFirstChild("ClientPlants")
+	if not ClientPlants then return end
+
+	for _, plant in pairs(ClientPlants:GetChildren()) do
+		if plant:GetAttribute("PlantType") then
+			if not IsFruit(plant) then SetVisibility(plant, state) end
+
+			for _, part in ipairs(plant:GetDescendants()) do
+				if not IsFruit(part) then SetVisibility(part, state) end
+			end
+		end
+	end
+end
+
+HideFruit = function(state)
+	local ClientPlants = workspace:FindFirstChild("ClientPlants")
+	if not ClientPlants then return end
+
+	for _, plant in pairs(ClientPlants:GetChildren()) do
+		if plant:GetAttribute("PlantType") and plant:GetAttribute("HarvestablePlant") ~= true then
+			for _, part in ipairs(plant:GetDescendants()) do
+				if IsFruit(part) then SetVisibility(part, state) end
+			end
+		end
+	end
+end
 
 GetRandomPlantPosition = function()
 	if #MyPlantableParts == 0 then
@@ -352,6 +506,7 @@ HarvestSection:AddToggle("tgHarvestEnable", {
 	Default = false,
 	Callback = function(Value)
 		if QuickSave then QuickSave() end
+		table.clear(HarVestCropsList)
 	end,
 })
 HarvestSection:AddDivider()
@@ -490,6 +645,43 @@ Tabs.Misc:AddButton({
 	Title = "Reset Control Variable",
 	Callback = function()
 		if ResetControlVariable then ResetControlVariable() end
+	end,
+})
+Tabs.Misc:AddToggle("tgAntiLag", {
+	Title = "Anti-Lag",
+	Default = false,
+	Callback = function(Value)
+		pcall(function()
+			if Value then
+				ApplyAntiLag()
+				isAntiLag = true
+			else
+				if isAntiLag then RestoreAntiLag() end
+				isAntiLag = false
+			end
+		end)
+		if QuickSave then QuickSave() end
+	end,
+})
+Tabs.Misc:AddToggle("tgHideFruit", {
+	Title = "Hide Fruit",
+	Default = false,
+	Callback = function(Value)
+		--pcall(function()
+		HideFruit(Value)
+		--end)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+Tabs.Misc:AddToggle("tgHidePlant", {
+	Title = "Hide Plant",
+	Default = false,
+	Callback = function(Value)
+		--pcall(function()
+		HidePlant(Value)
+		--end)
+		if QuickSave then QuickSave() end
 	end,
 })
 
@@ -857,3 +1049,21 @@ task.spawn(function()
 		task.wait(0.5)
 	end
 end)
+
+SetupTracker = function()
+	local ClientPlants = workspace:FindFirstChild("ClientPlants")
+
+	if ClientPlants then
+		ClientPlants.DescendantAdded:Connect(function(newObj)
+			task.wait()
+
+			if IsFruit(newObj) then
+				if Options.tgHideFruit.Value then SetVisibility(newObj, true) end
+			else
+				if Options.tgHidePlant.Value then SetVisibility(newObj, true) end
+			end
+		end)
+	end
+end
+
+SetupTracker()

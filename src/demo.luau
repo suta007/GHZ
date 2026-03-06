@@ -5,6 +5,8 @@ local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.
 local CollapsibleAddon = loadstring(game:HttpGet("https://raw.githubusercontent.com/suta007/Lua_EfHub/refs/heads/master/Core/CollapsibleSection.lua"))()
 CollapsibleAddon(Fluent)
 
+local fVersion = "19-06"
+
 local EncodingService = game:GetService("EncodingService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -27,6 +29,9 @@ local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local noclipConnection = nil
 
+local Terrain = workspace.Terrain
+local Lighting = game:GetService("Lighting")
+
 local IsLoading = true
 local Pos = {
 	GearShop = CFrame.new(211.64, 205.47, 608.18),
@@ -35,21 +40,28 @@ local Pos = {
 	Sell = CFrame.new(149.40, 205.51, 672.00),
 	Quest = CFrame.new(111.52, 205.50, 635.02),
 }
-local isBuyingSeed, isBuyingGear, isPlanting, isSelling = false, false, false, false
+
+--Control Variable
+local isBuyingSeed, isBuyingGear, isPlanting = false, false, false
 local HarVestCropsList = {}
 local actionQueue = {}
 local isProcessing = false
 local HarvestPause = false
 local isHarvesting = false
-
+local isQuestClaiming = false
+--End of Control Variable
 local QuickSave, GetSelectedItems, TweenToTarget, ParseFruitUuid, SetNoClip, SafeTeleport
 local CheckHarvestCrops, ScanCrops, getCleanFruitName, HarvestCrops
-local AutoBuySeed, AutoBuyGear, AutoPlantSeed, AutoHarvest, AutoSellCrops
+local AutoBuySeed, AutoBuyGear, AutoSellCrops, AutoClaimQuest, AutoPlantsSeeds
+
 local processQueue
 
-local InitializePlotData, GetRandomPlantPosition
+local InitializePlotData, GetRandomPlantPosition, ResetControlVariable
 
 local RemoteNotification, RemoteReplicaSet
+local ApplyAntiLag, RestoreAntiLag, SetVisibility, HidePlant, HideFruit, IsFruit
+
+local isAntiLag = false
 
 local RNG = Random.new()
 local MyPlantableParts = {}
@@ -96,6 +108,154 @@ end
 
 InitializePlotData()
 
+local SettingCache = {
+	GlobalShadows = Lighting.GlobalShadows,
+	FogEnd = Lighting.FogEnd,
+	Brightness = Lighting.Brightness,
+	EnvDiffuse = Lighting.EnvironmentDiffuseScale,
+	EnvSpecular = Lighting.EnvironmentSpecularScale,
+	OutdoorAmbient = Lighting.OutdoorAmbient,
+	-- Terrain
+	WaterWaveSize = Terrain.WaterWaveSize,
+	WaterWaveSpeed = Terrain.WaterWaveSpeed,
+	WaterReflectance = Terrain.WaterReflectance,
+	WaterTransparency = Terrain.WaterTransparency,
+}
+ApplyAntiLag = function()
+	-- Lighting
+	Lighting.GlobalShadows = false
+	Lighting.FogEnd = 9e9
+	Lighting.Brightness = 2
+	Lighting.EnvironmentDiffuseScale = 0
+	Lighting.EnvironmentSpecularScale = 0
+	Lighting.OutdoorAmbient = Color3.new(0, 0, 0)
+
+	-- Terrain Water
+	Terrain.WaterWaveSize = 0
+	Terrain.WaterWaveSpeed = 0
+	Terrain.WaterReflectance = 0
+	Terrain.WaterTransparency = 1
+
+	-- Workspace optimize
+	for i, v in ipairs(workspace:GetDescendants()) do
+		if i % 200 == 0 then task.wait() end
+
+		if v:IsA("BasePart") then
+			v.Material = Enum.Material.SmoothPlastic
+			v.Reflectance = 0
+		elseif v:IsA("ParticleEmitter") then
+			v.Enabled = false
+		elseif v:IsA("Decal") or v:IsA("Texture") then
+			v.Transparency = 1
+		end
+	end
+
+	-- Rendering quality (safe)
+	pcall(function()
+		settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+	end)
+end
+
+RestoreAntiLag = function()
+	-- คืนค่า Lighting
+	Lighting.GlobalShadows = SettingCache.GlobalShadows
+	Lighting.FogEnd = SettingCache.FogEnd
+	Lighting.Brightness = SettingCache.Brightness
+	Lighting.EnvironmentDiffuseScale = SettingCache.EnvDiffuse
+	Lighting.EnvironmentSpecularScale = SettingCache.EnvSpecular
+	Lighting.OutdoorAmbient = SettingCache.OutdoorAmbient
+
+	-- คืนค่า Terrain
+	Terrain.WaterWaveSize = SettingCache.WaterWaveSize
+	Terrain.WaterWaveSpeed = SettingCache.WaterWaveSpeed
+	Terrain.WaterReflectance = SettingCache.WaterReflectance
+	Terrain.WaterTransparency = SettingCache.WaterTransparency
+
+	-- คืนค่าวัตถุใน Workspace
+	for i, v in ipairs(workspace:GetDescendants()) do
+		if i % 200 == 0 then task.wait() end
+
+		if v:IsA("BasePart") then
+			v.Material = Enum.Material.Plastic
+			v.Reflectance = 0
+		elseif v:IsA("ParticleEmitter") then
+			v.Enabled = true
+		elseif v:IsA("Decal") or v:IsA("Texture") then
+			v.Transparency = 0
+		end
+	end
+
+	pcall(function()
+		settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic
+	end)
+
+	print("SutaHub: Graphics Restored!")
+end
+
+SetVisibility = function(obj, isHidden)
+	if obj:IsA("BasePart") or obj:IsA("MeshPart") or obj:IsA("Decal") or obj:IsA("Texture") then
+		if isHidden then
+			-- ใช้คีย์เวิร์ดเดิม OriginalTrans
+			if not obj:GetAttribute("OriginalTrans") then obj:SetAttribute("OriginalTrans", obj.Transparency) end
+			obj.Transparency = 1
+		else
+			local orig = obj:GetAttribute("OriginalTrans")
+			if orig then obj.Transparency = orig end
+		end
+	elseif obj:IsA("ParticleEmitter") or obj:IsA("Sparkles") or obj:IsA("Fire") or obj:IsA("Trail") then
+		if isHidden then
+			-- ใช้คีย์เวิร์ดเดิม OriginalEnabled
+			if obj:GetAttribute("OriginalEnabled") == nil then obj:SetAttribute("OriginalEnabled", obj.Enabled) end
+			obj.Enabled = false
+		else
+			local orig = obj:GetAttribute("OriginalEnabled")
+			if orig ~= nil then obj.Enabled = orig end
+		end
+	end
+end
+
+IsFruit = function(obj)
+	local current = obj
+
+	while current and current ~= workspace do
+		if current:GetAttribute("FruitTemplateName") then return true end
+
+		if current.Name == "ClientPlants" then break end
+
+		current = current.Parent
+	end
+
+	return false
+end
+
+HidePlant = function(state)
+	local ClientPlants = workspace:FindFirstChild("ClientPlants")
+	if not ClientPlants then return end
+
+	for _, plant in pairs(ClientPlants:GetChildren()) do
+		if plant:GetAttribute("PlantType") then
+			if not IsFruit(plant) then SetVisibility(plant, state) end
+
+			for _, part in ipairs(plant:GetDescendants()) do
+				if not IsFruit(part) then SetVisibility(part, state) end
+			end
+		end
+	end
+end
+
+HideFruit = function(state)
+	local ClientPlants = workspace:FindFirstChild("ClientPlants")
+	if not ClientPlants then return end
+
+	for _, plant in pairs(ClientPlants:GetChildren()) do
+		if plant:GetAttribute("PlantType") and plant:GetAttribute("HarvestablePlant") ~= true then
+			for _, part in ipairs(plant:GetDescendants()) do
+				if IsFruit(part) then SetVisibility(part, state) end
+			end
+		end
+	end
+end
+
 GetRandomPlantPosition = function()
 	if #MyPlantableParts == 0 then
 		if not InitializePlotData() then return nil end
@@ -112,12 +272,12 @@ GetRandomPlantPosition = function()
 	local localOffset = CFrame.new(floatDistance, randomY, randomZ)
 	local worldCFrame = cframe * localOffset
 
-	-- 🌟 เปลี่ยนจาก CFrame.new เป็น Vector3.new
 	local finalX = worldCFrame.Position.X
 	local finalY = cframe.Position.Y
 	local finalZ = worldCFrame.Position.Z
 
-	return Vector3.new(finalX, finalY, finalZ)
+	-- 🌟 เปลี่ยนจาก Vector3.new เป็น CFrame.new ค่ะ
+	return CFrame.new(finalX, finalY, finalZ)
 end
 
 SetNoClip = function(state)
@@ -140,6 +300,8 @@ SetNoClip = function(state)
 	end
 end
 
+MySpawnPoint = MySpawn:GetPivot()
+
 TweenToTarget = function(targetCFrame, speed, yOffset)
 	local character = LocalPlayer.Character
 	if not character then return false end
@@ -149,12 +311,24 @@ TweenToTarget = function(targetCFrame, speed, yOffset)
 
 	local currentDistance = (rootPart.Position - targetCFrame.Position).Magnitude
 
-	if currentDistance <= 5 then return true end
+	if currentDistance <= 12 then return true end
 
 	local walkSpeed = speed or 50
 	local height = yOffset or 3
 
-	local finalPosition = targetCFrame.Position + Vector3.new(0, height, 0)
+	-- 1. แยกพิกัด X, Z ของเป้าหมายออกมาก่อน
+	local finalX = targetCFrame.Position.X
+	local finalZ = targetCFrame.Position.Z
+
+	-- 2. คำนวณค่า Y ปกติ และ ค่า Y ขั้นต่ำที่ยอมรับได้ (จุดเกิด + ระยะลอยตัว)
+	local targetY = targetCFrame.Position.Y + height
+	local minY = MySpawnPoint.Position.Y + height
+
+	-- 3. ใช้ math.max เพื่อเลือกค่า Y ที่สูงกว่าเสมอ (กันตัวละครจมดิน)
+	local finalY = math.max(targetY, minY)
+
+	-- 4. ประกอบร่าง Vector3 และ CFrame ใหม่
+	local finalPosition = Vector3.new(finalX, finalY, finalZ)
 	local finalCFrame = CFrame.new(finalPosition)
 
 	local flyDistance = (rootPart.Position - finalCFrame.Position).Magnitude
@@ -217,7 +391,7 @@ end
 
 local Window = Fluent:CreateWindow({
 	Title = "Garden Horizons",
-	SubTitle = "by EfHub",
+	SubTitle = "by EfHub v " .. fVersion,
 	TabWidth = 100,
 	Size = UDim2.fromOffset(1400, 800),
 	Resize = true,
@@ -230,8 +404,8 @@ local Window = Fluent:CreateWindow({
 local Tabs = {
 	Main = Window:AddTab({ Title = "Main", Icon = "house" }),
 	Shop = Window:AddTab({ Title = "Shop", Icon = "shopping-cart" }),
-	Plot = Window:AddTab({ Title = "Plot", Icon = "tree-pine" }),
-	Sell = Window:AddTab({ Title = "Sell", Icon = "dollar-sign" }),
+	Auto = Window:AddTab({ Title = "Automatic", Icon = "bot" }),
+	Misc = Window:AddTab({ Title = "Misc", Icon = "component" }),
 	Settings = Window:AddTab({ Title = "Settings", Icon = "settings" }),
 }
 local Options = Fluent.Options
@@ -249,8 +423,10 @@ local SeedShopTable = getShopData("SeedShopData")
 local GearShopTable = getShopData("GearShopData")
 
 local PlantDataTable = { "ALL" }
+local SeedDataTable = { "ALL" }
 for PlantName, _ in pairs(require(PlantData)) do
 	table.insert(PlantDataTable, PlantName)
+	table.insert(SeedDataTable, PlantName .. " Seed")
 end
 
 ------------------------------------------------------
@@ -292,9 +468,34 @@ PlantsSection:AddToggle("tgPlantsEnable", {
 	Title = "Auto Plants",
 	Default = false,
 	Callback = function(Value)
-		if Value then
-			--if AutoPlantSeed() then AutoPlantSeed() end
-		end
+		if Value then table.insert(actionQueue, {
+			FuncName = AutoPlantsSeeds,
+		}) end
+		if QuickSave then QuickSave() end
+	end,
+})
+PlantsSection:AddButton({
+	Title = "Clear Selected Seeds",
+	Callback = function()
+		Options.ddPlantsSeeds:SetValue({})
+	end,
+})
+PlantsSection:AddDropdown("ddPlantsSeeds", {
+	Title = "Select Seeds",
+	Values = SeedDataTable,
+	Multi = true,
+	Default = {},
+	Searchable = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+PlantsSection:AddDropdown("ddPlantsPos", {
+	Title = "Select Plants Position",
+	Values = { "Player", "Random" },
+	Default = "Player",
+	Callback = function(Value)
 		if QuickSave then QuickSave() end
 	end,
 })
@@ -305,6 +506,7 @@ HarvestSection:AddToggle("tgHarvestEnable", {
 	Default = false,
 	Callback = function(Value)
 		if QuickSave then QuickSave() end
+		table.clear(HarVestCropsList)
 	end,
 })
 HarvestSection:AddDivider()
@@ -345,6 +547,15 @@ HarvestSection:AddDropdown("ddHarvestMutants", {
 	end,
 })
 
+local SellSection = Tabs.Main:AddCollapsibleSection("Sell", false)
+SellSection:AddToggle("tgSellCropsEnable", {
+	Title = "Sell",
+	Default = false,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
 local function tempBuySeed()
 	local SeedShop = GetShopData:InvokeServer("SeedShop")
 	if not SeedShop then return end
@@ -368,10 +579,10 @@ BuySeedSection:AddToggle("tgBuySeedEnable", {
 BuySeedSection:AddButton({
 	Title = "Clear Selected Seeds",
 	Callback = function()
-		Options.ddBuySeed:SetValue({})
+		Options.ddBuySeeds:SetValue({})
 	end,
 })
-BuySeedSection:AddDropdown("ddBuySeed", {
+BuySeedSection:AddDropdown("ddBuySeeds", {
 	Title = "Select Seeds",
 	Values = SeedShopTable,
 	Multi = true,
@@ -420,11 +631,56 @@ BuyGearSection:AddDropdown("ddBuyGear", {
 	end,
 })
 
-local SellSection = Tabs.Sell:AddCollapsibleSection("Sell", false)
-SellSection:AddToggle("tgSellCropsEnable", {
-	Title = "Sell",
+local QuestSection = Tabs.Auto:AddCollapsibleSection("Quest", false)
+QuestSection:AddToggle("tgQuestEnable", {
+	Title = "Auto Claim Quest",
 	Default = false,
 	Callback = function(Value)
+		if Value then RemoteEvents:WaitForChild("RequestQuests"):FireServer() end
+		if QuickSave then QuickSave() end
+	end,
+})
+--รีเซ็ท ตัวแปรที่ใช้ควบคุม
+Tabs.Misc:AddButton({
+	Title = "Reset Control Variable",
+	Callback = function()
+		if ResetControlVariable then ResetControlVariable() end
+	end,
+})
+Tabs.Misc:AddToggle("tgAntiLag", {
+	Title = "Anti-Lag",
+	Default = false,
+	Callback = function(Value)
+		pcall(function()
+			if Value then
+				ApplyAntiLag()
+				isAntiLag = true
+			else
+				if isAntiLag then RestoreAntiLag() end
+				isAntiLag = false
+			end
+		end)
+		if QuickSave then QuickSave() end
+	end,
+})
+Tabs.Misc:AddToggle("tgHideFruit", {
+	Title = "Hide Fruit",
+	Default = false,
+	Callback = function(Value)
+		--pcall(function()
+		HideFruit(Value)
+		--end)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+Tabs.Misc:AddToggle("tgHidePlant", {
+	Title = "Hide Plant",
+	Default = false,
+	Callback = function(Value)
+		--pcall(function()
+		HidePlant(Value)
+		--end)
 		if QuickSave then QuickSave() end
 	end,
 })
@@ -451,6 +707,19 @@ GetSelectedItems = function(DropdownValue)
 		end
 	end
 	return Items
+end
+
+ResetControlVariable = function()
+	isBuyingSeed = false
+	isBuyingGear = false
+	isPlanting = false
+	isProcessing = false
+	HarvestPause = false
+	isHarvesting = false
+	isQuestClaiming = false
+
+	table.clear(HarVestCropsList)
+	table.clear(actionQueue)
 end
 
 task.spawn(function()
@@ -573,7 +842,7 @@ AutoBuySeed = function(Items)
 
 	if not Items then return end
 	isBuyingSeed = true
-	local SeedBuyList = GetSelectedItems(Options.ddBuySeed.Value)
+	local SeedBuyList = GetSelectedItems(Options.ddBuySeeds.Value)
 	SafeTeleport(Pos.SeedShop)
 	task.wait(0.5)
 	for Name, Seed in pairs(Items) do
@@ -610,6 +879,70 @@ AutoBuyGear = function(Items)
 	task.wait(0.3)
 	isBuyingGear = false
 	--retrn
+end
+
+AutoPlantsSeeds = function()
+	if not Options.tgPlantsEnable.Value or isPlanting then return end
+
+	pcall(function()
+		Humanoid:UnequipTools()
+	end)
+	local ddPlantsPos = Options.ddPlantsPos.Value
+	local PlantPos
+	local Backpack = LocalPlayer.Backpack
+	local SeedList = GetSelectedItems(Options.ddPlantsSeeds.Value)
+
+	if Backpack then
+		for _index, item in pairs(Backpack:GetChildren()) do
+			if not Options.tgPlantsEnable.Value then break end
+			if item:GetAttribute("Type") == "Seeds" and (table.find(SeedList, "ALL") or table.find(SeedList, item:GetAttribute("BaseName"))) then
+				isPlanting = true
+				pcall(function()
+					Humanoid:EquipTool(item)
+				end)
+				local ItemCount = item:GetAttribute("ItemCount") or 0
+				for i = 1, ItemCount do
+					if not Options.tgPlantsEnable.Value then
+						isPlanting = false
+						break
+					end
+					if ddPlantsPos == "Player" then
+						PlantPos = Character:GetPivot()
+					elseif ddPlantsPos == "Random" then
+						PlantPos = GetRandomPlantPosition()
+						TweenToTarget(CFrame.new(PlantPos.X + 3, PlantPos.Y, PlantPos.Z), 100, 3)
+					end
+					local args = {
+						item:GetAttribute("PlantType"),
+						--Vector3.new(PlantPos.X, PlantPos.Y, PlantPos.Z),
+						PlantPos.Position,
+					}
+					PlantSeed:InvokeServer(unpack(args))
+					task.wait(0.3)
+				end
+				pcall(function()
+					Humanoid:UnequipTools()
+				end)
+			end
+		end
+		isPlanting = false
+	end
+end
+
+AutoClaimQuest = function(QuestData)
+	if not Options.tgQuestEnable.Value or isQuestClaiming or not QuestData then return end
+
+	isQuestClaiming = true
+	local Daily = QuestData.Daily.Active
+	for index, qDaily in pairs(Daily) do
+		if qDaily.CompletedAt and not qDaily.Claimed then game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ClaimQuest"):FireServer("Daily", index) end
+	end
+
+	local Weekly = QuestData.Weekly.Active
+	for index, qWeekly in pairs(Weekly) do
+		if qWeekly.CompletedAt and not qWeekly.Claimed then game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ClaimQuest"):FireServer("Weekly", index) end
+	end
+	isQuestClaiming = false
 end
 
 processQueue = function()
@@ -676,6 +1009,11 @@ local function hookIncoming(remote)
 				RemoteReplicaSet(args)
 			elseif RemoteName == "Notification" then
 				RemoteNotification(args)
+			elseif RemoteName == "UpdateQuests" then
+				table.insert(actionQueue, {
+					FuncName = AutoClaimQuest,
+					args = args[1],
+				})
 			end
 		end)
 	end
@@ -711,3 +1049,21 @@ task.spawn(function()
 		task.wait(0.5)
 	end
 end)
+
+SetupTracker = function()
+	local ClientPlants = workspace:FindFirstChild("ClientPlants")
+
+	if ClientPlants then
+		ClientPlants.DescendantAdded:Connect(function(newObj)
+			task.wait()
+
+			if IsFruit(newObj) then
+				if Options.tgHideFruit.Value then SetVisibility(newObj, true) end
+			else
+				if Options.tgHidePlant.Value then SetVisibility(newObj, true) end
+			end
+		end)
+	end
+end
+
+SetupTracker()
