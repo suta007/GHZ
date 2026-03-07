@@ -5,7 +5,7 @@ local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.
 local CollapsibleAddon = loadstring(game:HttpGet("https://raw.githubusercontent.com/suta007/Lua_EfHub/refs/heads/master/Core/CollapsibleSection.lua"))()
 CollapsibleAddon(Fluent)
 
-local fVersion = "2569.03.07-11.08"
+local fVersion = "2569.03.07-19.19"
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -22,6 +22,7 @@ local SellItems = RemoteEvents:WaitForChild("SellItems")
 
 local ShopData = ReplicatedStorage.Shop.ShopData
 local PlantData = ReplicatedStorage.Plants.Definitions.PlantDataDefinitions
+local MutationData = ReplicatedStorage.Plants.Definitions.MutationDataDefinitions
 
 local VirtualUser = game:GetService("VirtualUser")
 local TweenService = game:GetService("TweenService")
@@ -33,6 +34,7 @@ local noclipConnection = nil
 local Terrain = workspace.Terrain
 local Lighting = game:GetService("Lighting")
 local SutaDistLimit = 14
+local SutaYoffset = 4
 local IsLoading = true
 local Pos = {
 	GearShop = CFrame.new(211.64, 205.47, 608.18),
@@ -51,6 +53,7 @@ local HarvestPause = false
 local isHarvesting = false
 local isQuestClaiming = false
 --End of Control Variable
+local NewPlayer
 local QuickSave, GetSelectedItems, TweenToTarget, ParseFruitUuid, SetNoClip, SafeTeleport
 local CheckHarvestCrops, ScanCrops, HarvestCrops
 local AutoBuySeed, AutoBuyGear, AutoSellCrops, AutoClaimQuest, AutoPlantsSeeds
@@ -295,7 +298,7 @@ end
 
 --MySpawnPoint = MySpawn:GetPivot()
 
-TweenToTarget = function(targetCFrame, speed, yOffset)
+TweenToTarget = function(targetCFrame, speed)
 	local character = game.Players.LocalPlayer.Character
 	if not character then return false end
 	local rootPart = character:FindFirstChild("HumanoidRootPart")
@@ -305,7 +308,7 @@ TweenToTarget = function(targetCFrame, speed, yOffset)
 	if currentDistance <= SutaDistLimit then return true end
 
 	local walkSpeed = speed or 50
-	local height = yOffset or 5
+	local height = SutaYoffset or 3
 	local targetPos = targetCFrame.Position
 	local spawnY = (MySpawnPoint and MySpawnPoint.Position.Y or 0)
 
@@ -417,6 +420,10 @@ for PlantName, _ in pairs(require(PlantData)) do
 	table.insert(PlantDataTable, PlantName)
 	table.insert(SeedDataTable, PlantName .. " Seed")
 end
+local MutationDataTable = { "ALL" }
+for MutationName, _ in pairs(require(MutationData)) do
+	table.insert(MutationDataTable, MutationName)
+end
 
 ------------------------------------------------------
 -- ระบบปุ่มลอย (Floating Button) สำหรับ Android
@@ -510,7 +517,7 @@ HarvestSection:AddDropdown("ddHarvestCrops", {
 	Title = "Select Crops",
 	Values = PlantDataTable,
 	Multi = true,
-	Default = {},
+	Default = { "ALL" },
 	Searchable = true,
 	Callback = function(Value)
 		if QuickSave then QuickSave() end
@@ -527,10 +534,42 @@ HarvestSection:AddButton({
 
 HarvestSection:AddDropdown("ddHarvestMutants", {
 	Title = "Select Mutants",
-	Values = {}, --PlantDataTable,
+	Values = MutationDataTable,
 	Multi = true,
-	Default = {},
+	Default = { "ALL" },
 	Searchable = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+HarvestSection:AddDivider()
+HarvestSection:AddDropdown("ddRipeness", {
+	Title = "Ripeness Stage",
+	Values = { "ALL", "Unripe", "Ripened", "Lush" },
+	Default = { "ALL" },
+	Multi = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+HarvestSection:AddInput("ipRipenessMulti", {
+	Title = "Ripeness Multiplier",
+	Default = 3,
+	Numeric = false,
+	Finished = false,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+HarvestSection:AddDivider()
+HarvestSection:AddDropdown("ddVariant", {
+	Title = "Variant",
+	Values = { "ALL", "Silver", "Gold" },
+	Default = { "ALL" },
+	Multi = true,
 	Callback = function(Value)
 		if QuickSave then QuickSave() end
 	end,
@@ -629,14 +668,18 @@ QuestSection:AddToggle("tgQuestEnable", {
 		if QuickSave then QuickSave() end
 	end,
 })
+
 --รีเซ็ท ตัวแปรที่ใช้ควบคุม
-Tabs.Misc:AddButton({
+local MiscSection = Tabs.Misc:AddCollapsibleSection("Misc", false)
+MiscSection:AddButton({
 	Title = "Reset Control Variable",
 	Callback = function()
 		if ResetControlVariable then ResetControlVariable() end
 	end,
 })
-Tabs.Misc:AddToggle("tgAntiLag", {
+local AntiLagSection = Tabs.Misc:AddCollapsibleSection("Anti-Lag", false)
+
+AntiLagSection:AddToggle("tgAntiLag", {
 	Title = "Anti-Lag",
 	Default = false,
 	Callback = function(Value)
@@ -652,7 +695,7 @@ Tabs.Misc:AddToggle("tgAntiLag", {
 		if QuickSave then QuickSave() end
 	end,
 })
-Tabs.Misc:AddToggle("tgHideFruit", {
+AntiLagSection:AddToggle("tgHideFruit", {
 	Title = "Hide Fruit",
 	Default = false,
 	Callback = function(Value)
@@ -663,13 +706,34 @@ Tabs.Misc:AddToggle("tgHideFruit", {
 	end,
 })
 
-Tabs.Misc:AddToggle("tgHidePlant", {
+AntiLagSection:AddToggle("tgHidePlant", {
 	Title = "Hide Plant",
 	Default = false,
 	Callback = function(Value)
 		--pcall(function()
 		HidePlant(Value)
 		--end)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+local NewPlayerSection = Tabs.Misc:AddCollapsibleSection("New Player", false)
+NewPlayerSection:AddInput("ipNewDelay", {
+	Title = "Delay timmes (Minute)",
+	Default = 5,
+	Numeric = true,
+	Finished = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+NewPlayerSection:AddToggle("tgNewAutoSell", {
+	Title = "Auto Sell",
+	Default = false,
+	Callback = function(Value)
+		if Value then table.insert(actionQueue, {
+			FuncName = AutoSellCrops,
+		}) end
 		if QuickSave then QuickSave() end
 	end,
 })
@@ -737,10 +801,18 @@ end)
 
 CheckHarvestCrops = function(fruit)
 	local ddHarvestCropsList = GetSelectedItems(Options.ddHarvestCrops.Value)
+	--local ddHarvestMutantsList = GetSelectedItems(Options.ddHarvestMutants.Value)
+	local ddRipenessList = GetSelectedItems(Options.ddRipeness.Value)
+	local ipRipenessMulti = tonumber(Options.ipRipenessMulti.Value)
+	--local ddVariantList = GetSelectedItems(Options.ddVariant.Value)
 
 	local fruitName = fruit:GetAttribute("PlantType") or (fruit.Parent and fruit.Parent:GetAttribute("PlantType")) or "Fruit"
 
 	if not table.find(ddHarvestCropsList, "ALL") and not table.find(ddHarvestCropsList, fruitName) then return false end
+
+	if not table.find(ddRipenessList, "ALL") and not table.find(ddRipenessList, fruit:GetAttribute("RipenessStage")) then return false end
+
+	if ipRipenessMulti ~= 0 and fruit:GetAttribute("RipenessMultiplier") < ipRipenessMulti then return false end
 
 	-- 4. เช็กความพร้อม (FullyGrown) เพื่อความชัวร์
 	--if not fruit:GetAttribute("FullyGrown") then return false end
@@ -786,7 +858,7 @@ HarvestCrops = function()
 
 		local targetCFrame = CFrame.new(fruit:GetPivot().Position + Vector3.new(3, 0, 0))
 
-		TweenToTarget(targetCFrame, 100, 4)
+		TweenToTarget(targetCFrame, 100)
 
 		-- จำลองการกดปุ่ม E
 		task.wait(0.1) -- พักนิดนึงให้ฟิสิกส์นิ่ง
@@ -906,7 +978,7 @@ AutoPlantsSeeds = function()
 						PlantPos = Character:GetPivot()
 					elseif ddPlantsPos == "Random" then
 						PlantPos = GetRandomPlantPosition()
-						TweenToTarget(CFrame.new(PlantPos.X + 3, PlantPos.Y, PlantPos.Z), 100, 4)
+						TweenToTarget(CFrame.new(PlantPos.X + 3, PlantPos.Y, PlantPos.Z), 100)
 					end
 					local args = {
 						item:GetAttribute("PlantType"),
@@ -996,6 +1068,22 @@ RemoteNotification = function(args)
 	end
 end
 
+local lastTriggerMinute = -1
+NewPlayer = function()
+	local timeData = os.date("!*t")
+	local currentMinute = timeData.min
+	local ipNewDelay = tonumber(Options.ipNewDelay.Value)
+	if currentMinute % ipNewDelay == 0 and currentMinute ~= lastTriggerMinute then
+		lastTriggerMinute = currentMinute
+		if Options.tgNewAutoSell.Value then table.insert(actionQueue, {
+			FuncName = AutoSellCrops,
+		}) end
+		if Options.tgPlantsEnable.Value then table.insert(actionQueue, {
+			FuncName = AutoPlantsSeeds,
+		}) end
+	end
+end
+
 --[[ Hook ]]
 local function hookIncoming(remote)
 	if remote:IsA("RemoteEvent") then
@@ -1044,6 +1132,13 @@ task.spawn(function()
 	while true do
 		if #actionQueue > 0 and not isProcessing then processQueue() end
 		task.wait(0.5)
+	end
+end)
+
+task.spawn(function()
+	while true do
+		pcall(NewPlayer)
+		task.wait(10)
 	end
 end)
 
