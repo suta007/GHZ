@@ -5,7 +5,7 @@ local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.
 local CollapsibleAddon = loadstring(game:HttpGet("https://raw.githubusercontent.com/suta007/Lua_EfHub/refs/heads/master/Core/CollapsibleSection.lua"))()
 CollapsibleAddon(Fluent)
 
-local fVersion = "2569.03.07-19.19"
+local fVersion = "2569.03.07-21.46"
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -574,6 +574,25 @@ HarvestSection:AddDropdown("ddVariant", {
 		if QuickSave then QuickSave() end
 	end,
 })
+HarvestSection:AddDivider()
+HarvestSection:AddDropdown("ddWeight", {
+	Title = "Weight",
+	Values = { "Below", "Above" },
+	Default = "Below",
+	Multi = false,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+HarvestSection:AddInput("ipWeight", {
+	Title = "Weight",
+	Default = 0,
+	Numeric = true,
+	Finished = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
 
 local SellSection = Tabs.Main:AddCollapsibleSection("Sell", false)
 SellSection:AddToggle("tgSellCropsEnable", {
@@ -731,9 +750,13 @@ NewPlayerSection:AddToggle("tgNewAutoSell", {
 	Title = "Auto Sell",
 	Default = false,
 	Callback = function(Value)
-		if Value then table.insert(actionQueue, {
-			FuncName = AutoSellCrops,
-		}) end
+		--if Value then
+		--HarvestPause = true
+		--table.clear(HarVestCropsList)
+		--table.insert(actionQueue, {
+		--	FuncName = AutoSellCrops,
+		--})
+		--end
 		if QuickSave then QuickSave() end
 	end,
 })
@@ -800,22 +823,48 @@ end)
 --[[ Function ]]
 
 CheckHarvestCrops = function(fruit)
+	--เช็ค Favorite ด้วยนะ
 	local ddHarvestCropsList = GetSelectedItems(Options.ddHarvestCrops.Value)
-	--local ddHarvestMutantsList = GetSelectedItems(Options.ddHarvestMutants.Value)
+	local ddHarvestMutantsList = GetSelectedItems(Options.ddHarvestMutants.Value)
 	local ddRipenessList = GetSelectedItems(Options.ddRipeness.Value)
 	local ipRipenessMulti = tonumber(Options.ipRipenessMulti.Value)
-	--local ddVariantList = GetSelectedItems(Options.ddVariant.Value)
+	local ddVariantList = GetSelectedItems(Options.ddVariant.Value)
+	local ddWeight = Options.ddWeight.Value
+	local ipWeight = tonumber(Options.ipWeight.Value)
 
 	local fruitName = fruit:GetAttribute("PlantType") or (fruit.Parent and fruit.Parent:GetAttribute("PlantType")) or "Fruit"
 
 	if not table.find(ddHarvestCropsList, "ALL") and not table.find(ddHarvestCropsList, fruitName) then return false end
 
+	if fruit:GetAttribute("Favorited") == true then return false end
+
 	if not table.find(ddRipenessList, "ALL") and not table.find(ddRipenessList, fruit:GetAttribute("RipenessStage")) then return false end
 
 	if ipRipenessMulti ~= 0 and fruit:GetAttribute("RipenessMultiplier") < ipRipenessMulti then return false end
 
-	-- 4. เช็กความพร้อม (FullyGrown) เพื่อความชัวร์
-	--if not fruit:GetAttribute("FullyGrown") then return false end
+	if not table.find(ddVariantList, "ALL") and not table.find(ddVariantList, fruit:GetAttribute("Variant")) then return false end
+
+	if not table.find(ddHarvestMutantsList, "ALL") then
+		local CropsMutants = fruit:GetAttribute("Mutation")
+		if not CropsMutants or CropsMutants == "" then return false end
+		local CropsMutantsTable = string.split(CropsMutants, ",")
+		local isMutantMatch = false
+		for _, mutation in ipairs(CropsMutantsTable) do
+			if table.find(ddHarvestMutantsList, mutation) then isMutantMatch = true end
+		end
+		if not isMutantMatch then return false end
+	end
+
+	if ipWeight ~= 0 then
+		local rawWeight = fruit:GetAttribute("FruitWeight")
+
+		if not rawWeight then return false end
+
+		local weight = tonumber(rawWeight)
+
+		if ddWeight == "Below" and weight >= ipWeight then return false end -- น้ำหนักน้อยกว่าที่กำหนด เป็น true เพื่อเก็บเกี่ยว
+		if ddWeight == "Above" and weight <= ipWeight then return false end -- น้ำหนักมากกว่าที่กำหนด เป็น true เพื่อเก็บเกี่ยว
+	end
 
 	return true
 end
@@ -900,6 +949,7 @@ AutoSellCrops = function()
 	task.wait(1)
 	SafeTeleport(MySpawnPoint)
 	task.wait(0.3)
+	HarvestPause = false
 end
 
 AutoBuySeed = function(Items)
@@ -924,6 +974,7 @@ AutoBuySeed = function(Items)
 	SafeTeleport(MySpawnPoint)
 	task.wait(0.3)
 	isBuyingSeed = false
+	HarvestPause = false
 	--retrn
 end
 
@@ -1036,6 +1087,7 @@ processQueue = function()
 	end
 	isProcessing = false
 	HarvestPause = false
+	task.wait(0.5)
 end
 
 RemoteReplicaSet = function(args)
@@ -1075,9 +1127,13 @@ NewPlayer = function()
 	local ipNewDelay = tonumber(Options.ipNewDelay.Value)
 	if currentMinute % ipNewDelay == 0 and currentMinute ~= lastTriggerMinute then
 		lastTriggerMinute = currentMinute
-		if Options.tgNewAutoSell.Value then table.insert(actionQueue, {
-			FuncName = AutoSellCrops,
-		}) end
+		if Options.tgNewAutoSell.Value then
+			HarvestPause = true
+			table.clear(HarVestCropsList)
+			table.insert(actionQueue, {
+				FuncName = AutoSellCrops,
+			})
+		end
 		if Options.tgPlantsEnable.Value then table.insert(actionQueue, {
 			FuncName = AutoPlantsSeeds,
 		}) end
