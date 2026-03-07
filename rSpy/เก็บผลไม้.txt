@@ -52,3 +52,16 @@ game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("
 786df7b8-b6e6-4c4f-b76d-aa2063a66814
 
 786df7b8-b6e6-4c4f-b76d-aa2063a66814:regrow:1
+
+RipenessStage
+- Unripe
+- Ripened
+- Lush
+
+RipenessMultiplier (สูงสุด 3)
+
+RipenessElapsed (ตัวเลขเดินหน้าไปเรื่อยๆ)
+
+Variant
+
+Mutation  -> Foggy,Starstruck

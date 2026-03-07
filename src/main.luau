@@ -5,9 +5,8 @@ local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.
 local CollapsibleAddon = loadstring(game:HttpGet("https://raw.githubusercontent.com/suta007/Lua_EfHub/refs/heads/master/Core/CollapsibleSection.lua"))()
 CollapsibleAddon(Fluent)
 
-local fVersion = "2569.03.06-22.59"
+local fVersion = "2569.03.07-11.08"
 
-local EncodingService = game:GetService("EncodingService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
@@ -27,11 +26,13 @@ local PlantData = ReplicatedStorage.Plants.Definitions.PlantDataDefinitions
 local VirtualUser = game:GetService("VirtualUser")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
+local CollectionService = game:GetService("CollectionService")
+
 local noclipConnection = nil
 
 local Terrain = workspace.Terrain
 local Lighting = game:GetService("Lighting")
-
+local SutaDistLimit = 14
 local IsLoading = true
 local Pos = {
 	GearShop = CFrame.new(211.64, 205.47, 608.18),
@@ -51,7 +52,7 @@ local isHarvesting = false
 local isQuestClaiming = false
 --End of Control Variable
 local QuickSave, GetSelectedItems, TweenToTarget, ParseFruitUuid, SetNoClip, SafeTeleport
-local CheckHarvestCrops, ScanCrops, getCleanFruitName, HarvestCrops
+local CheckHarvestCrops, ScanCrops, HarvestCrops
 local AutoBuySeed, AutoBuyGear, AutoSellCrops, AutoClaimQuest, AutoPlantsSeeds
 
 local processQueue
@@ -59,7 +60,7 @@ local processQueue
 local InitializePlotData, GetRandomPlantPosition, ResetControlVariable
 
 local RemoteNotification, RemoteReplicaSet
-local ApplyAntiLag, RestoreAntiLag, SetVisibility, HidePlant, HideFruit, IsFruit
+local ApplyAntiLag, RestoreAntiLag, SetVisibility, HidePlant, HideFruit, UpdateVisibilityFromAnchor
 
 local isAntiLag = false
 
@@ -192,10 +193,12 @@ RestoreAntiLag = function()
 	print("SutaHub: Graphics Restored!")
 end
 
+-- [[ Main Visibility Functions ]]
+
 SetVisibility = function(obj, isHidden)
-	if obj:IsA("BasePart") or obj:IsA("MeshPart") or obj:IsA("Decal") or obj:IsA("Texture") then
+	-- Optimize 1: ตัด MeshPart ออก เพราะ IsA("BasePart") คลุมหมดแล้ว
+	if obj:IsA("BasePart") or obj:IsA("Decal") or obj:IsA("Texture") then
 		if isHidden then
-			-- ใช้คีย์เวิร์ดเดิม OriginalTrans
 			if not obj:GetAttribute("OriginalTrans") then obj:SetAttribute("OriginalTrans", obj.Transparency) end
 			obj.Transparency = 1
 		else
@@ -204,7 +207,6 @@ SetVisibility = function(obj, isHidden)
 		end
 	elseif obj:IsA("ParticleEmitter") or obj:IsA("Sparkles") or obj:IsA("Fire") or obj:IsA("Trail") then
 		if isHidden then
-			-- ใช้คีย์เวิร์ดเดิม OriginalEnabled
 			if obj:GetAttribute("OriginalEnabled") == nil then obj:SetAttribute("OriginalEnabled", obj.Enabled) end
 			obj.Enabled = false
 		else
@@ -214,46 +216,37 @@ SetVisibility = function(obj, isHidden)
 	end
 end
 
-IsFruit = function(obj)
-	local current = obj
-
-	while current and current ~= workspace do
-		if current:GetAttribute("FruitTemplateName") then return true end
-
-		if current.Name == "ClientPlants" then break end
-
-		current = current.Parent
-	end
-
-	return false
-end
-
-HidePlant = function(state)
+-- [[ Helper: ฟังก์ชันจัดการแบบรวบยอด (ประหยัด CPU) ]]
+UpdateVisibilityFromAnchor = function(anchorName, state, isPlantCheck)
 	local ClientPlants = workspace:FindFirstChild("ClientPlants")
 	if not ClientPlants then return end
 
-	for _, plant in pairs(ClientPlants:GetChildren()) do
-		if plant:GetAttribute("PlantType") then
-			if not IsFruit(plant) then SetVisibility(plant, state) end
+	-- Optimize 2: วิ่งหาเฉพาะ Anchor ไม่ต้องถาม Part ทุกชิ้น
+	for _, obj in ipairs(ClientPlants:GetDescendants()) do
+		if obj.Name == anchorName then
+			local parent = obj.Parent
+			if parent then
+				-- ถ้าเช็กต้นไม้ ต้องแน่ใจว่าไม่มี FruitAnchor วางปนอยู่
+				if isPlantCheck and parent:FindFirstChild("FruitAnchor") then
+					continue -- ข้ามไปเลย
+				end
 
-			for _, part in ipairs(plant:GetDescendants()) do
-				if not IsFruit(part) then SetVisibility(part, state) end
+				-- สั่งซ่อน/แสดง ให้กับทุกชิ้นที่อยู่ใน Parent เดียวกันรวดเดียว
+				for _, sibling in ipairs(parent:GetChildren()) do
+					SetVisibility(sibling, state)
+				end
 			end
 		end
 	end
+end
+
+-- ใช้งาน Helper ให้โค้ดสั้นและคลีนขึ้น
+HidePlant = function(state)
+	UpdateVisibilityFromAnchor("PlantAnchor", state, true)
 end
 
 HideFruit = function(state)
-	local ClientPlants = workspace:FindFirstChild("ClientPlants")
-	if not ClientPlants then return end
-
-	for _, plant in pairs(ClientPlants:GetChildren()) do
-		if plant:GetAttribute("PlantType") and plant:GetAttribute("HarvestablePlant") ~= true then
-			for _, part in ipairs(plant:GetDescendants()) do
-				if IsFruit(part) then SetVisibility(part, state) end
-			end
-		end
-	end
+	UpdateVisibilityFromAnchor("FruitAnchor", state, false)
 end
 
 GetRandomPlantPosition = function()
@@ -300,51 +293,47 @@ SetNoClip = function(state)
 	end
 end
 
-MySpawnPoint = MySpawn:GetPivot()
+--MySpawnPoint = MySpawn:GetPivot()
 
 TweenToTarget = function(targetCFrame, speed, yOffset)
-	local character = LocalPlayer.Character
+	local character = game.Players.LocalPlayer.Character
 	if not character then return false end
-
 	local rootPart = character:FindFirstChild("HumanoidRootPart")
 	if not rootPart then return false end
 
 	local currentDistance = (rootPart.Position - targetCFrame.Position).Magnitude
-
-	if currentDistance <= 12 then return true end
+	if currentDistance <= SutaDistLimit then return true end
 
 	local walkSpeed = speed or 50
-	local height = yOffset or 3
+	local height = yOffset or 5
+	local targetPos = targetCFrame.Position
+	local spawnY = (MySpawnPoint and MySpawnPoint.Position.Y or 0)
 
-	-- 1. แยกพิกัด X, Z ของเป้าหมายออกมาก่อน
-	local finalX = targetCFrame.Position.X
-	local finalZ = targetCFrame.Position.Z
+	local groundPoint = Vector3.new(targetPos.X, spawnY, targetPos.Z)
+	local distanceFromGround = (targetPos - groundPoint).Magnitude
 
-	-- 2. คำนวณค่า Y ปกติ และ ค่า Y ขั้นต่ำที่ยอมรับได้ (จุดเกิด + ระยะลอยตัว)
-	local targetY = targetCFrame.Position.Y + height
-	local minY = MySpawnPoint.Position.Y + height
+	local finalY
+	if distanceFromGround > SutaDistLimit then
+		finalY = targetPos.Y + height
+	else
+		finalY = spawnY + height
+	end
 
-	-- 3. ใช้ math.max เพื่อเลือกค่า Y ที่สูงกว่าเสมอ (กันตัวละครจมดิน)
-	local finalY = math.max(targetY, minY)
+	finalY = math.max(finalY, spawnY + height)
 
-	-- 4. ประกอบร่าง Vector3 และ CFrame ใหม่
-	local finalPosition = Vector3.new(finalX, finalY, finalZ)
-	local finalCFrame = CFrame.new(finalPosition)
+	local finalCFrame = CFrame.new(Vector3.new(targetPos.X, finalY, targetPos.Z))
 
-	local flyDistance = (rootPart.Position - finalCFrame.Position).Magnitude
-	local tweenTime = flyDistance / walkSpeed
-
-	local tweenInfo = TweenInfo.new(tweenTime, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
-
-	local goal = { CFrame = finalCFrame }
-
-	local tween = TweenService:Create(rootPart, tweenInfo, goal)
-
+	rootPart.Anchored = false
 	SetNoClip(true)
+
+	local tweenTime = (rootPart.Position - finalCFrame.Position).Magnitude / walkSpeed
+	local tweenInfo = TweenInfo.new(tweenTime, Enum.EasingStyle.Linear)
+	local tween = TweenService:Create(rootPart, tweenInfo, { CFrame = finalCFrame })
 
 	tween:Play()
 	tween.Completed:Wait()
 
+	rootPart.Anchored = true
 	SetNoClip(false)
 
 	return true
@@ -372,7 +361,7 @@ SafeTeleport = function(targetCFrame)
 		rootPart.AssemblyLinearVelocity = Vector3.zero
 		rootPart.AssemblyAngularVelocity = Vector3.zero
 	end
-
+	rootPart.Anchored = false
 	character:PivotTo(targetCFrame)
 
 	task.wait(0.1)
@@ -746,22 +735,15 @@ end)
 
 --[[ Function ]]
 
-getCleanFruitName = function(rawName)
-	local cleanName = string.gsub(rawName, "%d+$", "")
-	return cleanName
-end
-
 CheckHarvestCrops = function(fruit)
 	local ddHarvestCropsList = GetSelectedItems(Options.ddHarvestCrops.Value)
-	local fruitName
-	if fruit.Parent.name == "ClientPlants" then
-		fruitName = getCleanFruitName(fruit.Name)
-	elseif fruit.Parent then
-		fruitName = getCleanFruitName(fruit.Parent.Name)
-	else
-		return false -- กันเหนียวไว้กรณีที่ fruit ไม่มี Parent แล้ว
-	end
+
+	local fruitName = fruit:GetAttribute("PlantType") or (fruit.Parent and fruit.Parent:GetAttribute("PlantType")) or "Fruit"
+
 	if not table.find(ddHarvestCropsList, "ALL") and not table.find(ddHarvestCropsList, fruitName) then return false end
+
+	-- 4. เช็กความพร้อม (FullyGrown) เพื่อความชัวร์
+	--if not fruit:GetAttribute("FullyGrown") then return false end
 
 	return true
 end
@@ -769,32 +751,46 @@ end
 ScanCrops = function()
 	if not Options.tgHarvestEnable.Value then return end
 	table.clear(HarVestCropsList)
-	local ClientPlants = workspace.ClientPlants
-	local Crops = {}
-	for _, plant in pairs(ClientPlants:GetChildren()) do
-		if plant:GetAttribute("FullyGrown") and plant:GetAttribute("HarvestablePlant") then
-			Crops = { plant }
-		else
-			Crops = plant:GetChildren()
-		end
-		for _, fruit in pairs(Crops) do
-			if not Options.tgHarvestEnable.Value then break end
-			if fruit:GetAttribute("FullyGrown") then
-				if CheckHarvestCrops(fruit) then table.insert(HarVestCropsList, fruit) end
-			end
+
+	-- 1. ค้นหาผ่าน Tag ที่ปุ่มกด
+	for _, prompt in pairs(CollectionService:GetTagged("HarvestPrompt")) do
+		if prompt.Enabled then
+			local fruit = prompt.Parent.Parent -- ย้อนกลับไปหา Model หลัก
+
+			if CheckHarvestCrops(fruit) then table.insert(HarVestCropsList, fruit) end
 		end
 	end
-	return
+
+	-- 2. เรียงลำดับตามชื่อผลไม้ (PlantType) เพื่อให้เก็บเป็นโซนๆ ไป
+	if #HarVestCropsList > 1 then
+		table.sort(HarVestCropsList, function(a, b)
+			local nameA = a:GetAttribute("PlantType") or (a.Parent and a.Parent:GetAttribute("PlantType")) or "Fruit"
+			local nameB = b:GetAttribute("PlantType") or (b.Parent and b.Parent:GetAttribute("PlantType")) or "Fruit"
+			return nameA < nameB
+		end)
+	end
 end
 
 HarvestCrops = function()
-	if isProcessing or isHarvesting or HarvestPause or not Options.tgHarvestEnable.Value then return end
+	if HarvestPause or isProcessing or isHarvesting or not Options.tgHarvestEnable.Value then return end
 
 	if #HarVestCropsList > 0 then
 		isHarvesting = true
 		local fruit = table.remove(HarVestCropsList, 1)
 
-		TweenToTarget(fruit:GetPivot() * CFrame.new(3, 0, 0), 50, 1)
+		local prompt = fruit:FindFirstChild("HarvestPrompt", true)
+		if not fruit or not fruit.Parent or not prompt or not prompt.Enabled then
+			isHarvesting = false
+			return
+		end
+
+		local targetCFrame = CFrame.new(fruit:GetPivot().Position + Vector3.new(3, 0, 0))
+
+		TweenToTarget(targetCFrame, 100, 4)
+
+		-- จำลองการกดปุ่ม E
+		task.wait(0.1) -- พักนิดนึงให้ฟิสิกส์นิ่ง
+		--if prompt.Enabled then fireproximityprompt(prompt) end
 		local gUuid, gindex = ParseFruitUuid(fruit:GetAttribute("Uuid"))
 		local args = {}
 		if gindex then
@@ -910,7 +906,7 @@ AutoPlantsSeeds = function()
 						PlantPos = Character:GetPivot()
 					elseif ddPlantsPos == "Random" then
 						PlantPos = GetRandomPlantPosition()
-						TweenToTarget(CFrame.new(PlantPos.X + 3, PlantPos.Y, PlantPos.Z), 100, 3)
+						TweenToTarget(CFrame.new(PlantPos.X + 3, PlantPos.Y, PlantPos.Z), 100, 4)
 					end
 					local args = {
 						item:GetAttribute("PlantType"),
@@ -992,6 +988,7 @@ RemoteNotification = function(args)
 	if args[1] and type(args[1]) == "string" then
 		if string.find(args[1], "inventory is full!") then
 			HarvestPause = true
+			table.clear(HarVestCropsList)
 			table.insert(actionQueue, {
 				FuncName = AutoSellCrops,
 			})
@@ -1050,24 +1047,34 @@ task.spawn(function()
 	end
 end)
 
+-- [[ Tracker System: ดักจับต้นไม้ที่ปลูกใหม่ ]]
+
 SetupTracker = function()
 	local ClientPlants = workspace:FindFirstChild("ClientPlants")
 	if not ClientPlants then return end
 
 	ClientPlants.ChildAdded:Connect(function(newPlant)
+		-- รอให้ Anchor และ Part ต่างๆ โหลดเข้ามาใน Folder ให้ครบก่อน
 		task.wait(0.5)
 
-		if newPlant:GetAttribute("PlantType") then
-			if Options.tgHidePlant.Value and not IsFruit(newPlant) then SetVisibility(newPlant, true) end
-
-			for _, part in ipairs(newPlant:GetDescendants()) do
-				if IsFruit(part) then
-					if Options.tgHideFruit.Value then
-						if newPlant:GetAttribute("HarvestablePlant") ~= true then SetVisibility(part, true) end
+		-- Optimize 3: กวาดหา Anchor แค่รอบเดียวตอนต้นไม้เกิดใหม่
+		for _, obj in ipairs(newPlant:GetDescendants()) do
+			-- จัดการส่วนต้นไม้
+			if Options.tgHidePlant.Value and obj.Name == "PlantAnchor" then
+				local parent = obj.Parent
+				if not parent:FindFirstChild("FruitAnchor") then
+					for _, sibling in ipairs(parent:GetChildren()) do
+						SetVisibility(sibling, true)
 					end
-				else
-					if Options.tgHidePlant.Value then SetVisibility(part, true) end
 				end
+
+			-- จัดการส่วนผลไม้
+			elseif Options.tgHideFruit.Value and obj.Name == "FruitAnchor" then
+				--if newPlant:GetAttribute("HarvestablePlant") ~= true then
+				for _, sibling in ipairs(obj.Parent:GetChildren()) do
+					SetVisibility(sibling, true)
+				end
+				--end
 			end
 		end
 	end)
