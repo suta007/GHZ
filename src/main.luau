@@ -970,13 +970,13 @@ ScanCrops = function()
 	end
 
 	-- 2. เรียงลำดับตามชื่อผลไม้ (PlantType) เพื่อให้เก็บเป็นโซนๆ ไป
-	if #HarVestCropsList > 1 then
+	--[[ 	if #HarVestCropsList > 1 then
 		table.sort(HarVestCropsList, function(a, b)
 			local nameA = a:GetAttribute("PlantType") or (a.Parent and a.Parent:GetAttribute("PlantType")) or "Fruit"
 			local nameB = b:GetAttribute("PlantType") or (b.Parent and b.Parent:GetAttribute("PlantType")) or "Fruit"
 			return nameA < nameB
 		end)
-	end
+	end ]]
 end
 
 HarvestCrops = function()
