@@ -5,7 +5,7 @@ local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.
 local CollapsibleAddon = loadstring(game:HttpGet("https://raw.githubusercontent.com/suta007/Lua_EfHub/refs/heads/master/Core/CollapsibleSection.lua"))()
 CollapsibleAddon(Fluent)
 
-local fVersion = "2569.03.07-21.46"
+local fVersion = "2569.03.08-11.57"
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -473,9 +473,13 @@ PlantsSection:AddToggle("tgPlantsEnable", {
 	Title = "Auto Plants",
 	Default = false,
 	Callback = function(Value)
-		if Value then table.insert(actionQueue, {
-			FuncName = AutoPlantsSeeds,
-		}) end
+		if Value then
+			table.insert(actionQueue, {
+				FuncName = AutoPlantsSeeds,
+			})
+		else
+			isPlanting = false
+		end
 		if QuickSave then QuickSave() end
 	end,
 })
@@ -487,7 +491,7 @@ PlantsSection:AddButton({
 })
 PlantsSection:AddDropdown("ddPlantsSeeds", {
 	Title = "Select Seeds",
-	Values = SeedDataTable,
+	Values = PlantDataTable,
 	Multi = true,
 	Default = {},
 	Searchable = true,
@@ -512,6 +516,7 @@ HarvestSection:AddToggle("tgHarvestEnable", {
 	Callback = function(Value)
 		if QuickSave then QuickSave() end
 		table.clear(HarVestCropsList)
+		if not Value then isHarvesting = false end
 	end,
 })
 HarvestSection:AddDivider()
@@ -662,6 +667,7 @@ SellSection:AddToggle("tgSellCropsEnable", {
 	Default = false,
 	Callback = function(Value)
 		if QuickSave then QuickSave() end
+		--if not Value then isProcessing = false end
 	end,
 })
 
@@ -826,7 +832,7 @@ NewPlayerSection:AddToggle("tgNewAutoSell", {
 SaveManager:SetLibrary(Fluent)
 InterfaceManager:SetLibrary(Fluent)
 
-SaveManager:SetIgnoreIndexes({})
+--SaveManager:SetIgnoreIndexes({})
 InterfaceManager:SetFolder("EfHub")
 SaveManager:SetFolder("EfHub/HRZ")
 
@@ -1053,10 +1059,10 @@ AutoBuySeed = function(Items)
 		end
 	end
 	SafeTeleport(MySpawnPoint)
-	task.wait(0.3)
+	task.wait(1)
 	isBuyingSeed = false
 	HarvestPause = false
-	--retrn
+	task.wait(0.2)
 end
 
 AutoBuyGear = function(Items)
@@ -1076,9 +1082,10 @@ AutoBuyGear = function(Items)
 		end
 	end
 	SafeTeleport(MySpawnPoint)
-	task.wait(0.3)
+	task.wait(1)
 	isBuyingGear = false
-	--retrn
+	HarvestPause = false
+	task.wait(0.2)
 end
 
 AutoPlantsSeeds = function()
@@ -1095,7 +1102,7 @@ AutoPlantsSeeds = function()
 	if Backpack then
 		for _index, item in pairs(Backpack:GetChildren()) do
 			if not Options.tgPlantsEnable.Value then break end
-			if item:GetAttribute("Type") == "Seeds" and (table.find(SeedList, "ALL") or table.find(SeedList, item:GetAttribute("BaseName"))) then
+			if item:GetAttribute("Type") == "Seeds" and (table.find(SeedList, "ALL") or table.find(SeedList, item:GetAttribute("PlantType"))) then
 				isPlanting = true
 				pcall(function()
 					Humanoid:EquipTool(item)
