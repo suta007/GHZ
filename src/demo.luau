@@ -5,7 +5,7 @@ local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.
 local CollapsibleAddon = loadstring(game:HttpGet("https://raw.githubusercontent.com/suta007/Lua_EfHub/refs/heads/master/Core/CollapsibleSection.lua"))()
 CollapsibleAddon(Fluent)
 
-local fVersion = "2569.03.07-19.19"
+local fVersion = "2569.03.07-21.46"
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -425,6 +425,15 @@ for MutationName, _ in pairs(require(MutationData)) do
 	table.insert(MutationDataTable, MutationName)
 end
 
+local PlantDataBackTable = table.clone(PlantDataTable)
+PlantDataBackTable[1] = "NONE"
+
+local SeedDataBackTable = table.clone(SeedDataTable)
+SeedDataBackTable[1] = "NONE"
+
+local MutationDataBackTable = table.clone(MutationDataTable)
+MutationDataBackTable[1] = "NONE"
+
 ------------------------------------------------------
 -- ระบบปุ่มลอย (Floating Button) สำหรับ Android
 ------------------------------------------------------
@@ -510,7 +519,7 @@ HarvestSection:AddDivider()
 HarvestSection:AddButton({
 	Title = "Clear Selected Crops",
 	Callback = function()
-		Options.ddHarvestCrops:SetValue({})
+		Options.ddHarvestCrops:SetValue({ "ALL" })
 	end,
 })
 HarvestSection:AddDropdown("ddHarvestCrops", {
@@ -523,12 +532,28 @@ HarvestSection:AddDropdown("ddHarvestCrops", {
 		if QuickSave then QuickSave() end
 	end,
 })
+HarvestSection:AddButton({
+	Title = "Clear Backlist Crops",
+	Callback = function()
+		Options.ddHarvestBlackCrops:SetValue({ "NONE" })
+	end,
+})
+HarvestSection:AddDropdown("ddHarvestBlackCrops", {
+	Title = "Blacklist Crops",
+	Values = PlantDataBackTable,
+	Multi = true,
+	Default = { "NONE" },
+	Searchable = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
 
 HarvestSection:AddDivider()
 HarvestSection:AddButton({
 	Title = "Clear Selected Mutant",
 	Callback = function()
-		Options.ddHarvestMutants:SetValue({})
+		Options.ddHarvestMutants:SetValue({ "ALL" })
 	end,
 })
 
@@ -537,6 +562,24 @@ HarvestSection:AddDropdown("ddHarvestMutants", {
 	Values = MutationDataTable,
 	Multi = true,
 	Default = { "ALL" },
+	Searchable = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+HarvestSection:AddButton({
+	Title = "Clear Backlist Mutant",
+	Callback = function()
+		Options.ddHarvestBackMutants:SetValue({ "NONE" })
+	end,
+})
+
+HarvestSection:AddDropdown("ddHarvestBackMutants", {
+	Title = "Backlist Mutants",
+	Values = MutationDataBackTable,
+	Multi = true,
+	Default = { "NONE" },
 	Searchable = true,
 	Callback = function(Value)
 		if QuickSave then QuickSave() end
@@ -564,11 +607,30 @@ HarvestSection:AddInput("ipRipenessMulti", {
 	end,
 })
 
+HarvestSection:AddDropdown("ddBlackRipeness", {
+	Title = "Backlist Ripeness Stage",
+	Values = { "NONE", "Unripe", "Ripened", "Lush" },
+	Default = { "NONE" },
+	Multi = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
 HarvestSection:AddDivider()
 HarvestSection:AddDropdown("ddVariant", {
 	Title = "Variant",
 	Values = { "ALL", "Silver", "Gold" },
 	Default = { "ALL" },
+	Multi = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+HarvestSection:AddDropdown("ddBackVariant", {
+	Title = "Backlist Variant",
+	Values = { "NONE", "Silver", "Gold" },
+	Default = { "NONE" },
 	Multi = true,
 	Callback = function(Value)
 		if QuickSave then QuickSave() end
@@ -823,7 +885,13 @@ end)
 --[[ Function ]]
 
 CheckHarvestCrops = function(fruit)
-	--เช็ค Favorite ด้วยนะ
+	-- ดึงค่า Attributes ของผลไม้มาเก็บไว้ก่อน เพื่อลดการเรียกฟังก์ชันซ้ำซ้อน
+	local fruitName = fruit:GetAttribute("PlantType") or (fruit.Parent and fruit.Parent:GetAttribute("PlantType")) or "Fruit"
+	local fruitRipeness = fruit:GetAttribute("RipenessStage")
+	local fruitVariant = fruit:GetAttribute("Variant")
+	local CropsMutants = fruit:GetAttribute("Mutation")
+
+	-- White list Variables
 	local ddHarvestCropsList = GetSelectedItems(Options.ddHarvestCrops.Value)
 	local ddHarvestMutantsList = GetSelectedItems(Options.ddHarvestMutants.Value)
 	local ddRipenessList = GetSelectedItems(Options.ddRipeness.Value)
@@ -832,20 +900,14 @@ CheckHarvestCrops = function(fruit)
 	local ddWeight = Options.ddWeight.Value
 	local ipWeight = tonumber(Options.ipWeight.Value)
 
-	local fruitName = fruit:GetAttribute("PlantType") or (fruit.Parent and fruit.Parent:GetAttribute("PlantType")) or "Fruit"
-
+	-- White list Checks
 	if not table.find(ddHarvestCropsList, "ALL") and not table.find(ddHarvestCropsList, fruitName) then return false end
-
 	if fruit:GetAttribute("Favorited") == true then return false end
-
-	if not table.find(ddRipenessList, "ALL") and not table.find(ddRipenessList, fruit:GetAttribute("RipenessStage")) then return false end
-
+	if not table.find(ddRipenessList, "ALL") and not table.find(ddRipenessList, fruitRipeness) then return false end
 	if ipRipenessMulti ~= 0 and fruit:GetAttribute("RipenessMultiplier") < ipRipenessMulti then return false end
-
-	if not table.find(ddVariantList, "ALL") and not table.find(ddVariantList, fruit:GetAttribute("Variant")) then return false end
+	if not table.find(ddVariantList, "ALL") and not table.find(ddVariantList, fruitVariant) then return false end
 
 	if not table.find(ddHarvestMutantsList, "ALL") then
-		local CropsMutants = fruit:GetAttribute("Mutation")
 		if not CropsMutants or CropsMutants == "" then return false end
 		local CropsMutantsTable = string.split(CropsMutants, ",")
 		local isMutantMatch = false
@@ -857,13 +919,32 @@ CheckHarvestCrops = function(fruit)
 
 	if ipWeight ~= 0 then
 		local rawWeight = fruit:GetAttribute("FruitWeight")
-
 		if not rawWeight then return false end
-
 		local weight = tonumber(rawWeight)
+		if ddWeight == "Below" and weight >= ipWeight then return false end
+		if ddWeight == "Above" and weight <= ipWeight then return false end
+	end
 
-		if ddWeight == "Below" and weight >= ipWeight then return false end -- น้ำหนักน้อยกว่าที่กำหนด เป็น true เพื่อเก็บเกี่ยว
-		if ddWeight == "Above" and weight <= ipWeight then return false end -- น้ำหนักมากกว่าที่กำหนด เป็น true เพื่อเก็บเกี่ยว
+	-- Black list Variables
+	local ddHarvestBlackCropsList = GetSelectedItems(Options.ddHarvestBlackCrops.Value)
+	local ddBlackRipenessList = GetSelectedItems(Options.ddBlackRipeness.Value)
+	local ddHarvestBackVariantList = GetSelectedItems(Options.ddBackVariant.Value)
+	local ddHarvestBackMutantsList = GetSelectedItems(Options.ddHarvestBackMutants.Value)
+
+	-- Black list Checks (แก้ไข Logic Bug แล้ว)
+	if not table.find(ddHarvestBlackCropsList, "NONE") and table.find(ddHarvestBlackCropsList, fruitName) then return false end
+	if not table.find(ddBlackRipenessList, "NONE") and table.find(ddBlackRipenessList, fruitRipeness) then return false end
+	if not table.find(ddHarvestBackVariantList, "NONE") and table.find(ddHarvestBackVariantList, fruitVariant) then return false end -- แก้ไขเอา not ออก
+
+	if not table.find(ddHarvestBackMutantsList, "NONE") then
+		if CropsMutants and CropsMutants ~= "" then
+			local CropsMutantsTable = string.split(CropsMutants, ",")
+			local isBackMutantMatch = false
+			for _, mutation in ipairs(CropsMutantsTable) do
+				if table.find(ddHarvestBackMutantsList, mutation) then isBackMutantMatch = true end
+			end
+			if isBackMutantMatch then return false end
+		end
 	end
 
 	return true
