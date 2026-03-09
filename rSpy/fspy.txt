@@ -1,0 +1,70 @@
+//////////////
+//Remove Corn plant
+🚀 [ส่งออก] Remote: RemovePlant.FireServer
+➡️[1] : 1d79f1ed-d489-46a1-8f69-ee672be00be3
+
+//Remove Carrot
+🚀 [ส่งออก] Remote: RemovePlant.FireServer
+➡️[1] : 0e6829e2-f0f2-42e7-a323-c665f32c9de5
+
+
+//Remove Fruit
+🚀 [ส่งออก] Remote: RemovePlant.FireServer
+➡️[1] : 7e8fe68c-30d7-4d21-b584-2a831cd7b7a6
+➡️[2] : 1
+🚀 [ส่งออก] Remote: RemovePlant.FireServer
+➡️[1] : d82b9285-a04e-466c-b530-c249682d0fa7
+➡️[2] : 3
+
+
+
+//////////////////////////////
+🚀 [ส่งออก] Remote: TrowelAction.InvokeServer
+➡️[1] : 
+  ➡️[Action] : Pickup (string)
+  ➡️[PlantUuid] : 7e8fe68c-30d7-4d21-b584-2a831cd7b7a6 (string)
+
+
+🚀 [ส่งออก] Remote: TrowelAction.InvokeServer
+➡️[1] : 
+  ➡️[PlantUuid] : 7e8fe68c-30d7-4d21-b584-2a831cd7b7a6 (string)
+  ➡️[RotationY] : 241.79930114746094 (number)   --> Attribute -> AppliedRotationY
+  ➡️[Action] : Place (string)
+  ➡️[Position] : 182.45960998535156, 185.5998077392578, 323.7581787109375 (Vector3)
+
+  ///2
+  🚀 [ส่งออก] Remote: TrowelAction.InvokeServer
+➡️[1] : 
+  ➡️[Action] : Pickup (string)
+  ➡️[PlantUuid] : 6a856c6b-8234-4783-a755-2bda5bfc8bf3 (string)
+🚀 [ส่งออก] Remote: TrowelAction.InvokeServer
+➡️[1] : 
+  ➡️[PlantUuid] : 6a856c6b-8234-4783-a755-2bda5bfc8bf3 (string)
+  ➡️[RotationY] : 210.19174194335938 (number)
+  ➡️[Action] : Place (string)
+  ➡️[Position] : 189.95018005371094, 185.5998077392578, 295.8524475097656 (Vector3)
+
+/////////////////
+  🚀 [ส่งออก] Remote: UseGear.FireServer
+➡️[1] : Favorite Tool
+➡️[2] : 
+  ➡️[PlantUuid] : 7e8fe68c-30d7-4d21-b584-2a831cd7b7a6 (string)
+  ➡️[GrowthAnchorIndex] : 1 (number)
+📥 [รับจาก Server] Remote: Notification
+➡️[1] : Favorited Corn
+➡️[2] : 3
+🚀 [ส่งออก] Remote: UseGear.FireServer
+➡️[1] : Favorite Tool
+➡️[2] : 
+  ➡️[PlantUuid] : 7e8fe68c-30d7-4d21-b584-2a831cd7b7a6 (string)
+  ➡️[GrowthAnchorIndex] : 1 (number)
+📥 [รับจาก Server] Remote: Notification
+➡️[1] : Unfavorited Corn
+➡️[2] : 
+
+
+
+
+
+
+

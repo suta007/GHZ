@@ -14,7 +14,7 @@ local Window = Fluent:CreateWindow({
 
 local Tabs = {
 	Main = Window:AddTab({ Title = "Log Console", Icon = "terminal" }),
-	Event = Window:AddTab({ Title = "Event", Icon = "calendar" }),
+	--Event = Window:AddTab({ Title = "Event", Icon = "calendar" }),
 }
 
 Window:SelectTab(1)
@@ -153,27 +153,24 @@ local function ShowData(tbl, indent)
 	end
 end
 
-Tabs.Event:AddButton({
-	Title = "Test",
-	Callback = function()
-		game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("RequestQuests"):FireServer()
-	end,
-})
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+--local myName = LocalPlayer.Name
+local Backpack = LocalPlayer.Backpack
+--local ClientPlants = workspace:FindFirstChild("ClientPlants")
+---local myCharacter = workspace:FindFirstChild(myName)
+for _, item in ipairs(Backpack:GetChildren()) do
+	if item:GetAttribute("BaseName") == "Carrot" then
+		--AddLog(item:GetAttribute("Type"))
+		item:SetAttribute("FruitValue", 115)
+		item:SetAttribute("FruitWeight", 0.07917)
+		item:SetAttribute("RipenessStage", "Lush")
+		item:SetAttribute("PlantTemplateName", "Carrot1")
+		item:SetAttribute("RipenessMultiplier", 3)
+		item:SetAttribute("IsHarvested", true)
+		item:SetAttribute("HiddenNumber", 1.131)
 
-game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("UpdateQuests").OnClientEvent:Connect(function(QuestData)
-	ShowData(QuestData, 1)
-
-	local Weekly = QuestData.Weekly.Active
-	for index, qWeekly in pairs(Weekly) do
-		if qWeekly.CompletedAt and not qWeekly.Claimed then
-			game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ClaimQuest"):FireServer("Weekly",index)
-		end
+		AddLog("Done " .. item:GetAttribute("UUID"))
+		item:SetAttribute("UUID", nil)
 	end
-
-	local Daily = QuestData.Daily.Active
-		for index, qDaily in pairs(Daily) do
-		if qDaily.CompletedAt and not qDaily.Claimed then
-			game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ClaimQuest"):FireServer("Daily",index)
-		end
-	end
-end)
+end

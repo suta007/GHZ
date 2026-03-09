@@ -5,7 +5,7 @@ local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.
 local CollapsibleAddon = loadstring(game:HttpGet("https://raw.githubusercontent.com/suta007/Lua_EfHub/refs/heads/master/Core/CollapsibleSection.lua"))()
 CollapsibleAddon(Fluent)
 
-local fVersion = "2569.03.08-11.57"
+local fVersion = "2569.03.08-17.34"
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -28,6 +28,7 @@ local VirtualUser = game:GetService("VirtualUser")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local CollectionService = game:GetService("CollectionService")
+local CoreGui = game:GetService("CoreGui")
 
 local noclipConnection = nil
 
@@ -57,13 +58,11 @@ local NewPlayer
 local QuickSave, GetSelectedItems, TweenToTarget, ParseFruitUuid, SetNoClip, SafeTeleport
 local CheckHarvestCrops, ScanCrops, HarvestCrops
 local AutoBuySeed, AutoBuyGear, AutoSellCrops, AutoClaimQuest, AutoPlantsSeeds
-
 local processQueue
-
 local InitializePlotData, GetRandomPlantPosition, ResetControlVariable
-
 local RemoteNotification, RemoteReplicaSet
 local ApplyAntiLag, RestoreAntiLag, SetVisibility, HidePlant, HideFruit, UpdateVisibilityFromAnchor
+local CreatESP, espPlants, espFruit
 
 local isAntiLag = false
 
@@ -524,7 +523,7 @@ HarvestSection:AddDivider()
 HarvestSection:AddButton({
 	Title = "Clear Selected Crops",
 	Callback = function()
-		Options.ddHarvestCrops:SetValue({ "ALL" })
+		Options.ddHarvestCrops:SetValue({ ALL = true })
 	end,
 })
 HarvestSection:AddDropdown("ddHarvestCrops", {
@@ -540,7 +539,7 @@ HarvestSection:AddDropdown("ddHarvestCrops", {
 HarvestSection:AddButton({
 	Title = "Clear Backlist Crops",
 	Callback = function()
-		Options.ddHarvestBlackCrops:SetValue({ "NONE" })
+		Options.ddHarvestBlackCrops:SetValue({ NONE = true })
 	end,
 })
 HarvestSection:AddDropdown("ddHarvestBlackCrops", {
@@ -558,7 +557,7 @@ HarvestSection:AddDivider()
 HarvestSection:AddButton({
 	Title = "Clear Selected Mutant",
 	Callback = function()
-		Options.ddHarvestMutants:SetValue({ "ALL" })
+		Options.ddHarvestMutants:SetValue({ ALL = true })
 	end,
 })
 
@@ -576,7 +575,7 @@ HarvestSection:AddDropdown("ddHarvestMutants", {
 HarvestSection:AddButton({
 	Title = "Clear Backlist Mutant",
 	Callback = function()
-		Options.ddHarvestBackMutants:SetValue({ "NONE" })
+		Options.ddHarvestBackMutants:SetValue({ NONE = true })
 	end,
 })
 
@@ -825,6 +824,57 @@ NewPlayerSection:AddToggle("tgNewAutoSell", {
 		--	FuncName = AutoSellCrops,
 		--})
 		--end
+		if QuickSave then QuickSave() end
+	end,
+})
+
+local espSection = Tabs.Misc:AddCollapsibleSection("ESP", false)
+espSection:AddToggle("tgPlantsESP", {
+	Title = "ESP Plants",
+	Default = false,
+	Callback = function(Value)
+		espPlants(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+espSection:AddButton({
+	Title = "Clear Selected Plants",
+	Callback = function()
+		Options.ddPlantsESP:SetValue({ NONE = true })
+	end,
+})
+espSection:AddDropdown("ddPlantsESP", {
+	Title = "Select Plants",
+	Values = PlantDataBackTable,
+	Multi = true,
+	Default = { "NONE" },
+	Searchable = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+espSection:AddDivider()
+espSection:AddToggle("tgFruitESP", {
+	Title = "ESP Fruit",
+	Default = false,
+	Callback = function(Value)
+		espFruit(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+espSection:AddButton({
+	Title = "Clear Selected Fruit",
+	Callback = function()
+		Options.ddFruitESP:SetValue({ NONE = true })
+	end,
+})
+espSection:AddDropdown("ddFruitESP", {
+	Title = "Select Fruit",
+	Values = PlantDataBackTable,
+	Multi = true,
+	Default = { "NONE" },
+	Searchable = true,
+	Callback = function(Value)
 		if QuickSave then QuickSave() end
 	end,
 })
@@ -1208,6 +1258,130 @@ RemoteNotification = function(args)
 	end
 end
 
+CreatESP = function(espfolder, obj, uuid, txt1, txt2, arg)
+	if not (espfolder and obj and uuid and txt1) then return end
+	local priority = arg or 0
+	local bgui = Instance.new("BillboardGui")
+	bgui.Name = "ESP_" .. uuid
+	bgui.Adornee = obj
+	bgui.Size = UDim2.new(0, 200, 0, 80)
+	bgui.StudsOffset = Vector3.new(0, 3.5, 0)
+	bgui.AlwaysOnTop = true
+	bgui.LightInfluence = 0
+	bgui.Parent = espfolder
+
+	local textLabel = Instance.new("TextLabel")
+	textLabel.Parent = bgui
+	textLabel.Size = UDim2.new(1, 0, 0, 0)
+	textLabel.AutomaticSize = Enum.AutomaticSize.XY
+	textLabel.BackgroundTransparency = 1
+	textLabel.TextWrapped = false
+	if txt2 and txt2 ~= "" then
+		textLabel.Text = string.format("%s\n%s", tostring(txt1), tostring(txt2))
+	else
+		textLabel.Text = tostring(txt1)
+	end
+
+	if priority == 3 then
+		textLabel.TextColor3 = Color3.fromRGB(200, 200, 10)
+	elseif priority == 2 then
+		textLabel.TextColor3 = Color3.fromRGB(200, 50, 10)
+	elseif priority == 1 then
+		textLabel.TextColor3 = Color3.fromRGB(10, 200, 10)
+	else
+		textLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+	end
+
+	textLabel.TextStrokeTransparency = 0
+	textLabel.TextSize = 16
+	textLabel.Font = Enum.Font.FredokaOne
+
+	textLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+	textLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
+end
+
+espPlants = function(State)
+	local FolderName = "PlantsESP"
+	local TargetFolder = gethui and gethui() or CoreGui
+	local oldFolder = TargetFolder:FindFirstChild(FolderName)
+	if oldFolder then oldFolder:Destroy() end
+
+	if State ~= true then return end
+	local espPlantsList = GetSelectedItems(Options.ddPlantsESP.Value)
+	if table.find(espPlantsList, "NONE") then return end
+
+	local ESPFolder = Instance.new("Folder")
+	ESPFolder.Name = FolderName
+	ESPFolder.Parent = TargetFolder
+
+	local ClientPlants = workspace:FindFirstChild("ClientPlants")
+	if ClientPlants then
+		for _, plant in pairs(ClientPlants:GetChildren()) do
+			local plantName = plant:GetAttribute("PlantType")
+			if table.find(espPlantsList, plantName) then
+				local uuid = plant:GetAttribute("Uuid") or plant.Name
+				local scale = plant:GetAttribute("HiddenNumber") or 0
+				local Weight = plant:GetAttribute("PlantWeight") or 0
+				local arg = 0
+				if scale >= 2 then
+					arg = 3
+				elseif scale >= 1.5 then
+					arg = 2
+				elseif scale >= 1 then
+					arg = 1
+				end
+				if Weight > 0 then
+					CreatESP(ESPFolder, plant, uuid, "🌱 " .. plantName, string.format("Weight : %.2f kg", Weight), arg)
+				else
+					CreatESP(ESPFolder, plant, uuid, "🌱 " .. plantName, string.format("Scale : %.2f", scale), arg)
+				end
+			end
+		end
+	end
+end
+
+espFruit = function(State)
+	local FolderName = "FruitESP"
+	local TargetFolder = gethui and gethui() or CoreGui
+	local oldFolder = TargetFolder:FindFirstChild(FolderName)
+	if oldFolder then oldFolder:Destroy() end
+
+	if State ~= true then return end
+
+	local espFruitList = GetSelectedItems(Options.ddFruitESP.Value)
+	if table.find(espFruitList, "NONE") then return end
+
+	local ESPFolder = Instance.new("Folder")
+	ESPFolder.Name = FolderName
+	ESPFolder.Parent = TargetFolder
+
+	local ClientPlants = workspace:FindFirstChild("ClientPlants")
+	if ClientPlants then
+		for _, obj in pairs(ClientPlants:GetDescendants()) do
+			if obj.Name == "FruitAnchor" then
+				local fruit = obj.Parent
+				if fruit then
+					local fruitName = fruit:GetAttribute("PlantType") or (fruit.Parent and fruit.Parent:GetAttribute("PlantType")) or "Fruit"
+					if table.find(espFruitList, fruitName) then
+						local uuid = fruit:GetAttribute("Uuid") or fruitName
+						local Weight = fruit:GetAttribute("FruitWeight") or 0
+						local scale = fruit:GetAttribute("HiddenNumber") or 0
+						local arg = 0
+						if scale >= 2 then
+							arg = 3
+						elseif scale >= 1.5 then
+							arg = 2
+						elseif scale >= 1 then
+							arg = 1
+						end
+						CreatESP(ESPFolder, fruit, uuid, "🍎" .. fruitName, string.format("Weight : %.2f kg", Weight), arg)
+					end
+				end
+			end
+		end
+	end
+end
+
 local lastTriggerMinute = -1
 NewPlayer = function()
 	local timeData = os.date("!*t")
@@ -1283,6 +1457,16 @@ task.spawn(function()
 	while true do
 		pcall(NewPlayer)
 		task.wait(10)
+	end
+end)
+
+--Watch Dog
+task.spawn(function()
+	while true do
+		task.wait(3600)
+		if Options.tgPlantsESP and Options.tgPlantsESP.Value == true then Options.tgPlantsESP:SetValue(false) end
+		if Options.tgFruitESP and Options.tgFruitESP.Value == true then Options.tgFruitESP:SetValue(false) end
+		if ResetControlVariable then ResetControlVariable() end
 	end
 end)
 

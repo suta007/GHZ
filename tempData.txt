@@ -1,0 +1,457 @@
+📋 Script initialized successfully.
+=======================================
+🔍 ข้อมูลของ Object: Shovel
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+Type = Tools (string)
+BaseName = Shovel (string)
+UUID = e46ca5c0-ebfc-4924-bb7a-8d6a25249ddc (string)
+ItemCount = 1 (number)
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x2 Royal Seed Pack
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+BaseName = Royal Seed Pack (string)
+UUID = 959c8cce-a022-4c72-90c5-ef513c580c44 (string)
+Type = Seeds (string)
+ItemCount = 2 (number)
+IsCrate = true (boolean)
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x2 Corn Seed
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+PlantType = Corn (string)
+BaseName = Corn Seed (string)
+UUID = 34437658-d13b-48de-96e1-333eb32b2866 (string)
+Type = Seeds (string)
+ItemCount = 2 (number)
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: Carrot (0.07 KG)
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+FruitValue = 98 (number)
+FruitWeight = 0.07322000000000001 (number)
+Type = Plants (string)
+BaseName = Carrot (string)
+RipenessStage = Lush (string)
+PlantTemplateName = Carrot1 (string)
+RipenessMultiplier = 3 (number)
+IsHarvested = true (boolean)
+HiddenNumber = 1.046 (number)
+HarvestedFrom = Carrot (string)
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: Gold Carrot (0.07 KG)
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+FruitValue = 393 (number)
+FruitWeight = 0.06545000000000001 (number)
+PlantTemplateName = Carrot2 (string)
+Type = Plants (string)
+BaseName = Carrot (string)
+RipenessStage = Lush (string)
+Variant = Gold (string)
+RipenessMultiplier = 3 (number)
+IsHarvested = true (boolean)
+HiddenNumber = 0.935 (number)
+HarvestedFrom = Carrot (string)
+
+--- 🔵 Properties ---
+=======================================
+
+
+///////////////////////////////////////
+
+📋 Script initialized successfully.
+=======================================
+🔍 ข้อมูลของ Object: Humanoid
+🏷️ ประเภท (Class): Humanoid
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: Animate
+🏷️ ประเภท (Class): LocalScript
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: HumanoidRootPart
+🏷️ ประเภท (Class): Part
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: BillboardReparent
+🏷️ ประเภท (Class): LocalScript
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: Health
+🏷️ ประเภท (Class): Script
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: Left Leg
+🏷️ ประเภท (Class): Part
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: Right Leg
+🏷️ ประเภท (Class): Part
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: Head
+🏷️ ประเภท (Class): Part
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: Torso
+🏷️ ประเภท (Class): Part
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: Left Arm
+🏷️ ประเภท (Class): Part
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: Right Arm
+🏷️ ประเภท (Class): Part
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: Body Colors
+🏷️ ประเภท (Class): BodyColors
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: CharacterMesh
+🏷️ ประเภท (Class): CharacterMesh
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: CharacterMesh
+🏷️ ประเภท (Class): CharacterMesh
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: CharacterMesh
+🏷️ ประเภท (Class): CharacterMesh
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: CharacterMesh
+🏷️ ประเภท (Class): CharacterMesh
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: CharacterMesh
+🏷️ ประเภท (Class): CharacterMesh
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: Pants
+🏷️ ประเภท (Class): Pants
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: VarietyShades02
+🏷️ ประเภท (Class): Accessory
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: MediHood
+🏷️ ประเภท (Class): Accessory
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: Shirt
+🏷️ ประเภท (Class): Shirt
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: Shirt Graphic
+🏷️ ประเภท (Class): ShirtGraphic
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: Carrot
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+Type = Plants (string)
+BaseName = Carrot (string)
+UUID = 451142ff-dde9-4107-8d38-aeef4b1f0cd2 (string)
+ItemCount = 1 (number)
+HarvestedFrom = Carrot (string)
+IsHarvested = true (boolean)
+InventoryPosition = 262 (number)
+FruitValue = 0 (number)
+
+--- 🔵 Properties ---
+=======================================
+
+
+=======================================
+🔍 ข้อมูลของ Object: Carrot (0.07 KG)
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+FruitValue = 98 (number)
+FruitWeight = 0.07322000000000001 (number)
+Type = Plants (string)
+BaseName = Carrot (string)
+RipenessStage = Lush (string)
+PlantTemplateName = Carrot1 (string)
+RipenessMultiplier = 3 (number)
+IsHarvested = true (boolean)
+HiddenNumber = 1.046 (number)
+HarvestedFrom = Carrot (string)
+
+
+
+
+📋 Script initialized successfully.
+=======================================
+🔍 ข้อมูลของ Object: Turbo Sprinkler
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x5 Wheat Seed
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: Shovel
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x13 Basic Sprinkler
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: Banana Seed
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x2 Strawberry Seed
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+ไม่มี Attributes ค่ะ
+
+--- 🔵 Properties ---
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: Carrot (0.08 KG)
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+FruitValue = 115 (number)
+FruitWeight = 0.07917 (number)
+Type = Plants (string)
+BaseName = Carrot (string)
+RipenessStage = Lush (string)
+PlantTemplateName = Carrot2 (string)
+RipenessMultiplier = 3 (number)
+IsHarvested = true (boolean)
+HiddenNumber = 1.131 (number)
+HarvestedFrom = Carrot (string)
+
+--- 🔵 Properties ---
+=======================================
