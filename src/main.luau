@@ -5,7 +5,7 @@ local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.
 local CollapsibleAddon = loadstring(game:HttpGet("https://raw.githubusercontent.com/suta007/Lua_EfHub/refs/heads/master/Core/CollapsibleSection.lua"))()
 CollapsibleAddon(Fluent)
 
-local fVersion = "2569.03.09-20.21"
+local fVersion = "2569.03.09-10.54"
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -62,7 +62,11 @@ local processQueue
 local InitializePlotData, GetRandomPlantPosition, ResetControlVariable
 local RemoteNotification, RemoteReplicaSet
 local ApplyAntiLag, RestoreAntiLag, SetVisibility, HidePlant, HideFruit, UpdateVisibilityFromAnchor
-local CreatESP, espPlants, espFruit
+local CreatESP, espPlants, espFruit, SetespPlant, SetespFruit, espInit
+local PlantsESPFolderName = "PlantsESP"
+local FruitESPFolderName = "FruitESP"
+local ESPFruitConnection
+local bGuiSession = {}
 
 local isAntiLag = false
 
@@ -1261,6 +1265,11 @@ end
 CreatESP = function(espfolder, obj, uuid, txt1, txt2, arg)
 	if not (espfolder and obj and uuid and txt1) then return end
 	local priority = arg or 0
+	if bGuiSession[uuid] then
+		bGuiSession[uuid]:Destroy()
+		bGuiSession[uuid] = nil
+	end
+
 	local bgui = Instance.new("BillboardGui")
 	bgui.Name = "ESP_" .. uuid
 	bgui.Adornee = obj
@@ -1298,12 +1307,45 @@ CreatESP = function(espfolder, obj, uuid, txt1, txt2, arg)
 
 	textLabel.AnchorPoint = Vector2.new(0.5, 0.5)
 	textLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
+	bGuiSession[uuid] = bgui
+end
+
+SetespPlant = function(obj)
+	if not Options.tgPlantsESP.Value then return end
+	local plant = (obj:IsA("Model") and obj) or obj:FindFirstAncestorOfClass("Model")
+	if not plant then return end
+	local plantName = plant:GetAttribute("PlantType")
+	if not plantName then return end
+
+	local TargetFolder = gethui and gethui() or CoreGui
+	local ESPFolder = TargetFolder:FindFirstChild(PlantsESPFolderName)
+	local espPlantsList = GetSelectedItems(Options.ddPlantsESP.Value)
+
+	if table.find(espPlantsList, "NONE") then return end
+
+	if table.find(espPlantsList, plantName) then
+		local uuid = plant:GetAttribute("Uuid") or plant.Name
+		local scale = plant:GetAttribute("HiddenNumber") or 0
+		local Weight = plant:GetAttribute("PlantWeight") or 0
+		local arg = 0
+		if scale >= 2 then
+			arg = 3
+		elseif scale >= 1.5 then
+			arg = 2
+		elseif scale >= 1 then
+			arg = 1
+		end
+		if Weight > 0 then
+			CreatESP(ESPFolder, plant, uuid, "🌱 " .. plantName, string.format("Weight : %.2f kg", Weight), arg)
+		else
+			CreatESP(ESPFolder, plant, uuid, "🌱 " .. plantName, string.format("Scale : %.2f", scale), arg)
+		end
+	end
 end
 
 espPlants = function(State)
-	local FolderName = "PlantsESP"
 	local TargetFolder = gethui and gethui() or CoreGui
-	local oldFolder = TargetFolder:FindFirstChild(FolderName)
+	local oldFolder = TargetFolder:FindFirstChild(PlantsESPFolderName)
 	if oldFolder then oldFolder:Destroy() end
 
 	if State ~= true then return end
@@ -1311,75 +1353,82 @@ espPlants = function(State)
 	if table.find(espPlantsList, "NONE") then return end
 
 	local ESPFolder = Instance.new("Folder")
-	ESPFolder.Name = FolderName
+	ESPFolder.Name = PlantsESPFolderName
 	ESPFolder.Parent = TargetFolder
 
 	local ClientPlants = workspace:FindFirstChild("ClientPlants")
 	if ClientPlants then
 		for _, plant in pairs(ClientPlants:GetChildren()) do
-			local plantName = plant:GetAttribute("PlantType")
-			if table.find(espPlantsList, plantName) then
-				local uuid = plant:GetAttribute("Uuid") or plant.Name
-				local scale = plant:GetAttribute("HiddenNumber") or 0
-				local Weight = plant:GetAttribute("PlantWeight") or 0
-				local arg = 0
-				if scale >= 2 then
-					arg = 3
-				elseif scale >= 1.5 then
-					arg = 2
-				elseif scale >= 1 then
-					arg = 1
-				end
-				if Weight > 0 then
-					CreatESP(ESPFolder, plant, uuid, "🌱 " .. plantName, string.format("Weight : %.2f kg", Weight), arg)
-				else
-					CreatESP(ESPFolder, plant, uuid, "🌱 " .. plantName, string.format("Scale : %.2f", scale), arg)
-				end
-			end
+			SetespPlant(plant)
+		end
+	end
+end
+
+SetespFruit = function(obj)
+	if not Options.tgFruitESP.Value then return end
+
+	local fruit = (obj:IsA("Model") and obj) or obj:FindFirstAncestorOfClass("Model")
+	if not fruit then return end
+
+	local fruitName = fruit:GetAttribute("PlantType") or (fruit.Parent and fruit.Parent:GetAttribute("PlantType"))
+	if not fruitName then return end
+
+	local TargetFolder = gethui and gethui() or CoreGui
+	local ESPFolder = TargetFolder:FindFirstChild(FruitESPFolderName)
+	local espFruitList = GetSelectedItems(Options.ddFruitESP.Value)
+
+	if table.find(espFruitList, "NONE") then return end
+
+	if table.find(espFruitList, fruitName) then
+		local uuid = fruit:GetAttribute("Uuid") or fruitName
+		local Weight = 0
+		for i = 1, 3 do
+			Weight = fruit:GetAttribute("FruitWeight") or fruit:GetAttribute("PlantWeight") or 0
+
+			if Weight > 0 then break end
+
+			task.wait(1)
+		end
+
+		local scale = fruit:GetAttribute("HiddenNumber") or 0
+		local arg = 0
+		if scale >= 2 then
+			arg = 3
+		elseif scale >= 1.5 then
+			arg = 2
+		elseif scale >= 1 then
+			arg = 1
+		end
+		if Weight > 0 then
+			CreatESP(ESPFolder, fruit, uuid, "🍎" .. fruitName, string.format("Weight : %.2f kg", Weight), arg)
+		else
+			CreatESP(ESPFolder, fruit, uuid, "🍎" .. fruitName, string.format("Scale : %.2f", scale), arg)
 		end
 	end
 end
 
 espFruit = function(State)
-	local FolderName = "FruitESP"
 	local TargetFolder = gethui and gethui() or CoreGui
-	local oldFolder = TargetFolder:FindFirstChild(FolderName)
+	local oldFolder = TargetFolder:FindFirstChild(FruitESPFolderName)
 	if oldFolder then oldFolder:Destroy() end
-
+	if ESPFruitConnection then
+		ESPFruitConnection:Disconnect()
+		ESPFruitConnection = nil
+	end
 	if State ~= true then return end
 
 	local espFruitList = GetSelectedItems(Options.ddFruitESP.Value)
 	if table.find(espFruitList, "NONE") then return end
 
 	local ESPFolder = Instance.new("Folder")
-	ESPFolder.Name = FolderName
+	ESPFolder.Name = FruitESPFolderName
 	ESPFolder.Parent = TargetFolder
 
-	local ClientPlants = workspace:FindFirstChild("ClientPlants")
-	if ClientPlants then
-		for _, obj in pairs(ClientPlants:GetDescendants()) do
-			if obj.Name == "FruitAnchor" then
-				local fruit = obj.Parent
-				if fruit then
-					local fruitName = fruit:GetAttribute("PlantType") or (fruit.Parent and fruit.Parent:GetAttribute("PlantType")) or "Fruit"
-					if table.find(espFruitList, fruitName) then
-						local uuid = fruit:GetAttribute("Uuid") or fruitName
-						local Weight = fruit:GetAttribute("FruitWeight") or 0
-						local scale = fruit:GetAttribute("HiddenNumber") or 0
-						local arg = 0
-						if scale >= 2 then
-							arg = 3
-						elseif scale >= 1.5 then
-							arg = 2
-						elseif scale >= 1 then
-							arg = 1
-						end
-						CreatESP(ESPFolder, fruit, uuid, "🍎" .. fruitName, string.format("Weight : %.2f kg", Weight), arg)
-					end
-				end
-			end
-		end
+	for _, prompt in pairs(CollectionService:GetTagged("HarvestPrompt")) do
+		--if prompt.Enabled then SetespFruit(prompt) end
+		SetespFruit(prompt)
 	end
+	ESPFruitConnection = CollectionService:GetInstanceAddedSignal("HarvestPrompt"):Connect(SetespFruit)
 end
 
 local lastTriggerMinute = -1
@@ -1476,28 +1525,42 @@ SetupTracker = function()
 	local ClientPlants = workspace:FindFirstChild("ClientPlants")
 	if not ClientPlants then return end
 
-	ClientPlants.ChildAdded:Connect(function(newPlant)
-		-- รอให้ Anchor และ Part ต่างๆ โหลดเข้ามาใน Folder ให้ครบก่อน
+	ClientPlants.DescendantAdded:Connect(function(newPlant)
 		task.wait(0.5)
 
-		-- Optimize 3: กวาดหา Anchor แค่รอบเดียวตอนต้นไม้เกิดใหม่
 		for _, obj in ipairs(newPlant:GetDescendants()) do
-			-- จัดการส่วนต้นไม้
-			if Options.tgHidePlant.Value and obj.Name == "PlantAnchor" then
+			if obj.Name == "PlantAnchor" then
 				local parent = obj.Parent
-				if not parent:FindFirstChild("FruitAnchor") then
+
+				if Options.tgPlantsESP.Value then
+					if parent:GetAttribute("HarvestablePlant") then
+						SetespFruit(obj)
+					else
+						SetespPlant(obj)
+					end
+				end
+
+				if parent:GetAttribute("HarvestablePlant") then
+					if Options.tgHideFruit.Value then
+						for _, sibling in ipairs(obj.Parent:GetChildren()) do
+							SetVisibility(sibling, true)
+						end
+					end
+				else
+					if Options.tgHidePlant.Value then
+						for _, sibling in ipairs(parent:GetChildren()) do
+							SetVisibility(sibling, true)
+						end
+					end
+				end
+			elseif obj.Name == "FruitAnchor" then
+				local parent = obj.Parent
+				if Options.tgFruitESP.Value then SetespFruit(obj) end
+				if Options.tgHideFruit.Value then
 					for _, sibling in ipairs(parent:GetChildren()) do
 						SetVisibility(sibling, true)
 					end
 				end
-
-			-- จัดการส่วนผลไม้
-			elseif Options.tgHideFruit.Value and obj.Name == "FruitAnchor" then
-				--if newPlant:GetAttribute("HarvestablePlant") ~= true then
-				for _, sibling in ipairs(obj.Parent:GetChildren()) do
-					SetVisibility(sibling, true)
-				end
-				--end
 			end
 		end
 	end)

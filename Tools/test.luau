@@ -1,18 +1,11 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
-local GetShopData = RemoteEvents:WaitForChild("GetShopData")
-
-local args = {
-	"SeedShop",
-}
-local SeedShop = GetShopData:InvokeServer(unpack(args))
-
-for Name, Seed in pairs(SeedShop.Items) do
-	print(Name)
-	print(Seed.Amount)
+local CollectionService = game:GetService("CollectionService")
+local function fff(arg)
+	local fruit = arg.Parent.Parent
+	if fruit then
+		local fruitName = fruit:GetAttribute("PlantType") or (fruit.Parent and fruit.Parent:GetAttribute("PlantType")) or "Fruit"
+		rconsoleprint(fruitName)
+		print(fruitName)
+	end
 end
 
-PlantData = require(game:GetService("ReplicatedStorage").Plants.Definitions.PlantDataDefinitions)
-for PlanrName, _ in pairs(PlantData) do
-	print(PlanrName)
-end
+CollectionService:GetInstanceAddedSignal("HarvestPrompt"):Connect(fff)
