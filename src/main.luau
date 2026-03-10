@@ -485,14 +485,14 @@ PlantsSection:AddToggle("tgPlantsEnable", {
 PlantsSection:AddButton({
 	Title = "Clear Selected Seeds",
 	Callback = function()
-		Options.ddPlantsSeeds:SetValue({})
+		Options.ddPlantsSeeds:SetValue({ ALL = true })
 	end,
 })
 PlantsSection:AddDropdown("ddPlantsSeeds", {
 	Title = "Select Seeds",
 	Values = PlantDataTable,
 	Multi = true,
-	Default = {},
+	Default = { "ALL" },
 	Searchable = true,
 	Callback = function(Value)
 		if QuickSave then QuickSave() end
@@ -833,7 +833,7 @@ espSection:AddToggle("tgPlantsESP", {
 	Title = "ESP Plants",
 	Default = false,
 	Callback = function(Value)
-		espPlants(Value)
+		if espPlants then espPlants(Value) end
 		if QuickSave then QuickSave() end
 	end,
 })
@@ -858,7 +858,7 @@ espSection:AddToggle("tgFruitESP", {
 	Title = "ESP Fruit",
 	Default = false,
 	Callback = function(Value)
-		espFruit(Value)
+		if espFruit then espFruit(Value) end
 		if QuickSave then QuickSave() end
 	end,
 })
