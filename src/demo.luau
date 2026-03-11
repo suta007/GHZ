@@ -5,7 +5,7 @@ local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.
 local CollapsibleAddon = loadstring(game:HttpGet("https://raw.githubusercontent.com/suta007/Lua_EfHub/refs/heads/master/Core/CollapsibleSection.lua"))()
 CollapsibleAddon(Fluent)
 
-local fVersion = "2569.03.09-10.22"
+local fVersion = "2569.03.09-10.54"
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -53,6 +53,8 @@ local isProcessing = false
 local HarvestPause = false
 local isHarvesting = false
 local isQuestClaiming = false
+local isRemovePlants = false
+local isRemoveCrops = false
 --End of Control Variable
 local NewPlayer
 local QuickSave, GetSelectedItems, TweenToTarget, ParseFruitUuid, SetNoClip, SafeTeleport
@@ -62,11 +64,14 @@ local processQueue
 local InitializePlotData, GetRandomPlantPosition, ResetControlVariable
 local RemoteNotification, RemoteReplicaSet
 local ApplyAntiLag, RestoreAntiLag, SetVisibility, HidePlant, HideFruit, UpdateVisibilityFromAnchor
-local CreatESP, espPlants, espFruit, SetespPlant, SetespFruit, espInit
+local CreatESP, espPlants, espFruit, SetespPlant, SetespFruit
 local PlantsESPFolderName = "PlantsESP"
 local FruitESPFolderName = "FruitESP"
 local ESPFruitConnection
 local bGuiSession = {}
+
+local GetHarvestConfig, GetRemoveConfig
+local RemovePlants, RemoveCrops
 
 local isAntiLag = false
 
@@ -302,7 +307,7 @@ end
 --MySpawnPoint = MySpawn:GetPivot()
 
 TweenToTarget = function(targetCFrame, speed)
-	local character = game.Players.LocalPlayer.Character
+	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 	if not character then return false end
 	local rootPart = character:FindFirstChild("HumanoidRootPart")
 	if not rootPart then return false end
@@ -489,14 +494,14 @@ PlantsSection:AddToggle("tgPlantsEnable", {
 PlantsSection:AddButton({
 	Title = "Clear Selected Seeds",
 	Callback = function()
-		Options.ddPlantsSeeds:SetValue({ ALL = true })
+		Options.ddPlantsSeeds:SetValue({})
 	end,
 })
 PlantsSection:AddDropdown("ddPlantsSeeds", {
 	Title = "Select Seeds",
 	Values = PlantDataTable,
 	Multi = true,
-	Default = { "ALL" },
+	Default = {},
 	Searchable = true,
 	Callback = function(Value)
 		if QuickSave then QuickSave() end
@@ -522,6 +527,7 @@ HarvestSection:AddToggle("tgHarvestEnable", {
 		if not Value then isHarvesting = false end
 	end,
 })
+
 HarvestSection:AddDivider()
 
 HarvestSection:AddButton({
@@ -598,7 +604,7 @@ HarvestSection:AddDivider()
 HarvestSection:AddDropdown("ddRipeness", {
 	Title = "Ripeness Stage",
 	Values = { "ALL", "Unripe", "Ripened", "Lush" },
-	Default = { "ALL" },
+	Default = { "Lush" },
 	Multi = true,
 	Callback = function(Value)
 		if QuickSave then QuickSave() end
@@ -759,6 +765,227 @@ QuestSection:AddToggle("tgQuestEnable", {
 	end,
 })
 
+local RemoveSection = Tabs.Auto:AddCollapsibleSection("Remove Plants", false)
+RemoveSection:AddToggle("tgRemovePlantsEnable", {
+	Title = "Auto Remove Plants",
+	Default = false,
+	Callback = function(Value)
+		--[[ 		if Value then table.insert(actionQueue, {
+			FuncName = RemovePlants,
+		}) end ]]
+		if QuickSave then QuickSave() end
+	end,
+})
+RemoveSection:AddButton({
+	Title = "Clear Selected Plants",
+	Callback = function()
+		Options.ddRemovePlants:SetValue({})
+	end,
+})
+RemoveSection:AddDropdown("ddRemovePlants", {
+	Title = "Select Remove Plants",
+	Values = PlantDataTable,
+	Default = {},
+	Multi = true,
+	Searchable = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+RemoveSection:AddDropdown("ddRemovePlantsScale", {
+	Title = "Plants Scale Threshold",
+	Values = { "Below", "Above" },
+	Default = "Below",
+	Multi = false,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+RemoveSection:AddInput("ipRemovePlantsScale", {
+	Title = "Plants Scale",
+	Default = 0,
+	Numeric = true,
+	Finished = false,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+local RemoveFruitSection = Tabs.Auto:AddCollapsibleSection("Remove Fruit", false)
+RemoveFruitSection:AddToggle("tgRemoveFruitEnable", {
+	Title = "Auto Remove Fruit",
+	Default = false,
+	Callback = function(Value)
+		--[[ 		if Value then table.insert(actionQueue, {
+			FuncName = RemoveCrops,
+		}) end ]]
+		if QuickSave then QuickSave() end
+	end,
+})
+
+RemoveFruitSection:AddDivider()
+
+RemoveFruitSection:AddButton({
+	Title = "Clear Selected Remove Crops",
+	Callback = function()
+		Options.ddRemoveCrops:SetValue({ ALL = true })
+	end,
+})
+RemoveFruitSection:AddDropdown("ddRemoveCrops", {
+	Title = "Select Remove Crops",
+	Values = PlantDataTable,
+	Multi = true,
+	Default = { "ALL" },
+	Searchable = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+RemoveFruitSection:AddButton({
+	Title = "Clear Backlist Remove Crops",
+	Callback = function()
+		Options.ddRemoveBlackCrops:SetValue({ NONE = true })
+	end,
+})
+RemoveFruitSection:AddDropdown("ddRemoveBlackCrops", {
+	Title = "Blacklist Remove Crops",
+	Values = PlantDataBackTable,
+	Multi = true,
+	Default = { "NONE" },
+	Searchable = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+RemoveFruitSection:AddDivider()
+RemoveFruitSection:AddButton({
+	Title = "Clear Selected Mutant",
+	Callback = function()
+		Options.ddRemoveMutants:SetValue({ ALL = true })
+	end,
+})
+
+RemoveFruitSection:AddDropdown("ddRemoveMutants", {
+	Title = "Select Mutants",
+	Values = MutationDataTable,
+	Multi = true,
+	Default = { "ALL" },
+	Searchable = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+RemoveFruitSection:AddButton({
+	Title = "Clear Backlist Mutant",
+	Callback = function()
+		Options.ddRemoveBackMutants:SetValue({ NONE = true })
+	end,
+})
+
+RemoveFruitSection:AddDropdown("ddRemoveBackMutants", {
+	Title = "Backlist Mutants",
+	Values = MutationDataBackTable,
+	Multi = true,
+	Default = { "NONE" },
+	Searchable = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+RemoveFruitSection:AddDivider()
+RemoveFruitSection:AddDropdown("ddRemoveRipeness", {
+	Title = "Ripeness Stage",
+	Values = { "ALL", "Unripe", "Ripened", "Lush" },
+	Default = { "ALL" },
+	Multi = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+RemoveFruitSection:AddInput("ipRemoveRipenessMulti", {
+	Title = "Ripeness Multiplier",
+	Default = 0,
+	Numeric = false,
+	Finished = false,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+RemoveFruitSection:AddDropdown("ddRemoveBlackRipeness", {
+	Title = "Backlist Ripeness Stage",
+	Values = { "NONE", "Unripe", "Ripened", "Lush" },
+	Default = { "NONE" },
+	Multi = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+RemoveFruitSection:AddDivider()
+RemoveFruitSection:AddDropdown("ddRemoveVariant", {
+	Title = "Variant",
+	Values = { "ALL", "Silver", "Gold" },
+	Default = { "ALL" },
+	Multi = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+RemoveFruitSection:AddDropdown("ddRemoveBackVariant", {
+	Title = "Backlist Variant",
+	Values = { "NONE", "Silver", "Gold" },
+	Default = { "NONE" },
+	Multi = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+RemoveFruitSection:AddDivider()
+RemoveFruitSection:AddDropdown("ddRemoveWeight", {
+	Title = "Weight",
+	Values = { "Below", "Above" },
+	Default = "Below",
+	Multi = false,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+RemoveFruitSection:AddInput("ipRemoveWeight", {
+	Title = "Weight",
+	Default = 0,
+	Numeric = true,
+	Finished = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+RemoveFruitSection:AddDivider()
+RemoveFruitSection:AddDropdown("ddRemoveScale", {
+	Title = "Scale",
+	Values = { "Below", "Above" },
+	Default = "Below",
+	Multi = false,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+RemoveFruitSection:AddInput("ipRemoveScale", {
+	Title = "Scale",
+	Default = 0,
+	Numeric = true,
+	Finished = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+--end of remove
 --รีเซ็ท ตัวแปรที่ใช้ควบคุม
 local MiscSection = Tabs.Misc:AddCollapsibleSection("Misc", false)
 MiscSection:AddButton({
@@ -915,6 +1142,8 @@ ResetControlVariable = function()
 	HarvestPause = false
 	isHarvesting = false
 	isQuestClaiming = false
+	isRemovePlants = false
+	isRemoveCrops = false
 
 	table.clear(HarVestCropsList)
 	table.clear(actionQueue)
@@ -944,64 +1173,106 @@ end)
 
 --[[ Function ]]
 
-CheckHarvestCrops = function(fruit)
-	-- ดึงค่า Attributes ของผลไม้มาเก็บไว้ก่อน เพื่อลดการเรียกฟังก์ชันซ้ำซ้อน
+GetHarvestConfig = function()
+	return {
+		mode = "Harvest",
+		wl = {
+			crops = GetSelectedItems(Options.ddHarvestCrops.Value),
+			mutants = GetSelectedItems(Options.ddHarvestMutants.Value),
+			ripeness = GetSelectedItems(Options.ddRipeness.Value),
+			ripenessMulti = tonumber(Options.ipRipenessMulti.Value) or 0,
+			variant = GetSelectedItems(Options.ddVariant.Value),
+			weightCondition = Options.ddWeight.Value,
+			weightValue = tonumber(Options.ipWeight.Value) or 0,
+			scaleCondition = "", --Options.ddScale.Value,
+			scaleValue = 0, --tonumber(Options.ipScale.Value) or 0,
+		},
+		bl = {
+			crops = GetSelectedItems(Options.ddHarvestBlackCrops.Value),
+			ripeness = GetSelectedItems(Options.ddBlackRipeness.Value),
+			variant = GetSelectedItems(Options.ddBackVariant.Value),
+			mutants = GetSelectedItems(Options.ddHarvestBackMutants.Value),
+		},
+	}
+end
+
+GetRemoveConfig = function()
+	return {
+		mode = "Remove",
+		wl = {
+			crops = GetSelectedItems(Options.ddRemoveCrops.Value),
+			mutants = GetSelectedItems(Options.ddRemoveMutants.Value),
+			ripeness = GetSelectedItems(Options.ddRemoveRipeness.Value),
+			ripenessMulti = tonumber(Options.ipRemoveRipenessMulti.Value) or 0,
+			variant = GetSelectedItems(Options.ddRemoveVariant.Value),
+			weightCondition = Options.ddRemoveWeight.Value,
+			weightValue = tonumber(Options.ipRemoveWeight.Value) or 0,
+			scaleCondition = Options.ddRemoveScale.Value,
+			scaleValue = tonumber(Options.ipRemoveScale.Value) or 0,
+		},
+		bl = {
+			crops = GetSelectedItems(Options.ddRemoveBlackCrops.Value),
+			ripeness = GetSelectedItems(Options.ddRemoveBlackRipeness.Value),
+			variant = GetSelectedItems(Options.ddRemoveBackVariant.Value),
+			mutants = GetSelectedItems(Options.ddRemoveBackMutants.Value),
+		},
+	}
+end
+
+CheckHarvestCrops = function(fruit, config)
 	local fruitName = fruit:GetAttribute("PlantType") or (fruit.Parent and fruit.Parent:GetAttribute("PlantType")) or "Fruit"
 	local fruitRipeness = fruit:GetAttribute("RipenessStage")
 	local fruitVariant = fruit:GetAttribute("Variant")
 	local CropsMutants = fruit:GetAttribute("Mutation")
 
-	-- White list Variables
-	local ddHarvestCropsList = GetSelectedItems(Options.ddHarvestCrops.Value)
-	local ddHarvestMutantsList = GetSelectedItems(Options.ddHarvestMutants.Value)
-	local ddRipenessList = GetSelectedItems(Options.ddRipeness.Value)
-	local ipRipenessMulti = tonumber(Options.ipRipenessMulti.Value)
-	local ddVariantList = GetSelectedItems(Options.ddVariant.Value)
-	local ddWeight = Options.ddWeight.Value
-	local ipWeight = tonumber(Options.ipWeight.Value)
-
-	-- White list Checks
-	if not table.find(ddHarvestCropsList, "ALL") and not table.find(ddHarvestCropsList, fruitName) then return false end
+	if not table.find(config.wl.crops, "ALL") and not table.find(config.wl.crops, fruitName) then return false end
 	if fruit:GetAttribute("Favorited") == true then return false end
-	if not table.find(ddRipenessList, "ALL") and not table.find(ddRipenessList, fruitRipeness) then return false end
-	if ipRipenessMulti ~= 0 and fruit:GetAttribute("RipenessMultiplier") < ipRipenessMulti then return false end
-	if not table.find(ddVariantList, "ALL") and not table.find(ddVariantList, fruitVariant) then return false end
+	if not table.find(config.wl.ripeness, "ALL") and not table.find(config.wl.ripeness, fruitRipeness) then return false end
+	local fruitRipenessMulti = fruit:GetAttribute("RipenessMultiplier")
+	if config.wl.ripenessMulti ~= 0 and (not fruitRipenessMulti or fruitRipenessMulti < config.wl.ripenessMulti) then return false end
+	if not table.find(config.wl.variant, "ALL") and not table.find(config.wl.variant, fruitVariant) then return false end
 
-	if not table.find(ddHarvestMutantsList, "ALL") then
+	if not table.find(config.wl.mutants, "ALL") then
 		if not CropsMutants or CropsMutants == "" then return false end
 		local CropsMutantsTable = string.split(CropsMutants, ",")
 		local isMutantMatch = false
 		for _, mutation in ipairs(CropsMutantsTable) do
-			if table.find(ddHarvestMutantsList, mutation) then isMutantMatch = true end
+			if table.find(config.wl.mutants, mutation) then isMutantMatch = true end
 		end
 		if not isMutantMatch then return false end
 	end
 
-	if ipWeight ~= 0 then
-		local rawWeight = fruit:GetAttribute("FruitWeight")
-		if not rawWeight then return false end
-		local weight = tonumber(rawWeight)
-		if ddWeight == "Below" and weight >= ipWeight then return false end
-		if ddWeight == "Above" and weight <= ipWeight then return false end
+	local rawWeight = fruit:GetAttribute("FruitWeight") or fruit:GetAttribute("PlantWeight")
+	if not rawWeight then
+		if config.mode == "Harvest" then
+			return false
+		elseif config.mode == "Remove" then
+			if config.wl.scaleValue ~= 0 then
+				local rawScale = fruit:GetAttribute("HiddenNumber")
+				if not rawScale then return false end
+				local scale = tonumber(rawScale)
+				if config.wl.scaleCondition == "Below" and scale >= config.wl.scaleValue then return false end
+				if config.wl.scaleCondition == "Above" and scale <= config.wl.scaleValue then return false end
+			end
+		end
+	else
+		if config.wl.weightValue ~= 0 then
+			local weight = tonumber(rawWeight)
+			if config.wl.weightCondition == "Below" and weight >= config.wl.weightValue then return false end
+			if config.wl.weightCondition == "Above" and weight <= config.wl.weightValue then return false end
+		end
 	end
 
-	-- Black list Variables
-	local ddHarvestBlackCropsList = GetSelectedItems(Options.ddHarvestBlackCrops.Value)
-	local ddBlackRipenessList = GetSelectedItems(Options.ddBlackRipeness.Value)
-	local ddHarvestBackVariantList = GetSelectedItems(Options.ddBackVariant.Value)
-	local ddHarvestBackMutantsList = GetSelectedItems(Options.ddHarvestBackMutants.Value)
+	if not table.find(config.bl.crops, "NONE") and table.find(config.bl.crops, fruitName) then return false end
+	if not table.find(config.bl.ripeness, "NONE") and table.find(config.bl.ripeness, fruitRipeness) then return false end
+	if not table.find(config.bl.variant, "NONE") and table.find(config.bl.variant, fruitVariant) then return false end
 
-	-- Black list Checks (แก้ไข Logic Bug แล้ว)
-	if not table.find(ddHarvestBlackCropsList, "NONE") and table.find(ddHarvestBlackCropsList, fruitName) then return false end
-	if not table.find(ddBlackRipenessList, "NONE") and table.find(ddBlackRipenessList, fruitRipeness) then return false end
-	if not table.find(ddHarvestBackVariantList, "NONE") and table.find(ddHarvestBackVariantList, fruitVariant) then return false end -- แก้ไขเอา not ออก
-
-	if not table.find(ddHarvestBackMutantsList, "NONE") then
+	if not table.find(config.bl.mutants, "NONE") then
 		if CropsMutants and CropsMutants ~= "" then
 			local CropsMutantsTable = string.split(CropsMutants, ",")
 			local isBackMutantMatch = false
 			for _, mutation in ipairs(CropsMutantsTable) do
-				if table.find(ddHarvestBackMutantsList, mutation) then isBackMutantMatch = true end
+				if table.find(config.bl.mutants, mutation) then isBackMutantMatch = true end
 			end
 			if isBackMutantMatch then return false end
 		end
@@ -1015,11 +1286,12 @@ ScanCrops = function()
 	table.clear(HarVestCropsList)
 
 	-- 1. ค้นหาผ่าน Tag ที่ปุ่มกด
+	local dynHarvestConfig = GetHarvestConfig()
 	for _, prompt in pairs(CollectionService:GetTagged("HarvestPrompt")) do
 		if prompt.Enabled then
 			local fruit = prompt.Parent.Parent -- ย้อนกลับไปหา Model หลัก
 
-			if CheckHarvestCrops(fruit) then table.insert(HarVestCropsList, fruit) end
+			if CheckHarvestCrops(fruit, dynHarvestConfig) then table.insert(HarVestCropsList, fruit) end
 		end
 	end
 
@@ -1214,18 +1486,20 @@ processQueue = function()
 
 	while #actionQueue > 0 do
 		local taskData = table.remove(actionQueue, 1)
-		local success, _ = pcall(function()
+		--local success, _ = pcall(function()
+		pcall(function()
 			if taskData.args then
 				taskData.FuncName(taskData.args)
 			else
 				taskData.FuncName()
 			end
 		end)
-
+		--[[
 		if not success then
 			table.insert(actionQueue, taskData)
 			task.wait(2)
 		end
+		]]
 	end
 	isProcessing = false
 	HarvestPause = false
@@ -1431,6 +1705,117 @@ espFruit = function(State)
 	ESPFruitConnection = CollectionService:GetInstanceAddedSignal("HarvestPrompt"):Connect(SetespFruit)
 end
 
+RemovePlants = function()
+	if not Options.tgRemovePlantsEnable.Value or isRemovePlants then return end
+	local RemovePlantsList = GetSelectedItems(Options.ddRemovePlants.Value)
+	local RemovePlantsScale = Options.ddRemovePlantsScale.Value
+	local RemovePlantsScaleValue = tonumber(Options.ipRemovePlantsScale.Value) or 0
+
+	local ClientPlants = workspace:FindFirstChild("ClientPlants")
+	local Backpack = LocalPlayer.Backpack
+	local Shovel = Backpack:FindFirstChild("Shovel", true) or Character:FindFirstChild("Shovel", true)
+	local RemovePlant = RemoteEvents.RemovePlant
+	local function CheckPlantsScale(cPlant)
+		local rawScale = cPlant:GetAttribute("HiddenNumber")
+		if not rawScale then return false end
+		local scale = tonumber(rawScale)
+		if RemovePlantsScale == "Below" then
+			return scale < RemovePlantsScaleValue
+		elseif RemovePlantsScale == "Above" then
+			return scale > RemovePlantsScaleValue
+		end
+		return false
+	end
+	if ClientPlants then
+		isRemovePlants = true
+		for _, plant in pairs(ClientPlants:GetChildren()) do
+			if not Options.tgRemovePlantsEnable.Value then
+				isRemovePlants = false
+				return
+			end
+			local PlantType = plant:GetAttribute("PlantType")
+			if PlantType then
+				if table.find(RemovePlantsList, "ALL") or table.find(RemovePlantsList, PlantType) then
+					if RemovePlantsScaleValue == 0 or CheckPlantsScale(plant) then
+						pcall(function()
+							Humanoid:UnequipTools()
+						end)
+						task.wait()
+						Humanoid:EquipTool(Shovel)
+						task.wait()
+						local Uuid = plant:GetAttribute("Uuid")
+
+						local targetCFrame = CFrame.new(plant:GetPivot().Position + Vector3.new(3, 0, 4))
+						TweenToTarget(targetCFrame, 100)
+						RemovePlant:FireServer(Uuid)
+						task.wait()
+					end
+				end
+			end
+		end
+		isRemovePlants = false
+	end
+end
+
+RemoveCrops = function()
+	if not Options.tgRemoveFruitEnable.Value or isRemoveCrops then return end
+	local RemoveCropsList = GetSelectedItems(Options.ddRemoveCrops.Value)
+	local ClientPlants = workspace:FindFirstChild("ClientPlants")
+	local Backpack = LocalPlayer.Backpack
+	local Shovel = Backpack:FindFirstChild("Shovel", true) or Character:FindFirstChild("Shovel", true)
+	local RemovePlant = RemoteEvents.RemovePlant
+
+	if ClientPlants then
+		local dynRemoveConfig = GetRemoveConfig()
+		isRemoveCrops = true
+		for _, plant in pairs(ClientPlants:GetChildren()) do
+			if not Options.tgRemoveFruitEnable.Value then
+				isRemoveCrops = false
+				return
+			end
+			local PlantType = plant:GetAttribute("PlantType")
+			if PlantType then
+				if table.find(RemoveCropsList, "ALL") or table.find(RemoveCropsList, PlantType) then
+					local CropsTable = {}
+					if plant:GetAttribute("HarvestablePlant") then
+						CropsTable = { plant }
+					else
+						CropsTable = plant:GetChildren()
+					end
+					for _, crop in pairs(CropsTable) do
+						if not Options.tgRemoveFruitEnable.Value then
+							isRemoveCrops = false
+							return
+						end
+						if crop:IsA("Model") and CheckHarvestCrops(crop, dynRemoveConfig) then
+							pcall(function()
+								Humanoid:UnequipTools()
+							end)
+							task.wait()
+							Humanoid:EquipTool(Shovel)
+							task.wait()
+
+							local targetCFrame = CFrame.new(crop:GetPivot().Position + Vector3.new(3, 0, 4))
+							TweenToTarget(targetCFrame, 100)
+
+							local gUuid, gindex = ParseFruitUuid(crop:GetAttribute("Uuid"))
+							local args = {}
+							if gindex then
+								args = { gUuid, gindex }
+							else
+								args = { gUuid }
+							end
+							RemovePlant:FireServer(unpack(args))
+							task.wait()
+						end
+					end
+				end
+			end
+		end
+		isRemoveCrops = false
+	end
+end
+
 local lastTriggerMinute = -1
 NewPlayer = function()
 	local timeData = os.date("!*t")
@@ -1482,16 +1867,35 @@ end)
 task.spawn(function()
 	while true do
 		task.wait(0.2)
-		if not Options.tgHarvestEnable.Value then continue end
-		if #HarVestCropsList == 0 then ScanCrops() end
+		if Options.tgHarvestEnable.Value then
+			if #HarVestCropsList == 0 then
+				ScanCrops()
+			elseif not (HarvestPause or isProcessing or isHarvesting) then
+				HarvestCrops()
+			end
+		end
 	end
 end)
 
 task.spawn(function()
 	while true do
-		task.wait(0.2)
-		if not Options.tgHarvestEnable.Value or HarvestPause or isProcessing or isHarvesting then continue end
-		HarvestCrops()
+		local inQueueRemoveCrops = false
+		local inQueueRemovePlants = false
+
+		for _, action in ipairs(actionQueue) do
+			if action.FuncName == RemoveCrops then inQueueRemoveCrops = true end
+			if action.FuncName == RemovePlants then inQueueRemovePlants = true end
+		end
+
+		if Options.tgRemoveFruitEnable.Value and not inQueueRemoveCrops and not isRemoveCrops then table.insert(actionQueue, {
+			FuncName = RemoveCrops,
+		}) end
+
+		if Options.tgRemovePlantsEnable.Value and not inQueueRemovePlants and not isRemovePlants then table.insert(actionQueue, {
+			FuncName = RemovePlants,
+		}) end
+
+		task.wait(1)
 	end
 end)
 
