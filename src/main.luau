@@ -1,3 +1,6 @@
+-- ==========================================
+-- 1. Services, Requirements & Variables
+-- ==========================================
 --!nocheck
 local Fluent = loadstring(game:HttpGet("https://raw.githubusercontent.com/suta007/Lua_EfHub/refs/heads/master/FluentData/Renewed/Fluent.luau", true))()
 local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/SaveManager.luau"))()
@@ -5,7 +8,7 @@ local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.
 local CollapsibleAddon = loadstring(game:HttpGet("https://raw.githubusercontent.com/suta007/Lua_EfHub/refs/heads/master/Core/CollapsibleSection.lua"))()
 CollapsibleAddon(Fluent)
 
-local fVersion = "2569.03.11-23.09"
+local fVersion = "2569.03.12-21.08"
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -49,36 +52,43 @@ local Pos = {
 local isBuyingSeed, isBuyingGear, isPlanting = false, false, false
 local HarVestCropsList = {}
 local actionQueue = {}
+local backupQueue = {}
 local isProcessing = false
 local HarvestPause = false
 local isHarvesting = false
 local isQuestClaiming = false
 local isRemovePlants = false
 local isRemoveCrops = false
+
+local MannyMishapEnable = false
 --End of Control Variable
-local NewPlayer
-local QuickSave, GetSelectedItems, TweenToTarget, ParseFruitUuid, SetNoClip, SafeTeleport
-local CheckHarvestCrops, ScanCrops, HarvestCrops
-local AutoBuySeed, AutoBuyGear, AutoSellCrops, AutoClaimQuest, AutoPlantsSeeds
-local processQueue
-local InitializePlotData, GetRandomPlantPosition, ResetControlVariable
-local RemoteNotification, RemoteReplicaSet
-local ApplyAntiLag, RestoreAntiLag, SetVisibility, HidePlant, HideFruit, UpdateVisibilityFromAnchor
-local CreatESP, espPlants, espFruit, SetespPlant, SetespFruit
 local PlantsESPFolderName = "PlantsESP"
 local FruitESPFolderName = "FruitESP"
 local ESPFruitConnection
 local bGuiSession = {}
-
-local GetHarvestConfig, GetRemoveConfig
-local RemovePlants, RemoveCrops
-
-local isAntiLag = false
-
-local RNG = Random.new()
 local MyPlantableParts = {}
 local MyPlot, MySpawn, MySpawnPoint
+local isAntiLag = false
 
+local QuickSave, GetSelectedItems, TweenToTarget, ParseFruitUuid, SetNoClip, SafeTeleport
+local CheckHarvestCrops, ScanCrops, HarvestCrops
+local AutoBuyItem, AutoBuySeed, AutoBuyGear, AutoSellCrops, AutoClaimQuest, AutoPlantsSeeds
+local processQueue
+local InitializePlotData, GetRandomPlantPosition, ResetControlVariable, LockDownControlVariable
+local RemoteNotification, RemoteReplicaSet
+local ApplyAntiLag, RestoreAntiLag, SetVisibility, HidePlant, HideFruit, UpdateVisibilityFromAnchor
+local CreatESP, espPlants, espFruit, SetespPlant, SetespFruit
+
+local GetHarvestConfig, GetRemoveConfig
+local ProcessRemove, RemovePlants, RemoveCrops, SetupTracker
+
+local RNG = Random.new()
+
+local Options = Fluent.Options
+
+-- ==========================================
+-- 2. Utility Functions
+-- ==========================================
 local function ShowData(tbl, indent)
 	local lclIndent = indent or 0
 	local spacing = string.rep("  ", lclIndent)
@@ -133,6 +143,8 @@ local SettingCache = {
 	WaterReflectance = Terrain.WaterReflectance,
 	WaterTransparency = Terrain.WaterTransparency,
 }
+local AntiLagConnections = {}
+
 ApplyAntiLag = function()
 	-- Lighting
 	Lighting.GlobalShadows = false
@@ -148,9 +160,19 @@ ApplyAntiLag = function()
 	Terrain.WaterReflectance = 0
 	Terrain.WaterTransparency = 1
 
-	-- Workspace optimize
-	for i, v in ipairs(workspace:GetDescendants()) do
-		if i % 200 == 0 then task.wait() end
+	-- Workspace optimize: Targeted Folders Only
+	local targetFolders = {
+		workspace:FindFirstChild("ClientPlants"),
+		workspace:FindFirstChild("MapPhysical"),
+	}
+
+	local function ApplyToPart(v)
+		-- ยกเว้นโฟลเดอร์ Shops
+		local mapPhysical = workspace:FindFirstChild("MapPhysical")
+		if mapPhysical then
+			local shops = mapPhysical:FindFirstChild("Shops")
+			if shops and v:IsDescendantOf(shops) then return end
+		end
 
 		if v:IsA("BasePart") then
 			v.Material = Enum.Material.SmoothPlastic
@@ -162,6 +184,24 @@ ApplyAntiLag = function()
 		end
 	end
 
+	for _, folder in ipairs(targetFolders) do
+		if folder then
+			-- Scan current
+			for i, v in ipairs(folder:GetDescendants()) do
+				if i % 200 == 0 then task.wait() end
+				ApplyToPart(v)
+			end
+
+			-- Hook for new elements
+			table.insert(
+				AntiLagConnections,
+				folder.DescendantAdded:Connect(function(v)
+					if isAntiLag then ApplyToPart(v) end
+				end)
+			)
+		end
+	end
+
 	-- Rendering quality (safe)
 	pcall(function()
 		settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
@@ -169,6 +209,12 @@ ApplyAntiLag = function()
 end
 
 RestoreAntiLag = function()
+	-- Clean up connections
+	for _, conn in ipairs(AntiLagConnections) do
+		if conn then conn:Disconnect() end
+	end
+	table.clear(AntiLagConnections)
+
 	-- คืนค่า Lighting
 	Lighting.GlobalShadows = SettingCache.GlobalShadows
 	Lighting.FogEnd = SettingCache.FogEnd
@@ -183,9 +229,19 @@ RestoreAntiLag = function()
 	Terrain.WaterReflectance = SettingCache.WaterReflectance
 	Terrain.WaterTransparency = SettingCache.WaterTransparency
 
-	-- คืนค่าวัตถุใน Workspace
-	for i, v in ipairs(workspace:GetDescendants()) do
-		if i % 200 == 0 then task.wait() end
+	-- คืนค่าวัตถุใน Workspace: Targeted Folders Only
+	local targetFolders = {
+		workspace:FindFirstChild("ClientPlants"),
+		workspace:FindFirstChild("MapPhysical"),
+	}
+
+	local function RestorePart(v)
+		-- ยกเว้นโฟลเดอร์ Shops
+		local mapPhysical = workspace:FindFirstChild("MapPhysical")
+		if mapPhysical then
+			local shops = mapPhysical:FindFirstChild("Shops")
+			if shops and v:IsDescendantOf(shops) then return end
+		end
 
 		if v:IsA("BasePart") then
 			v.Material = Enum.Material.Plastic
@@ -194,6 +250,15 @@ RestoreAntiLag = function()
 			v.Enabled = true
 		elseif v:IsA("Decal") or v:IsA("Texture") then
 			v.Transparency = 0
+		end
+	end
+
+	for _, folder in ipairs(targetFolders) do
+		if folder then
+			for i, v in ipairs(folder:GetDescendants()) do
+				if i % 200 == 0 then task.wait() end
+				RestorePart(v)
+			end
 		end
 	end
 
@@ -342,10 +407,25 @@ TweenToTarget = function(targetCFrame, speed)
 	local tween = TweenService:Create(rootPart, tweenInfo, { CFrame = finalCFrame })
 
 	tween:Play()
+
+	-- Timeout Protection (Max 5 Sec)
+	local timeout = false
+	task.delay(math.min(tweenTime + 2, 5), function()
+		if tween.PlaybackState == Enum.PlaybackState.Playing then
+			tween:Cancel()
+			timeout = true
+		end
+	end)
+
 	tween.Completed:Wait()
 
 	rootPart.Anchored = true
 	SetNoClip(false)
+
+	if timeout then
+		SafeTeleport(finalCFrame)
+		task.wait(0.2)
+	end
 
 	return true
 end
@@ -359,12 +439,9 @@ SafeTeleport = function(targetCFrame)
 
 	-- 1. เคลียร์สถานะท่านั่งและการเดิน
 	if humanoid then
-		if humanoid.Sit then
-			humanoid.Sit = false
-			humanoid.Jump = true
-			task.wait(0.05)
-		end
-
+		if humanoid.Sit then humanoid.Sit = false end
+		humanoid.Jump = true
+		task.wait(0.05)
 		humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
 	end
 
@@ -388,737 +465,6 @@ ParseFruitUuid = function(rawUuid)
 
 	return baseUuid, finalNumber
 end
-
-local Window = Fluent:CreateWindow({
-	Title = "Garden Horizons",
-	SubTitle = "by EfHub v " .. fVersion,
-	TabWidth = 100,
-	Size = UDim2.fromOffset(1400, 800),
-	Resize = true,
-	MinSize = Vector2.new(580, 460),
-	Acrylic = true,
-	Theme = "Darker",
-	MinimizeKey = Enum.KeyCode.RightControl,
-})
-
-local Tabs = {
-	Main = Window:AddTab({ Title = "Main", Icon = "house" }),
-	Shop = Window:AddTab({ Title = "Shop", Icon = "shopping-cart" }),
-	Auto = Window:AddTab({ Title = "Automatic", Icon = "bot" }),
-	Misc = Window:AddTab({ Title = "Misc", Icon = "component" }),
-	Settings = Window:AddTab({ Title = "Settings", Icon = "settings" }),
-}
-local Options = Fluent.Options
-Window:SelectTab(1)
-
-local function getShopData(path)
-	local names = { "ALL" }
-	for _, item in pairs(require(ShopData[path]).ShopData) do
-		table.insert(names, item.Name)
-	end
-	return names
-end
-
-local SeedShopTable = getShopData("SeedShopData")
-local GearShopTable = getShopData("GearShopData")
-
-local PlantDataTable = { "ALL" }
-local SeedDataTable = { "ALL" }
-for PlantName, _ in pairs(require(PlantData)) do
-	table.insert(PlantDataTable, PlantName)
-	table.insert(SeedDataTable, PlantName .. " Seed")
-end
-local MutationDataTable = { "ALL" }
-for MutationName, _ in pairs(require(MutationData)) do
-	table.insert(MutationDataTable, MutationName)
-end
-
-local PlantDataBackTable = table.clone(PlantDataTable)
-PlantDataBackTable[1] = "NONE"
-
-local SeedDataBackTable = table.clone(SeedDataTable)
-SeedDataBackTable[1] = "NONE"
-
-local MutationDataBackTable = table.clone(MutationDataTable)
-MutationDataBackTable[1] = "NONE"
-
-------------------------------------------------------
--- ระบบปุ่มลอย (Floating Button) สำหรับ Android
-------------------------------------------------------
-local ToggleGui = Instance.new("ScreenGui")
-local ToggleButton = Instance.new("TextButton")
-
-ToggleGui.Name = "EfHub_Toggle"
-ToggleGui.Parent = game:GetService("CoreGui")
-ToggleGui.ResetOnSpawn = false
-
-ToggleButton.Name = "ToggleButton"
-ToggleButton.Parent = ToggleGui
-ToggleButton.BackgroundColor3 = Color3.fromRGB(20, 20, 100)
-ToggleButton.Position = UDim2.new(0, 10, 0.5, 0)
-ToggleButton.Size = UDim2.new(0, 50, 0, 50)
-ToggleButton.Text = "EfHub"
-ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleButton.Draggable = true
-
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 25)
-UICorner.Parent = ToggleButton
-
-ToggleButton.MouseButton1Click:Connect(function()
-	pcall(function()
-		if Window.GUI then
-			Window.GUI.Enabled = not Window.GUI.Enabled
-		elseif Window.Instance then
-			Window.Instance.Enabled = not Window.Instance.Enabled
-		elseif Window.Root then
-			Window.Root.Visible = not Window.Root.Visible
-		end
-	end)
-end)
-local PlantsSection = Tabs.Main:AddCollapsibleSection("Plants", false)
-PlantsSection:AddToggle("tgPlantsEnable", {
-	Title = "Auto Plants",
-	Default = false,
-	Callback = function(Value)
-		if Value then
-			table.insert(actionQueue, {
-				FuncName = AutoPlantsSeeds,
-			})
-		else
-			isPlanting = false
-		end
-		if QuickSave then QuickSave() end
-	end,
-})
-PlantsSection:AddButton({
-	Title = "Clear Selected Seeds",
-	Callback = function()
-		Options.ddPlantsSeeds:SetValue({})
-	end,
-})
-PlantsSection:AddDropdown("ddPlantsSeeds", {
-	Title = "Select Seeds",
-	Values = PlantDataTable,
-	Multi = true,
-	Default = {},
-	Searchable = true,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-
-PlantsSection:AddDropdown("ddPlantsPos", {
-	Title = "Select Plants Position",
-	Values = { "Player", "Random" },
-	Default = "Player",
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-
-local HarvestSection = Tabs.Main:AddCollapsibleSection("Harvest", false)
-HarvestSection:AddToggle("tgHarvestEnable", {
-	Title = "Auto Harvest",
-	Default = false,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-		table.clear(HarVestCropsList)
-		if not Value then isHarvesting = false end
-	end,
-})
-
-HarvestSection:AddDivider()
-
-HarvestSection:AddButton({
-	Title = "Clear Selected Crops",
-	Callback = function()
-		Options.ddHarvestCrops:SetValue({ ALL = true })
-	end,
-})
-HarvestSection:AddDropdown("ddHarvestCrops", {
-	Title = "Select Crops",
-	Values = PlantDataTable,
-	Multi = true,
-	Default = { "ALL" },
-	Searchable = true,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-HarvestSection:AddButton({
-	Title = "Clear Backlist Crops",
-	Callback = function()
-		Options.ddHarvestBlackCrops:SetValue({ NONE = true })
-	end,
-})
-HarvestSection:AddDropdown("ddHarvestBlackCrops", {
-	Title = "Blacklist Crops",
-	Values = PlantDataBackTable,
-	Multi = true,
-	Default = { "NONE" },
-	Searchable = true,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-
-HarvestSection:AddDivider()
-HarvestSection:AddButton({
-	Title = "Clear Selected Mutant",
-	Callback = function()
-		Options.ddHarvestMutants:SetValue({ ALL = true })
-	end,
-})
-
-HarvestSection:AddDropdown("ddHarvestMutants", {
-	Title = "Select Mutants",
-	Values = MutationDataTable,
-	Multi = true,
-	Default = { "ALL" },
-	Searchable = true,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-
-HarvestSection:AddButton({
-	Title = "Clear Backlist Mutant",
-	Callback = function()
-		Options.ddHarvestBackMutants:SetValue({ NONE = true })
-	end,
-})
-
-HarvestSection:AddDropdown("ddHarvestBackMutants", {
-	Title = "Backlist Mutants",
-	Values = MutationDataBackTable,
-	Multi = true,
-	Default = { "NONE" },
-	Searchable = true,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-
-HarvestSection:AddDivider()
-HarvestSection:AddDropdown("ddRipeness", {
-	Title = "Ripeness Stage",
-	Values = { "ALL", "Unripe", "Ripened", "Lush" },
-	Default = { "Lush" },
-	Multi = true,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-
-HarvestSection:AddInput("ipRipenessMulti", {
-	Title = "Ripeness Multiplier",
-	Default = 3,
-	Numeric = false,
-	Finished = false,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-
-HarvestSection:AddDropdown("ddBlackRipeness", {
-	Title = "Backlist Ripeness Stage",
-	Values = { "NONE", "Unripe", "Ripened", "Lush" },
-	Default = { "NONE" },
-	Multi = true,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-
-HarvestSection:AddDivider()
-HarvestSection:AddDropdown("ddVariant", {
-	Title = "Variant",
-	Values = { "ALL", "Silver", "Gold" },
-	Default = { "ALL" },
-	Multi = true,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-HarvestSection:AddDropdown("ddBackVariant", {
-	Title = "Backlist Variant",
-	Values = { "NONE", "Silver", "Gold" },
-	Default = { "NONE" },
-	Multi = true,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-HarvestSection:AddDivider()
-HarvestSection:AddDropdown("ddWeight", {
-	Title = "Weight",
-	Values = { "Below", "Above" },
-	Default = "Below",
-	Multi = false,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-HarvestSection:AddInput("ipWeight", {
-	Title = "Weight",
-	Default = 0,
-	Numeric = true,
-	Finished = true,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-
-local SellSection = Tabs.Main:AddCollapsibleSection("Sell", false)
-SellSection:AddToggle("tgSellCropsEnable", {
-	Title = "Sell",
-	Default = false,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-		--if not Value then isProcessing = false end
-	end,
-})
-
-local function tempBuySeed()
-	local SeedShop = GetShopData:InvokeServer("SeedShop")
-	if not SeedShop then return end
-	table.insert(actionQueue, {
-		FuncName = AutoBuySeed,
-		args = SeedShop.Items,
-	})
-end
-
-local BuySeedSection = Tabs.Shop:AddCollapsibleSection("Buy Seed", false)
-BuySeedSection:AddToggle("tgBuySeedEnable", {
-	Title = "Auto Buy Seed",
-	Default = false,
-	Callback = function(Value)
-		if Value then
-			if tempBuySeed then tempBuySeed() end
-		end
-		if QuickSave then QuickSave() end
-	end,
-})
-BuySeedSection:AddButton({
-	Title = "Clear Selected Seeds",
-	Callback = function()
-		Options.ddBuySeeds:SetValue({})
-	end,
-})
-BuySeedSection:AddDropdown("ddBuySeeds", {
-	Title = "Select Seeds",
-	Values = SeedShopTable,
-	Multi = true,
-	Default = {},
-	Searchable = true,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-
-local function tempBuyGear()
-	local GearShop = GetShopData:InvokeServer("GearShop")
-	if not GearShop then return end
-	table.insert(actionQueue, {
-		FuncName = AutoBuyGear,
-		args = GearShop.Items,
-	})
-end
-
-local BuyGearSection = Tabs.Shop:AddCollapsibleSection("Buy Gear", false)
-BuyGearSection:AddToggle("tgBuyGearEnable", {
-	Title = "Auto Buy Gear",
-	Default = false,
-	Callback = function(Value)
-		if Value then
-			if tempBuyGear then tempBuyGear() end
-		end
-		if QuickSave then QuickSave() end
-	end,
-})
-
-BuyGearSection:AddButton({
-	Title = "Clear Selected Gears",
-	Callback = function()
-		Options.ddBuyGear:SetValue({})
-	end,
-})
-BuyGearSection:AddDropdown("ddBuyGear", {
-	Title = "Select Gears",
-	Values = GearShopTable,
-	Multi = true,
-	Default = {},
-	Searchable = true,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-
-local QuestSection = Tabs.Auto:AddCollapsibleSection("Quest", false)
-QuestSection:AddToggle("tgQuestEnable", {
-	Title = "Auto Claim Quest",
-	Default = false,
-	Callback = function(Value)
-		if Value then RemoteEvents:WaitForChild("RequestQuests"):FireServer() end
-		if QuickSave then QuickSave() end
-	end,
-})
-
-local RemoveSection = Tabs.Auto:AddCollapsibleSection("Remove Plants", false)
-RemoveSection:AddToggle("tgRemovePlantsEnable", {
-	Title = "Auto Remove Plants",
-	Default = false,
-	Callback = function(Value)
-		--[[ 		if Value then table.insert(actionQueue, {
-			FuncName = RemovePlants,
-		}) end ]]
-		if QuickSave then QuickSave() end
-	end,
-})
-RemoveSection:AddButton({
-	Title = "Clear Selected Plants",
-	Callback = function()
-		Options.ddRemovePlants:SetValue({})
-	end,
-})
-RemoveSection:AddDropdown("ddRemovePlants", {
-	Title = "Select Remove Plants",
-	Values = PlantDataTable,
-	Default = {},
-	Multi = true,
-	Searchable = true,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-RemoveSection:AddDropdown("ddRemovePlantsScale", {
-	Title = "Plants Scale Threshold",
-	Values = { "Below", "Above" },
-	Default = "Below",
-	Multi = false,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-RemoveSection:AddInput("ipRemovePlantsScale", {
-	Title = "Plants Scale",
-	Default = 0,
-	Numeric = true,
-	Finished = false,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-
-local RemoveFruitSection = Tabs.Auto:AddCollapsibleSection("Remove Fruit", false)
-RemoveFruitSection:AddToggle("tgRemoveFruitEnable", {
-	Title = "Auto Remove Fruit",
-	Default = false,
-	Callback = function(Value)
-		--[[ 		if Value then table.insert(actionQueue, {
-			FuncName = RemoveCrops,
-		}) end ]]
-		if QuickSave then QuickSave() end
-	end,
-})
-
-RemoveFruitSection:AddDivider()
-
-RemoveFruitSection:AddButton({
-	Title = "Clear Selected Remove Crops",
-	Callback = function()
-		Options.ddRemoveCrops:SetValue({ ALL = true })
-	end,
-})
-RemoveFruitSection:AddDropdown("ddRemoveCrops", {
-	Title = "Select Remove Crops",
-	Values = PlantDataTable,
-	Multi = true,
-	Default = { "ALL" },
-	Searchable = true,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-RemoveFruitSection:AddButton({
-	Title = "Clear Backlist Remove Crops",
-	Callback = function()
-		Options.ddRemoveBlackCrops:SetValue({ NONE = true })
-	end,
-})
-RemoveFruitSection:AddDropdown("ddRemoveBlackCrops", {
-	Title = "Blacklist Remove Crops",
-	Values = PlantDataBackTable,
-	Multi = true,
-	Default = { "NONE" },
-	Searchable = true,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-
-RemoveFruitSection:AddDivider()
-RemoveFruitSection:AddButton({
-	Title = "Clear Selected Mutant",
-	Callback = function()
-		Options.ddRemoveMutants:SetValue({ ALL = true })
-	end,
-})
-
-RemoveFruitSection:AddDropdown("ddRemoveMutants", {
-	Title = "Select Mutants",
-	Values = MutationDataTable,
-	Multi = true,
-	Default = { "ALL" },
-	Searchable = true,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-
-RemoveFruitSection:AddButton({
-	Title = "Clear Backlist Mutant",
-	Callback = function()
-		Options.ddRemoveBackMutants:SetValue({ NONE = true })
-	end,
-})
-
-RemoveFruitSection:AddDropdown("ddRemoveBackMutants", {
-	Title = "Backlist Mutants",
-	Values = MutationDataBackTable,
-	Multi = true,
-	Default = { "NONE" },
-	Searchable = true,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-
-RemoveFruitSection:AddDivider()
-RemoveFruitSection:AddDropdown("ddRemoveRipeness", {
-	Title = "Ripeness Stage",
-	Values = { "ALL", "Unripe", "Ripened", "Lush" },
-	Default = { "ALL" },
-	Multi = true,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-
-RemoveFruitSection:AddInput("ipRemoveRipenessMulti", {
-	Title = "Ripeness Multiplier",
-	Default = 0,
-	Numeric = false,
-	Finished = false,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-
-RemoveFruitSection:AddDropdown("ddRemoveBlackRipeness", {
-	Title = "Backlist Ripeness Stage",
-	Values = { "NONE", "Unripe", "Ripened", "Lush" },
-	Default = { "NONE" },
-	Multi = true,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-
-RemoveFruitSection:AddDivider()
-RemoveFruitSection:AddDropdown("ddRemoveVariant", {
-	Title = "Variant",
-	Values = { "ALL", "Silver", "Gold" },
-	Default = { "ALL" },
-	Multi = true,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-RemoveFruitSection:AddDropdown("ddRemoveBackVariant", {
-	Title = "Backlist Variant",
-	Values = { "NONE", "Silver", "Gold" },
-	Default = { "NONE" },
-	Multi = true,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-RemoveFruitSection:AddDivider()
-RemoveFruitSection:AddDropdown("ddRemoveWeight", {
-	Title = "Weight",
-	Values = { "Below", "Above" },
-	Default = "Below",
-	Multi = false,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-RemoveFruitSection:AddInput("ipRemoveWeight", {
-	Title = "Weight",
-	Default = 0,
-	Numeric = true,
-	Finished = true,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-
-RemoveFruitSection:AddDivider()
-RemoveFruitSection:AddDropdown("ddRemoveScale", {
-	Title = "Scale",
-	Values = { "Below", "Above" },
-	Default = "Below",
-	Multi = false,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-RemoveFruitSection:AddInput("ipRemoveScale", {
-	Title = "Scale",
-	Default = 0,
-	Numeric = true,
-	Finished = true,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-
---end of remove
---รีเซ็ท ตัวแปรที่ใช้ควบคุม
-local MiscSection = Tabs.Misc:AddCollapsibleSection("Misc", false)
-MiscSection:AddButton({
-	Title = "Reset Control Variable",
-	Callback = function()
-		if ResetControlVariable then ResetControlVariable() end
-	end,
-})
-local AntiLagSection = Tabs.Misc:AddCollapsibleSection("Anti-Lag", false)
-
-AntiLagSection:AddToggle("tgAntiLag", {
-	Title = "Anti-Lag",
-	Default = false,
-	Callback = function(Value)
-		pcall(function()
-			if Value then
-				ApplyAntiLag()
-				isAntiLag = true
-			else
-				if isAntiLag then RestoreAntiLag() end
-				isAntiLag = false
-			end
-		end)
-		if QuickSave then QuickSave() end
-	end,
-})
-AntiLagSection:AddToggle("tgHideFruit", {
-	Title = "Hide Fruit",
-	Default = false,
-	Callback = function(Value)
-		--pcall(function()
-		HideFruit(Value)
-		--end)
-		if QuickSave then QuickSave() end
-	end,
-})
-
-AntiLagSection:AddToggle("tgHidePlant", {
-	Title = "Hide Plant",
-	Default = false,
-	Callback = function(Value)
-		--pcall(function()
-		HidePlant(Value)
-		--end)
-		if QuickSave then QuickSave() end
-	end,
-})
-
-local NewPlayerSection = Tabs.Misc:AddCollapsibleSection("New Player", false)
-NewPlayerSection:AddInput("ipNewDelay", {
-	Title = "Delay timmes (Minute)",
-	Default = 5,
-	Numeric = true,
-	Finished = true,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-NewPlayerSection:AddToggle("tgNewAutoSell", {
-	Title = "Auto Sell",
-	Default = false,
-	Callback = function(Value)
-		--if Value then
-		--HarvestPause = true
-		--table.clear(HarVestCropsList)
-		--table.insert(actionQueue, {
-		--	FuncName = AutoSellCrops,
-		--})
-		--end
-		if QuickSave then QuickSave() end
-	end,
-})
-
-local espSection = Tabs.Misc:AddCollapsibleSection("ESP", false)
-espSection:AddToggle("tgPlantsESP", {
-	Title = "ESP Plants",
-	Default = false,
-	Callback = function(Value)
-		if espPlants then espPlants(Value) end
-		if QuickSave then QuickSave() end
-	end,
-})
-espSection:AddButton({
-	Title = "Clear Selected Plants",
-	Callback = function()
-		Options.ddPlantsESP:SetValue({ NONE = true })
-	end,
-})
-espSection:AddDropdown("ddPlantsESP", {
-	Title = "Select Plants",
-	Values = PlantDataBackTable,
-	Multi = true,
-	Default = { "NONE" },
-	Searchable = true,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-espSection:AddDivider()
-espSection:AddToggle("tgFruitESP", {
-	Title = "ESP Fruit",
-	Default = false,
-	Callback = function(Value)
-		if espFruit then espFruit(Value) end
-		if QuickSave then QuickSave() end
-	end,
-})
-espSection:AddButton({
-	Title = "Clear Selected Fruit",
-	Callback = function()
-		Options.ddFruitESP:SetValue({ NONE = true })
-	end,
-})
-espSection:AddDropdown("ddFruitESP", {
-	Title = "Select Fruit",
-	Values = PlantDataBackTable,
-	Multi = true,
-	Default = { "NONE" },
-	Searchable = true,
-	Callback = function(Value)
-		if QuickSave then QuickSave() end
-	end,
-})
-
-SaveManager:SetLibrary(Fluent)
-InterfaceManager:SetLibrary(Fluent)
-
---SaveManager:SetIgnoreIndexes({})
-InterfaceManager:SetFolder("EfHub")
-SaveManager:SetFolder("EfHub/HRZ")
-
-InterfaceManager:BuildInterfaceSection(Tabs.Settings)
-SaveManager:BuildConfigSection(Tabs.Settings)
 
 QuickSave = function()
 	if not IsLoading then SaveManager:Save("Horizons") end
@@ -1149,29 +495,23 @@ ResetControlVariable = function()
 	table.clear(actionQueue)
 end
 
-task.spawn(function()
-	while not SaveManager.Options.SaveManager_ConfigList do
-		task.wait()
-	end
-	SaveManager.Options.SaveManager_ConfigList:SetValue("EfHub")
-	SaveManager:Load("Horizons")
-	task.wait(1)
-	IsLoading = false
-	Fluent:Notify({
-		Title = "EfHub",
-		Content = "Settings loaded automatically",
-		Duration = 3,
-	})
-end)
+LockDownControlVariable = function()
+	isBuyingSeed = true
+	isBuyingGear = true
+	isPlanting = true
+	isProcessing = true
+	HarvestPause = true
+	isHarvesting = true
+	isQuestClaiming = true
+	isRemovePlants = true
+	isRemoveCrops = true
+	backupQueue = table.clone(actionQueue)
+	table.clear(actionQueue)
+end
 
---[[ Anti-AFK ]]
-
-LocalPlayer.Idled:Connect(function()
-	VirtualUser:CaptureController()
-	VirtualUser:ClickButton2(Vector2.new())
-end)
-
---[[ Function ]]
+-- ==========================================
+-- 3. Core Logic & Automation Functions
+-- ==========================================
 
 GetHarvestConfig = function()
 	return {
@@ -1190,8 +530,8 @@ GetHarvestConfig = function()
 		bl = {
 			crops = GetSelectedItems(Options.ddHarvestBlackCrops.Value),
 			ripeness = GetSelectedItems(Options.ddBlackRipeness.Value),
-			variant = GetSelectedItems(Options.ddBackVariant.Value),
-			mutants = GetSelectedItems(Options.ddHarvestBackMutants.Value),
+			variant = GetSelectedItems(Options.ddBlackVariant.Value),
+			mutants = GetSelectedItems(Options.ddHarvestBlackMutants.Value),
 		},
 	}
 end
@@ -1213,8 +553,8 @@ GetRemoveConfig = function()
 		bl = {
 			crops = GetSelectedItems(Options.ddRemoveBlackCrops.Value),
 			ripeness = GetSelectedItems(Options.ddRemoveBlackRipeness.Value),
-			variant = GetSelectedItems(Options.ddRemoveBackVariant.Value),
-			mutants = GetSelectedItems(Options.ddRemoveBackMutants.Value),
+			variant = GetSelectedItems(Options.ddRemoveBlackVariant.Value),
+			mutants = GetSelectedItems(Options.ddRemoveBlackMutants.Value),
 		},
 	}
 end
@@ -1270,11 +610,11 @@ CheckHarvestCrops = function(fruit, config)
 	if not table.find(config.bl.mutants, "NONE") then
 		if CropsMutants and CropsMutants ~= "" then
 			local CropsMutantsTable = string.split(CropsMutants, ",")
-			local isBackMutantMatch = false
+			local isBlackMutantMatch = false
 			for _, mutation in ipairs(CropsMutantsTable) do
-				if table.find(config.bl.mutants, mutation) then isBackMutantMatch = true end
+				if table.find(config.bl.mutants, mutation) then isBlackMutantMatch = true end
 			end
-			if isBackMutantMatch then return false end
+			if isBlackMutantMatch then return false end
 		end
 	end
 
@@ -1352,7 +692,7 @@ HarvestCrops = function()
 end
 
 AutoSellCrops = function()
-	if not Options.tgSellCropsEnable.Value then return end
+	if not (Options.tgSellCropsEnable.Value or Options.tgNewAutoSell) then return end
 	SafeTeleport(Pos.Sell)
 	task.wait(0.3)
 	local args = {
@@ -1365,53 +705,46 @@ AutoSellCrops = function()
 	HarvestPause = false
 end
 
-AutoBuySeed = function(Items)
-	if not Options.tgBuySeedEnable.Value then return end
-	--[[ 	if not MySpawnPoint then
-		if not InitializePlotData() then return nil end
-	end ]]
-
+AutoBuyItem = function(ShopType, Items, DropdownValue)
 	if not Items then return end
-	isBuyingSeed = true
-	local SeedBuyList = GetSelectedItems(Options.ddBuySeeds.Value)
-	SafeTeleport(Pos.SeedShop)
+	if ShopType == "SeedShop" then
+		isBuyingSeed = true
+	else
+		isBuyingGear = true
+	end
+
+	local BuyList = GetSelectedItems(DropdownValue)
+	SafeTeleport(Pos[ShopType])
 	task.wait(0.5)
-	for Name, Seed in pairs(Items) do
-		if table.find(SeedBuyList, "ALL") or table.find(SeedBuyList, Name) then
-			for i = 1, tonumber(Seed.Amount) do
-				PurchaseShopItem:InvokeServer("SeedShop", Name)
+
+	for Name, itemData in pairs(Items) do
+		if table.find(BuyList, "ALL") or table.find(BuyList, Name) then
+			for i = 1, tonumber(itemData.Amount) do
+				PurchaseShopItem:InvokeServer(ShopType, Name)
 				task.wait(0.2)
 			end
 		end
 	end
+
 	SafeTeleport(MySpawnPoint)
 	task.wait(1)
-	isBuyingSeed = false
+	if ShopType == "SeedShop" then
+		isBuyingSeed = false
+	else
+		isBuyingGear = false
+	end
 	HarvestPause = false
 	task.wait(0.2)
 end
 
+AutoBuySeed = function(Items)
+	if not Options.tgBuySeedEnable.Value then return end
+	AutoBuyItem("SeedShop", Items, Options.ddBuySeeds.Value)
+end
+
 AutoBuyGear = function(Items)
 	if not Options.tgBuyGearEnable.Value then return end
-
-	if not Items then return end
-	isBuyingGear = true
-	local SeedGearList = GetSelectedItems(Options.ddBuyGear.Value)
-	SafeTeleport(Pos.GearShop)
-	task.wait(0.5)
-	for Name, Seed in pairs(Items) do
-		if table.find(SeedGearList, "ALL") or table.find(SeedGearList, Name) then
-			for i = 1, tonumber(Seed.Amount) do
-				PurchaseShopItem:InvokeServer("GearShop", Name)
-				task.wait(0.2)
-			end
-		end
-	end
-	SafeTeleport(MySpawnPoint)
-	task.wait(1)
-	isBuyingGear = false
-	HarvestPause = false
-	task.wait(0.2)
+	AutoBuyItem("GearShop", Items, Options.ddBuyGear.Value)
 end
 
 AutoPlantsSeeds = function()
@@ -1488,7 +821,7 @@ processQueue = function()
 		local taskData = table.remove(actionQueue, 1)
 		--local success, _ = pcall(function()
 		pcall(function()
-			if taskData.args then
+			if taskData.args ~= nil then
 				taskData.FuncName(taskData.args)
 			else
 				taskData.FuncName()
@@ -1705,17 +1038,26 @@ espFruit = function(State)
 	ESPFruitConnection = CollectionService:GetInstanceAddedSignal("HarvestPrompt"):Connect(SetespFruit)
 end
 
-RemovePlants = function()
-	if not Options.tgRemovePlantsEnable.Value or isRemovePlants then return end
-	local RemovePlantsList = GetSelectedItems(Options.ddRemovePlants.Value)
-	local RemovePlantsScale = Options.ddRemovePlantsScale.Value
-	local RemovePlantsScaleValue = tonumber(Options.ipRemovePlantsScale.Value) or 0
-
+ProcessRemove = function(isFruit)
 	local ClientPlants = workspace:FindFirstChild("ClientPlants")
+	if not ClientPlants then return end
+
 	local Backpack = LocalPlayer.Backpack
 	local Shovel = Backpack:FindFirstChild("Shovel", true) or Character:FindFirstChild("Shovel", true)
 	local RemovePlant = RemoteEvents.RemovePlant
+
+	local RemoveList = isFruit and GetSelectedItems(Options.ddRemoveCrops.Value) or GetSelectedItems(Options.ddRemovePlants.Value)
+	local dynRemoveConfig = isFruit and GetRemoveConfig() or nil
+
+	local RemovePlantsScaleValue = 0
+	local RemovePlantsScale = ""
+	if not isFruit then
+		RemovePlantsScale = Options.ddRemovePlantsScale.Value
+		RemovePlantsScaleValue = tonumber(Options.ipRemovePlantsScale.Value) or 0
+	end
+
 	local function CheckPlantsScale(cPlant)
+		if RemovePlantsScaleValue == 0 then return true end
 		local rawScale = cPlant:GetAttribute("HiddenNumber")
 		if not rawScale then return false end
 		local scale = tonumber(rawScale)
@@ -1726,204 +1068,63 @@ RemovePlants = function()
 		end
 		return false
 	end
-	if ClientPlants then
-		isRemovePlants = true
-		for _, plant in pairs(ClientPlants:GetChildren()) do
-			if not Options.tgRemovePlantsEnable.Value then
-				isRemovePlants = false
-				return
-			end
-			local PlantType = plant:GetAttribute("PlantType")
-			if PlantType then
-				if table.find(RemovePlantsList, "ALL") or table.find(RemovePlantsList, PlantType) then
-					if RemovePlantsScaleValue == 0 or CheckPlantsScale(plant) then
-						pcall(function()
-							Humanoid:UnequipTools()
-						end)
-						task.wait()
-						Humanoid:EquipTool(Shovel)
-						task.wait()
-						local Uuid = plant:GetAttribute("Uuid")
 
-						local targetCFrame = CFrame.new(plant:GetPivot().Position + Vector3.new(3, 0, 4))
-						TweenToTarget(targetCFrame, 100)
-						RemovePlant:FireServer(Uuid)
-						task.wait()
-					end
+	local function PerformDig(obj)
+		pcall(function()
+			Humanoid:UnequipTools()
+		end)
+		task.wait()
+		Humanoid:EquipTool(Shovel)
+		task.wait()
+		local targetCFrame = CFrame.new(obj:GetPivot().Position + Vector3.new(3, 0, 4))
+		TweenToTarget(targetCFrame, 100)
+
+		local gUuid, gindex = ParseFruitUuid(obj:GetAttribute("Uuid"))
+		if isFruit then
+			if gindex then
+				RemovePlant:FireServer(gUuid, gindex)
+			else
+				RemovePlant:FireServer(gUuid)
+			end
+		else
+			RemovePlant:FireServer(gUuid)
+		end
+		task.wait()
+	end
+
+	for _, plant in pairs(ClientPlants:GetChildren()) do
+		local enableOpt = isFruit and Options.tgRemoveFruitEnable.Value or Options.tgRemovePlantsEnable.Value
+		if not enableOpt then return false end
+
+		local PlantType = plant:GetAttribute("PlantType")
+		if PlantType and (table.find(RemoveList, "ALL") or table.find(RemoveList, PlantType)) then
+			if isFruit then
+				local CropsTable = plant:GetAttribute("HarvestablePlant") and { plant } or plant:GetChildren()
+				for _, crop in pairs(CropsTable) do
+					if not Options.tgRemoveFruitEnable.Value then return false end
+					if crop:IsA("Model") and CheckHarvestCrops(crop, dynRemoveConfig) then PerformDig(crop) end
 				end
+			else
+				if CheckPlantsScale(plant) then PerformDig(plant) end
 			end
 		end
-		isRemovePlants = false
 	end
+	return true
+end
+
+RemovePlants = function()
+	if not Options.tgRemovePlantsEnable.Value or isRemovePlants then return end
+	isRemovePlants = true
+	ProcessRemove(false)
+	isRemovePlants = false
 end
 
 RemoveCrops = function()
 	if not Options.tgRemoveFruitEnable.Value or isRemoveCrops then return end
-	local RemoveCropsList = GetSelectedItems(Options.ddRemoveCrops.Value)
-	local ClientPlants = workspace:FindFirstChild("ClientPlants")
-	local Backpack = LocalPlayer.Backpack
-	local Shovel = Backpack:FindFirstChild("Shovel", true) or Character:FindFirstChild("Shovel", true)
-	local RemovePlant = RemoteEvents.RemovePlant
-
-	if ClientPlants then
-		local dynRemoveConfig = GetRemoveConfig()
-		isRemoveCrops = true
-		for _, plant in pairs(ClientPlants:GetChildren()) do
-			if not Options.tgRemoveFruitEnable.Value then
-				isRemoveCrops = false
-				return
-			end
-			local PlantType = plant:GetAttribute("PlantType")
-			if PlantType then
-				if table.find(RemoveCropsList, "ALL") or table.find(RemoveCropsList, PlantType) then
-					local CropsTable = {}
-					if plant:GetAttribute("HarvestablePlant") then
-						CropsTable = { plant }
-					else
-						CropsTable = plant:GetChildren()
-					end
-					for _, crop in pairs(CropsTable) do
-						if not Options.tgRemoveFruitEnable.Value then
-							isRemoveCrops = false
-							return
-						end
-						if crop:IsA("Model") and CheckHarvestCrops(crop, dynRemoveConfig) then
-							pcall(function()
-								Humanoid:UnequipTools()
-							end)
-							task.wait()
-							Humanoid:EquipTool(Shovel)
-							task.wait()
-
-							local targetCFrame = CFrame.new(crop:GetPivot().Position + Vector3.new(3, 0, 4))
-							TweenToTarget(targetCFrame, 100)
-
-							local gUuid, gindex = ParseFruitUuid(crop:GetAttribute("Uuid"))
-							local args = {}
-							if gindex then
-								args = { gUuid, gindex }
-							else
-								args = { gUuid }
-							end
-							RemovePlant:FireServer(unpack(args))
-							task.wait()
-						end
-					end
-				end
-			end
-		end
-		isRemoveCrops = false
-	end
+	isRemoveCrops = true
+	ProcessRemove(true)
+	isRemoveCrops = false
 end
-
-local lastTriggerMinute = -1
-NewPlayer = function()
-	local timeData = os.date("!*t")
-	local currentMinute = timeData.min
-	local ipNewDelay = tonumber(Options.ipNewDelay.Value)
-	if currentMinute % ipNewDelay == 0 and currentMinute ~= lastTriggerMinute then
-		lastTriggerMinute = currentMinute
-		if Options.tgNewAutoSell.Value then
-			HarvestPause = true
-			table.clear(HarVestCropsList)
-			table.insert(actionQueue, {
-				FuncName = AutoSellCrops,
-			})
-		end
-		if Options.tgPlantsEnable.Value then table.insert(actionQueue, {
-			FuncName = AutoPlantsSeeds,
-		}) end
-	end
-end
-
---[[ Hook ]]
-local function hookIncoming(remote)
-	if remote:IsA("RemoteEvent") then
-		remote.OnClientEvent:Connect(function(...)
-			local RemoteName = remote.Name
-			local args = { ... }
-			if RemoteName == "ReplicaSet" then
-				RemoteReplicaSet(args)
-			elseif RemoteName == "Notification" then
-				RemoteNotification(args)
-			elseif RemoteName == "UpdateQuests" then
-				table.insert(actionQueue, {
-					FuncName = AutoClaimQuest,
-					args = args[1],
-				})
-			end
-		end)
-	end
-end
-
-for _, obj in ipairs(game:GetDescendants()) do
-	hookIncoming(obj)
-end
-
-game.DescendantAdded:Connect(function(obj)
-	hookIncoming(obj)
-end)
-
-task.spawn(function()
-	while true do
-		task.wait(0.2)
-		if Options.tgHarvestEnable.Value then
-			if #HarVestCropsList == 0 then
-				ScanCrops()
-			elseif not (HarvestPause or isProcessing or isHarvesting) then
-				HarvestCrops()
-			end
-		end
-	end
-end)
-
-task.spawn(function()
-	while true do
-		local inQueueRemoveCrops = false
-		local inQueueRemovePlants = false
-
-		for _, action in ipairs(actionQueue) do
-			if action.FuncName == RemoveCrops then inQueueRemoveCrops = true end
-			if action.FuncName == RemovePlants then inQueueRemovePlants = true end
-		end
-
-		if Options.tgRemoveFruitEnable.Value and not inQueueRemoveCrops and not isRemoveCrops then table.insert(actionQueue, {
-			FuncName = RemoveCrops,
-		}) end
-
-		if Options.tgRemovePlantsEnable.Value and not inQueueRemovePlants and not isRemovePlants then table.insert(actionQueue, {
-			FuncName = RemovePlants,
-		}) end
-
-		task.wait(1)
-	end
-end)
-
-task.spawn(function()
-	while true do
-		if #actionQueue > 0 and not isProcessing then processQueue() end
-		task.wait(0.5)
-	end
-end)
-
-task.spawn(function()
-	while true do
-		pcall(NewPlayer)
-		task.wait(10)
-	end
-end)
-
---Watch Dog
-task.spawn(function()
-	while true do
-		task.wait(3600)
-		if Options.tgPlantsESP and Options.tgPlantsESP.Value == true then Options.tgPlantsESP:SetValue(false) end
-		if Options.tgFruitESP and Options.tgFruitESP.Value == true then Options.tgFruitESP:SetValue(false) end
-		if ResetControlVariable then ResetControlVariable() end
-	end
-end)
-
--- [[ Tracker System: ดักจับต้นไม้ที่ปลูกใหม่ ]]
 
 SetupTracker = function()
 	local ClientPlants = workspace:FindFirstChild("ClientPlants")
@@ -1969,5 +1170,925 @@ SetupTracker = function()
 		end
 	end)
 end
+
+local function MannyMishapCollect()
+	if not Options.tgMannyMishapEnable.Value then return end
+	local HumanRoot = Character:FindFirstChild("HumanoidRootPart")
+	if not HumanRoot then return end
+	local folder = workspace:WaitForChild("MannyMishapCollectibles")
+	while MannyMishapEnable and Options.tgMannyMishapEnable.Value do
+		local fruits = folder:GetChildren()
+		if #fruits > 0 then
+			for _, model in ipairs(fruits) do
+				if not MannyMishapEnable or not Options.tgMannyMishapEnable.Value then return end
+				local anchor = model:FindFirstChild("Anchor") or model.PrimaryPart
+
+				if anchor and model.Parent then
+					local cFrame = anchor.CFrame
+					SafeTeleport(cFrame)
+					task.wait(1)
+				end
+			end
+		else
+			task.wait(2)
+		end
+	end
+end
+
+-- ==========================================
+-- 4. User Interface (UI)
+-- ==========================================
+
+local Window = Fluent:CreateWindow({
+	Title = "Garden Horizons",
+	SubTitle = "by EfHub v " .. fVersion,
+	TabWidth = 100,
+	Size = UDim2.fromOffset(1400, 800),
+	Resize = true,
+	MinSize = Vector2.new(580, 460),
+	Acrylic = true,
+	Theme = "Darker",
+	MinimizeKey = Enum.KeyCode.RightControl,
+})
+
+local Tabs = {
+	Main = Window:AddTab({ Title = "Main", Icon = "house" }),
+	Shop = Window:AddTab({ Title = "Shop", Icon = "shopping-cart" }),
+	Auto = Window:AddTab({ Title = "Automatic", Icon = "bot" }),
+	Event = Window:AddTab({ Title = "Event", Icon = "calendar" }),
+	Misc = Window:AddTab({ Title = "Misc", Icon = "component" }),
+	Settings = Window:AddTab({ Title = "Settings", Icon = "settings" }),
+}
+Window:SelectTab(1)
+
+local function getShopData(path)
+	local names = { "ALL" }
+	for _, item in pairs(require(ShopData[path]).ShopData) do
+		table.insert(names, item.Name)
+	end
+	return names
+end
+
+local SeedShopTable = getShopData("SeedShopData")
+local GearShopTable = getShopData("GearShopData")
+
+local PlantDataTable = { "ALL" }
+local SeedDataTable = { "ALL" }
+for PlantName, _ in pairs(require(PlantData)) do
+	table.insert(PlantDataTable, PlantName)
+	table.insert(SeedDataTable, PlantName .. " Seed")
+end
+local MutationDataTable = { "ALL" }
+for MutationName, _ in pairs(require(MutationData)) do
+	table.insert(MutationDataTable, MutationName)
+end
+
+local PlantDataBlackTable = table.clone(PlantDataTable)
+PlantDataBlackTable[1] = "NONE"
+
+local SeedDataBlackTable = table.clone(SeedDataTable)
+SeedDataBlackTable[1] = "NONE"
+
+local MutationDataBlackTable = table.clone(MutationDataTable)
+MutationDataBlackTable[1] = "NONE"
+
+------------------------------------------------------
+-- ระบบปุ่มลอย (Floating Button) สำหรับ Android
+------------------------------------------------------
+local ToggleGui = Instance.new("ScreenGui")
+local ToggleButton = Instance.new("TextButton")
+
+ToggleGui.Name = "EfHub_Toggle"
+ToggleGui.Parent = game:GetService("CoreGui")
+ToggleGui.ResetOnSpawn = false
+
+ToggleButton.Name = "ToggleButton"
+ToggleButton.Parent = ToggleGui
+ToggleButton.BackgroundColor3 = Color3.fromRGB(20, 20, 100)
+ToggleButton.Position = UDim2.new(0, 10, 0.5, 0)
+ToggleButton.Size = UDim2.new(0, 50, 0, 50)
+ToggleButton.Text = "EfHub"
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.Draggable = true
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 25)
+UICorner.Parent = ToggleButton
+
+ToggleButton.MouseButton1Click:Connect(function()
+	pcall(function()
+		if Window.GUI then
+			Window.GUI.Enabled = not Window.GUI.Enabled
+		elseif Window.Instance then
+			Window.Instance.Enabled = not Window.Instance.Enabled
+		elseif Window.Root then
+			Window.Root.Visible = not Window.Root.Visible
+		end
+	end)
+end)
+local PlantsSection = Tabs.Main:AddCollapsibleSection("Plants", false)
+PlantsSection:AddToggle("tgPlantsEnable", {
+	Title = "Auto Plants",
+	Default = false,
+	Callback = function(Value)
+		if Value then
+			table.insert(actionQueue, {
+				FuncName = AutoPlantsSeeds,
+			})
+		else
+			isPlanting = false
+		end
+		if QuickSave then QuickSave() end
+	end,
+})
+PlantsSection:AddButton({
+	Title = "Clear Selected Seeds",
+	Callback = function()
+		Options.ddPlantsSeeds:SetValue({})
+	end,
+})
+PlantsSection:AddDropdown("ddPlantsSeeds", {
+	Title = "Select Seeds",
+	Values = PlantDataTable,
+	Multi = true,
+	Default = {},
+	Searchable = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+PlantsSection:AddDropdown("ddPlantsPos", {
+	Title = "Select Plants Position",
+	Values = { "Player", "Random" },
+	Default = "Player",
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+local HarvestSection = Tabs.Main:AddCollapsibleSection("Harvest", false)
+HarvestSection:AddToggle("tgHarvestEnable", {
+	Title = "Auto Harvest",
+	Default = false,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+		table.clear(HarVestCropsList)
+		if not Value then isHarvesting = false end
+	end,
+})
+
+HarvestSection:AddDivider()
+
+HarvestSection:AddButton({
+	Title = "Clear Selected Crops",
+	Callback = function()
+		Options.ddHarvestCrops:SetValue({ ALL = true })
+	end,
+})
+HarvestSection:AddDropdown("ddHarvestCrops", {
+	Title = "Select Crops",
+	Values = PlantDataTable,
+	Multi = true,
+	Default = { "ALL" },
+	Searchable = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+HarvestSection:AddButton({
+	Title = "Clear Backlist Crops",
+	Callback = function()
+		Options.ddHarvestBlackCrops:SetValue({ NONE = true })
+	end,
+})
+HarvestSection:AddDropdown("ddHarvestBlackCrops", {
+	Title = "Blacklist Crops",
+	Values = PlantDataBlackTable,
+	Multi = true,
+	Default = { "NONE" },
+	Searchable = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+HarvestSection:AddDivider()
+HarvestSection:AddButton({
+	Title = "Clear Selected Mutant",
+	Callback = function()
+		Options.ddHarvestMutants:SetValue({ ALL = true })
+	end,
+})
+
+HarvestSection:AddDropdown("ddHarvestMutants", {
+	Title = "Select Mutants",
+	Values = MutationDataTable,
+	Multi = true,
+	Default = { "ALL" },
+	Searchable = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+HarvestSection:AddButton({
+	Title = "Clear Backlist Mutant",
+	Callback = function()
+		Options.ddHarvestBlackMutants:SetValue({ NONE = true })
+	end,
+})
+
+HarvestSection:AddDropdown("ddHarvestBlackMutants", {
+	Title = "Backlist Mutants",
+	Values = MutationDataBlackTable,
+	Multi = true,
+	Default = { "NONE" },
+	Searchable = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+HarvestSection:AddDivider()
+HarvestSection:AddDropdown("ddRipeness", {
+	Title = "Ripeness Stage",
+	Values = { "ALL", "Unripe", "Ripened", "Lush" },
+	Default = { "Lush" },
+	Multi = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+HarvestSection:AddInput("ipRipenessMulti", {
+	Title = "Ripeness Multiplier",
+	Default = 3,
+	Numeric = false,
+	Finished = false,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+HarvestSection:AddDropdown("ddBlackRipeness", {
+	Title = "Backlist Ripeness Stage",
+	Values = { "NONE", "Unripe", "Ripened", "Lush" },
+	Default = { "NONE" },
+	Multi = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+HarvestSection:AddDivider()
+HarvestSection:AddDropdown("ddVariant", {
+	Title = "Variant",
+	Values = { "ALL", "Silver", "Gold" },
+	Default = { "ALL" },
+	Multi = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+HarvestSection:AddDropdown("ddBlackVariant", {
+	Title = "Backlist Variant",
+	Values = { "NONE", "Silver", "Gold" },
+	Default = { "NONE" },
+	Multi = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+HarvestSection:AddDivider()
+HarvestSection:AddDropdown("ddWeight", {
+	Title = "Weight",
+	Values = { "Below", "Above" },
+	Default = "Below",
+	Multi = false,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+HarvestSection:AddInput("ipWeight", {
+	Title = "Weight",
+	Default = 0,
+	Numeric = true,
+	Finished = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+local SellSection = Tabs.Main:AddCollapsibleSection("Sell", false)
+SellSection:AddToggle("tgSellCropsEnable", {
+	Title = "Sell",
+	Default = false,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+		--if not Value then isProcessing = false end
+	end,
+})
+
+local function tempBuySeed()
+	local SeedShop = GetShopData:InvokeServer("SeedShop")
+	if not SeedShop then return end
+	table.insert(actionQueue, {
+		FuncName = AutoBuySeed,
+		args = SeedShop.Items,
+	})
+end
+
+local BuySeedSection = Tabs.Shop:AddCollapsibleSection("Buy Seed", false)
+BuySeedSection:AddToggle("tgBuySeedEnable", {
+	Title = "Auto Buy Seed",
+	Default = false,
+	Callback = function(Value)
+		if Value then
+			if tempBuySeed then tempBuySeed() end
+		end
+		if QuickSave then QuickSave() end
+	end,
+})
+BuySeedSection:AddButton({
+	Title = "Clear Selected Seeds",
+	Callback = function()
+		Options.ddBuySeeds:SetValue({})
+	end,
+})
+BuySeedSection:AddDropdown("ddBuySeeds", {
+	Title = "Select Seeds",
+	Values = SeedShopTable,
+	Multi = true,
+	Default = {},
+	Searchable = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+local function tempBuyGear()
+	local GearShop = GetShopData:InvokeServer("GearShop")
+	if not GearShop then return end
+	table.insert(actionQueue, {
+		FuncName = AutoBuyGear,
+		args = GearShop.Items,
+	})
+end
+
+local BuyGearSection = Tabs.Shop:AddCollapsibleSection("Buy Gear", false)
+BuyGearSection:AddToggle("tgBuyGearEnable", {
+	Title = "Auto Buy Gear",
+	Default = false,
+	Callback = function(Value)
+		if Value then
+			if tempBuyGear then tempBuyGear() end
+		end
+		if QuickSave then QuickSave() end
+	end,
+})
+
+BuyGearSection:AddButton({
+	Title = "Clear Selected Gears",
+	Callback = function()
+		Options.ddBuyGear:SetValue({})
+	end,
+})
+BuyGearSection:AddDropdown("ddBuyGear", {
+	Title = "Select Gears",
+	Values = GearShopTable,
+	Multi = true,
+	Default = {},
+	Searchable = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+local QuestSection = Tabs.Auto:AddCollapsibleSection("Quest", false)
+QuestSection:AddToggle("tgQuestEnable", {
+	Title = "Auto Claim Quest",
+	Default = false,
+	Callback = function(Value)
+		if Value then RemoteEvents:WaitForChild("RequestQuests"):FireServer() end
+		if QuickSave then QuickSave() end
+	end,
+})
+
+local RemoveSection = Tabs.Auto:AddCollapsibleSection("Remove Plants", false)
+RemoveSection:AddToggle("tgRemovePlantsEnable", {
+	Title = "Auto Remove Plants",
+	Default = false,
+	Callback = function(Value)
+		--[[ 		if Value then table.insert(actionQueue, {
+			FuncName = ProcessRemove,
+		}) end ]]
+		if QuickSave then QuickSave() end
+	end,
+})
+RemoveSection:AddButton({
+	Title = "Clear Selected Plants",
+	Callback = function()
+		Options.ddRemovePlants:SetValue({})
+	end,
+})
+RemoveSection:AddDropdown("ddRemovePlants", {
+	Title = "Select Remove Plants",
+	Values = PlantDataTable,
+	Default = {},
+	Multi = true,
+	Searchable = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+RemoveSection:AddDropdown("ddRemovePlantsScale", {
+	Title = "Plants Scale Threshold",
+	Values = { "Below", "Above" },
+	Default = "Below",
+	Multi = false,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+RemoveSection:AddInput("ipRemovePlantsScale", {
+	Title = "Plants Scale",
+	Default = 0,
+	Numeric = true,
+	Finished = false,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+local RemoveFruitSection = Tabs.Auto:AddCollapsibleSection("Remove Fruit", false)
+RemoveFruitSection:AddToggle("tgRemoveFruitEnable", {
+	Title = "Auto Remove Fruit",
+	Default = false,
+	Callback = function(Value)
+		--[[ 		if Value then table.insert(actionQueue, {
+			FuncName = ProcessRemove,
+		}) end ]]
+		if QuickSave then QuickSave() end
+	end,
+})
+
+RemoveFruitSection:AddDivider()
+
+RemoveFruitSection:AddButton({
+	Title = "Clear Selected Remove Crops",
+	Callback = function()
+		Options.ddRemoveCrops:SetValue({ ALL = true })
+	end,
+})
+RemoveFruitSection:AddDropdown("ddRemoveCrops", {
+	Title = "Select Remove Crops",
+	Values = PlantDataTable,
+	Multi = true,
+	Default = { "ALL" },
+	Searchable = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+RemoveFruitSection:AddButton({
+	Title = "Clear Backlist Remove Crops",
+	Callback = function()
+		Options.ddRemoveBlackCrops:SetValue({ NONE = true })
+	end,
+})
+RemoveFruitSection:AddDropdown("ddRemoveBlackCrops", {
+	Title = "Blacklist Remove Crops",
+	Values = PlantDataBlackTable,
+	Multi = true,
+	Default = { "NONE" },
+	Searchable = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+RemoveFruitSection:AddDivider()
+RemoveFruitSection:AddButton({
+	Title = "Clear Selected Mutant",
+	Callback = function()
+		Options.ddRemoveMutants:SetValue({ ALL = true })
+	end,
+})
+
+RemoveFruitSection:AddDropdown("ddRemoveMutants", {
+	Title = "Select Mutants",
+	Values = MutationDataTable,
+	Multi = true,
+	Default = { "ALL" },
+	Searchable = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+RemoveFruitSection:AddButton({
+	Title = "Clear Backlist Mutant",
+	Callback = function()
+		Options.ddRemoveBlackMutants:SetValue({ NONE = true })
+	end,
+})
+
+RemoveFruitSection:AddDropdown("ddRemoveBlackMutants", {
+	Title = "Backlist Mutants",
+	Values = MutationDataBlackTable,
+	Multi = true,
+	Default = { "NONE" },
+	Searchable = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+RemoveFruitSection:AddDivider()
+RemoveFruitSection:AddDropdown("ddRemoveRipeness", {
+	Title = "Ripeness Stage",
+	Values = { "ALL", "Unripe", "Ripened", "Lush" },
+	Default = { "ALL" },
+	Multi = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+RemoveFruitSection:AddInput("ipRemoveRipenessMulti", {
+	Title = "Ripeness Multiplier",
+	Default = 0,
+	Numeric = false,
+	Finished = false,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+RemoveFruitSection:AddDropdown("ddRemoveBlackRipeness", {
+	Title = "Backlist Ripeness Stage",
+	Values = { "NONE", "Unripe", "Ripened", "Lush" },
+	Default = { "NONE" },
+	Multi = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+RemoveFruitSection:AddDivider()
+RemoveFruitSection:AddDropdown("ddRemoveVariant", {
+	Title = "Variant",
+	Values = { "ALL", "Silver", "Gold" },
+	Default = { "ALL" },
+	Multi = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+RemoveFruitSection:AddDropdown("ddRemoveBlackVariant", {
+	Title = "Backlist Variant",
+	Values = { "NONE", "Silver", "Gold" },
+	Default = { "NONE" },
+	Multi = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+RemoveFruitSection:AddDivider()
+RemoveFruitSection:AddDropdown("ddRemoveWeight", {
+	Title = "Weight",
+	Values = { "Below", "Above" },
+	Default = "Below",
+	Multi = false,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+RemoveFruitSection:AddInput("ipRemoveWeight", {
+	Title = "Weight",
+	Default = 0,
+	Numeric = true,
+	Finished = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+RemoveFruitSection:AddDivider()
+RemoveFruitSection:AddDropdown("ddRemoveScale", {
+	Title = "Scale",
+	Values = { "Below", "Above" },
+	Default = "Below",
+	Multi = false,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+RemoveFruitSection:AddInput("ipRemoveScale", {
+	Title = "Scale",
+	Default = 0,
+	Numeric = true,
+	Finished = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+--end of remove
+local MannySection = Tabs.Event:AddCollapsibleSection("Manny Mishap", false)
+MannySection:AddToggle("tgMannyMishapEnable", {
+	Title = "Auto Manny Mishap Collect",
+	Default = false,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+--รีเซ็ท ตัวแปรที่ใช้ควบคุม
+local MiscSection = Tabs.Misc:AddCollapsibleSection("Misc", false)
+MiscSection:AddButton({
+	Title = "Reset Control Variable",
+	Callback = function()
+		if ResetControlVariable then ResetControlVariable() end
+	end,
+})
+local AntiLagSection = Tabs.Misc:AddCollapsibleSection("Anti-Lag", false)
+
+AntiLagSection:AddToggle("tgAntiLag", {
+	Title = "Anti-Lag",
+	Default = false,
+	Callback = function(Value)
+		pcall(function()
+			if Value then
+				ApplyAntiLag()
+				isAntiLag = true
+			else
+				if isAntiLag then RestoreAntiLag() end
+				isAntiLag = false
+			end
+		end)
+		if QuickSave then QuickSave() end
+	end,
+})
+AntiLagSection:AddToggle("tgHideFruit", {
+	Title = "Hide Fruit",
+	Default = false,
+	Callback = function(Value)
+		--pcall(function()
+		HideFruit(Value)
+		--end)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+AntiLagSection:AddToggle("tgHidePlant", {
+	Title = "Hide Plant",
+	Default = false,
+	Callback = function(Value)
+		--pcall(function()
+		HidePlant(Value)
+		--end)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+local NewPlayerSection = Tabs.Misc:AddCollapsibleSection("New Player", false)
+NewPlayerSection:AddInput("ipNewDelay", {
+	Title = "Delay timmes (Minute)",
+	Default = 5,
+	Numeric = true,
+	Finished = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+NewPlayerSection:AddToggle("tgNewAutoSell", {
+	Title = "Auto Sell",
+	Default = false,
+	Callback = function(Value)
+		--if Value then
+		--HarvestPause = true
+		--table.clear(HarVestCropsList)
+		--table.insert(actionQueue, {
+		--	FuncName = AutoSellCrops,
+		--})
+		--end
+		if QuickSave then QuickSave() end
+	end,
+})
+
+local espSection = Tabs.Misc:AddCollapsibleSection("ESP", false)
+espSection:AddToggle("tgPlantsESP", {
+	Title = "ESP Plants",
+	Default = false,
+	Callback = function(Value)
+		if espPlants then espPlants(Value) end
+		if QuickSave then QuickSave() end
+	end,
+})
+espSection:AddButton({
+	Title = "Clear Selected Plants",
+	Callback = function()
+		Options.ddPlantsESP:SetValue({ NONE = true })
+	end,
+})
+espSection:AddDropdown("ddPlantsESP", {
+	Title = "Select Plants",
+	Values = PlantDataBlackTable,
+	Multi = true,
+	Default = { "NONE" },
+	Searchable = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+espSection:AddDivider()
+espSection:AddToggle("tgFruitESP", {
+	Title = "ESP Fruit",
+	Default = false,
+	Callback = function(Value)
+		if espFruit then espFruit(Value) end
+		if QuickSave then QuickSave() end
+	end,
+})
+espSection:AddButton({
+	Title = "Clear Selected Fruit",
+	Callback = function()
+		Options.ddFruitESP:SetValue({ NONE = true })
+	end,
+})
+espSection:AddDropdown("ddFruitESP", {
+	Title = "Select Fruit",
+	Values = PlantDataBlackTable,
+	Multi = true,
+	Default = { "NONE" },
+	Searchable = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+SaveManager:SetLibrary(Fluent)
+InterfaceManager:SetLibrary(Fluent)
+
+--SaveManager:SetIgnoreIndexes({})
+InterfaceManager:SetFolder("EfHub")
+SaveManager:SetFolder("EfHub/HRZ")
+
+InterfaceManager:BuildInterfaceSection(Tabs.Settings)
+SaveManager:BuildConfigSection(Tabs.Settings)
+
+-- ==========================================
+-- 5. Initialization, Hooks & Loops
+-- ==========================================
+
+task.spawn(function()
+	while not SaveManager.Options.SaveManager_ConfigList do
+		task.wait()
+	end
+	SaveManager.Options.SaveManager_ConfigList:SetValue("Horizons")
+	SaveManager:Load("Horizons")
+	task.wait(1)
+	IsLoading = false
+	Fluent:Notify({
+		Title = "EfHub",
+		Content = "Settings loaded automatically",
+		Duration = 3,
+	})
+end)
+
+--[[ Anti-AFK ]]
+
+LocalPlayer.Idled:Connect(function()
+	VirtualUser:CaptureController()
+	VirtualUser:ClickButton2(Vector2.new())
+end)
+
+local function hookIncoming(remote)
+	if remote:IsA("RemoteEvent") then
+		remote.OnClientEvent:Connect(function(...)
+			local RemoteName = remote.Name
+			local args = { ... }
+			if RemoteName == "ReplicaSet" then
+				RemoteReplicaSet(args)
+			elseif RemoteName == "Notification" then
+				RemoteNotification(args)
+			elseif RemoteName == "UpdateQuests" then
+				table.insert(actionQueue, {
+					FuncName = AutoClaimQuest,
+					args = args[1],
+				})
+			elseif RemoteName == "MannyMishapScoreUpdate" then
+				if tonumber(args[1]) >= 300 then
+					MannyMishapEnable = false
+					ResetControlVariable()
+					actionQueue = table.clone(backupQueue)
+					SafeTeleport(MySpawnPoint)
+					task.wait(1)
+				end
+			end
+		end)
+	end
+end
+
+for _, obj in ipairs(game:GetDescendants()) do
+	hookIncoming(obj)
+end
+
+game.DescendantAdded:Connect(function(obj)
+	hookIncoming(obj)
+end)
+
+task.spawn(function()
+	local lastNewPlayerTrigger = -1
+	local lastWalkDog = tick()
+
+	while true do
+		local clock = tick()
+		task.wait(0.2)
+
+		-- 4. New Player check (roughly check every second)
+		-- 4. New Player check (ใช้ระบบจับเวลาด้วย clock)
+		local ipNewDelay = tonumber(Options.ipNewDelay.Value) or 5
+		local delaySeconds = ipNewDelay * 60 -- แปลงนาทีเป็นวินาที
+
+		-- เช็กว่าผ่านไปครบ X วินาทีแล้วหรือยัง
+		if delaySeconds > 0 and (clock - lastNewPlayerTrigger) >= delaySeconds then
+			lastNewPlayerTrigger = clock -- รีเซ็ตเวลาจับเวลารอบใหม่
+
+			-- จากนั้นค่อยเช็ก Toggle
+			if Options.tgNewAutoSell.Value then
+				HarvestPause = true
+				table.clear(HarVestCropsList)
+				table.insert(actionQueue, { FuncName = AutoSellCrops })
+			end
+
+			if Options.tgPlantsEnable.Value then table.insert(actionQueue, { FuncName = AutoPlantsSeeds }) end
+		end
+
+		-- 1. Harvest Crops
+		if Options.tgHarvestEnable.Value then
+			if #HarVestCropsList == 0 then
+				ScanCrops()
+			elseif not (HarvestPause or isProcessing or isHarvesting) then
+				HarvestCrops()
+			end
+		end
+
+		-- 2. Process Action Queue
+		if #actionQueue > 0 and not isProcessing then processQueue() end
+
+		-- 3. Remove Crops / Plants Queuing
+		local inQueueRemoveCrops = false
+		local inQueueRemovePlants = false
+		for _, action in ipairs(actionQueue) do
+			if action.FuncName == RemoveCrops then inQueueRemoveCrops = true end
+			if action.FuncName == RemovePlants then inQueueRemovePlants = true end
+		end
+
+		if Options.tgRemoveFruitEnable.Value and not inQueueRemoveCrops and not isRemoveCrops then table.insert(actionQueue, { FuncName = RemoveCrops }) end
+		if Options.tgRemovePlantsEnable.Value and not inQueueRemovePlants and not isRemovePlants then table.insert(actionQueue, { FuncName = RemovePlants }) end
+
+		-- 5. Watch Dog (Run every 3600 seconds)
+		if clock - lastWalkDog >= 3600 then
+			lastWalkDog = clock
+			if Options.tgPlantsESP and Options.tgPlantsESP.Value == true then Options.tgPlantsESP:SetValue(false) end
+			if Options.tgFruitESP and Options.tgFruitESP.Value == true then Options.tgFruitESP:SetValue(false) end
+			if ResetControlVariable then ResetControlVariable() end
+		end
+	end
+end)
+
+task.spawn(function()
+	while true do
+		--เช็คเวลา ถ้า นาที = 00 เริ่ม ถ้านาที = 05 หยุด
+		local currentMin = os.date("*t").min
+
+		if currentMin >= 0 and currentMin < 5 then
+			if Options.tgMannyMishapEnable.Value and not MannyMishapEnable then
+				LockDownControlVariable()
+				task.wait(1)
+				MannyMishapEnable = true
+				task.spawn(MannyMishapCollect)
+			elseif not Options.tgMannyMishapEnable.Value and MannyMishapEnable then
+				MannyMishapEnable = false
+				ResetControlVariable()
+				actionQueue = table.clone(backupQueue)
+				SafeTeleport(MySpawnPoint)
+				task.wait(1)
+			end
+		else
+			if MannyMishapEnable then
+				MannyMishapEnable = false
+				ResetControlVariable()
+				actionQueue = table.clone(backupQueue)
+				SafeTeleport(MySpawnPoint)
+				task.wait(1)
+			end
+		end
+		task.wait(5)
+	end
+end)
 
 SetupTracker()
