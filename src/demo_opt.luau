@@ -52,34 +52,37 @@ local Pos = {
 local isBuyingSeed, isBuyingGear, isPlanting = false, false, false
 local HarVestCropsList = {}
 local actionQueue = {}
+local backupQueue = {}
 local isProcessing = false
 local HarvestPause = false
 local isHarvesting = false
 local isQuestClaiming = false
 local isRemovePlants = false
 local isRemoveCrops = false
+
+local MannyMishapEnable = false
 --End of Control Variable
-local QuickSave, GetSelectedItems, TweenToTarget, ParseFruitUuid, SetNoClip, SafeTeleport
-local CheckHarvestCrops, ScanCrops, HarvestCrops
-local AutoBuyItem, AutoBuySeed, AutoBuyGear, AutoSellCrops, AutoClaimQuest, AutoPlantsSeeds
-local processQueue
-local InitializePlotData, GetRandomPlantPosition, ResetControlVariable
-local RemoteNotification, RemoteReplicaSet
-local ApplyAntiLag, RestoreAntiLag, SetVisibility, HidePlant, HideFruit, UpdateVisibilityFromAnchor
-local CreatESP, espPlants, espFruit, SetespPlant, SetespFruit
 local PlantsESPFolderName = "PlantsESP"
 local FruitESPFolderName = "FruitESP"
 local ESPFruitConnection
 local bGuiSession = {}
+local MyPlantableParts = {}
+local MyPlot, MySpawn, MySpawnPoint
+local isAntiLag = false
+
+local QuickSave, GetSelectedItems, TweenToTarget, ParseFruitUuid, SetNoClip, SafeTeleport
+local CheckHarvestCrops, ScanCrops, HarvestCrops
+local AutoBuyItem, AutoBuySeed, AutoBuyGear, AutoSellCrops, AutoClaimQuest, AutoPlantsSeeds
+local processQueue
+local InitializePlotData, GetRandomPlantPosition, ResetControlVariable, LockDownControlVariable
+local RemoteNotification, RemoteReplicaSet
+local ApplyAntiLag, RestoreAntiLag, SetVisibility, HidePlant, HideFruit, UpdateVisibilityFromAnchor
+local CreatESP, espPlants, espFruit, SetespPlant, SetespFruit
 
 local GetHarvestConfig, GetRemoveConfig
 local ProcessRemove, RemovePlants, RemoveCrops, SetupTracker
 
-local isAntiLag = false
-
 local RNG = Random.new()
-local MyPlantableParts = {}
-local MyPlot, MySpawn, MySpawnPoint
 
 local Options = Fluent.Options
 
@@ -492,6 +495,20 @@ ResetControlVariable = function()
 	isRemoveCrops = false
 
 	table.clear(HarVestCropsList)
+	table.clear(actionQueue)
+end
+
+LockDownControlVariable = function()
+	isBuyingSeed = true
+	isBuyingGear = true
+	isPlanting = true
+	isProcessing = true
+	HarvestPause = true
+	isHarvesting = true
+	isQuestClaiming = true
+	isRemovePlants = true
+	isRemoveCrops = true
+	backupQueue = table.clone(actionQueue)
 	table.clear(actionQueue)
 end
 
@@ -1157,6 +1174,30 @@ SetupTracker = function()
 	end)
 end
 
+local function MannyMishapCollect()
+	if not Options.tgMannyMishapEnable.Value then return end
+	local HumanRoot = Character:FindFirstChild("HumanoidRootPart")
+	if not HumanRoot then return end
+	local folder = workspace:WaitForChild("MannyMishapCollectibles")
+	while MannyMishapEnable and Options.tgMannyMishapEnable.Value do
+		local fruits = folder:GetChildren()
+		if #fruits > 0 then
+			for _, model in ipairs(fruits) do
+				if not MannyMishapEnable or not Options.tgMannyMishapEnable.Value then return end
+				local anchor = model:FindFirstChild("Anchor") or model.PrimaryPart
+
+				if anchor and model.Parent then
+					local cFrame = anchor.CFrame
+					SafeTeleport(cFrame)
+					task.wait(1)
+				end
+			end
+		else
+			task.wait(2)
+		end
+	end
+end
+
 -- ==========================================
 -- 4. User Interface (UI)
 -- ==========================================
@@ -1177,6 +1218,7 @@ local Tabs = {
 	Main = Window:AddTab({ Title = "Main", Icon = "house" }),
 	Shop = Window:AddTab({ Title = "Shop", Icon = "shopping-cart" }),
 	Auto = Window:AddTab({ Title = "Automatic", Icon = "bot" }),
+	Event = Window:AddTab({ Title = "Event", Icon = "calendar" }),
 	Misc = Window:AddTab({ Title = "Misc", Icon = "component" }),
 	Settings = Window:AddTab({ Title = "Settings", Icon = "settings" }),
 }
@@ -1757,6 +1799,15 @@ RemoveFruitSection:AddInput("ipRemoveScale", {
 })
 
 --end of remove
+local MannySection = Tabs.Event:AddCollapsibleSection("Manny Mishap", false)
+MannySection:AddToggle("tgMannyMishapEnable", {
+	Title = "Auto Manny Mishap Collect",
+	Default = false,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
 --รีเซ็ท ตัวแปรที่ใช้ควบคุม
 local MiscSection = Tabs.Misc:AddCollapsibleSection("Misc", false)
 MiscSection:AddButton({
@@ -2001,6 +2052,37 @@ task.spawn(function()
 			if Options.tgFruitESP and Options.tgFruitESP.Value == true then Options.tgFruitESP:SetValue(false) end
 			if ResetControlVariable then ResetControlVariable() end
 		end
+	end
+end)
+
+task.spawn(function()
+	while true do
+		--เช็คเวลา ถ้า นาที = 00 เริ่ม ถ้านาที = 05 หยุด
+		local currentMin = os.date("*t").min
+
+		if currentMin >= 0 and currentMin < 5 then
+			if Options.tgMannyMishapEnable.Value and not MannyMishapEnable then
+				LockDownControlVariable()
+				task.wait(1)
+				MannyMishapEnable = true
+				task.spawn(MannyMishapCollect)
+			elseif not Options.tgMannyMishapEnable.Value and MannyMishapEnable then
+				MannyMishapEnable = false
+				ResetControlVariable()
+				actionQueue = table.clone(backupQueue)
+				SafeTeleport(MySpawnPoint)
+				task.wait(1)
+			end
+		else
+			if MannyMishapEnable then
+				MannyMishapEnable = false
+				ResetControlVariable()
+				actionQueue = table.clone(backupQueue)
+				SafeTeleport(MySpawnPoint)
+				task.wait(1)
+			end
+		end
+		task.wait(5)
 	end
 end)
 
