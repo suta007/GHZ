@@ -1982,6 +1982,14 @@ local function hookIncoming(remote)
 					FuncName = AutoClaimQuest,
 					args = args[1],
 				})
+			elseif RemoteName == "MannyMishapScoreUpdate" then
+				if tonumber(args[1]) >= 300 then
+					MannyMishapEnable = false
+					ResetControlVariable()
+					actionQueue = table.clone(backupQueue)
+					SafeTeleport(MySpawnPoint)
+					task.wait(1)
+				end
 			end
 		end)
 	end
