@@ -1,3 +1,6 @@
+-- ==========================================
+-- 1. Services, Requirements & Variables
+-- ==========================================
 --!nocheck
 local Fluent = loadstring(game:HttpGet("https://raw.githubusercontent.com/suta007/Lua_EfHub/refs/heads/master/FluentData/Renewed/Fluent.luau", true))()
 local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/SaveManager.luau"))()
@@ -5,7 +8,7 @@ local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.
 local CollapsibleAddon = loadstring(game:HttpGet("https://raw.githubusercontent.com/suta007/Lua_EfHub/refs/heads/master/Core/CollapsibleSection.lua"))()
 CollapsibleAddon(Fluent)
 
-local fVersion = "2569.03.09-10.54"
+local fVersion = "2569.03.11-23.09"
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -54,11 +57,12 @@ local HarvestPause = false
 local isHarvesting = false
 local isQuestClaiming = false
 local isRemovePlants = false
+local isRemoveCrops = false
 --End of Control Variable
 local NewPlayer
 local QuickSave, GetSelectedItems, TweenToTarget, ParseFruitUuid, SetNoClip, SafeTeleport
 local CheckHarvestCrops, ScanCrops, HarvestCrops
-local AutoBuySeed, AutoBuyGear, AutoSellCrops, AutoClaimQuest, AutoPlantsSeeds
+local AutoBuyItem, AutoSellCrops, AutoClaimQuest, AutoPlantsSeeds
 local processQueue
 local InitializePlotData, GetRandomPlantPosition, ResetControlVariable
 local RemoteNotification, RemoteReplicaSet
@@ -69,9 +73,8 @@ local FruitESPFolderName = "FruitESP"
 local ESPFruitConnection
 local bGuiSession = {}
 
-local HarvestConfig = {}
-local RemoveConfig = {}
-local RemovePlants, RemoveCrops
+local GetHarvestConfig, GetRemoveConfig
+local ProcessRemove
 
 local isAntiLag = false
 
@@ -79,6 +82,11 @@ local RNG = Random.new()
 local MyPlantableParts = {}
 local MyPlot, MySpawn, MySpawnPoint
 
+local Options = Fluent.Options
+
+-- ==========================================
+-- 2. Utility Functions
+-- ==========================================
 local function ShowData(tbl, indent)
 	local lclIndent = indent or 0
 	local spacing = string.rep("  ", lclIndent)
@@ -133,6 +141,8 @@ local SettingCache = {
 	WaterReflectance = Terrain.WaterReflectance,
 	WaterTransparency = Terrain.WaterTransparency,
 }
+local AntiLagConnections = {}
+
 ApplyAntiLag = function()
 	-- Lighting
 	Lighting.GlobalShadows = false
@@ -148,9 +158,19 @@ ApplyAntiLag = function()
 	Terrain.WaterReflectance = 0
 	Terrain.WaterTransparency = 1
 
-	-- Workspace optimize
-	for i, v in ipairs(workspace:GetDescendants()) do
-		if i % 200 == 0 then task.wait() end
+	-- Workspace optimize: Targeted Folders Only
+	local targetFolders = {
+		workspace:FindFirstChild("ClientPlants"),
+		workspace:FindFirstChild("MapPhysical"),
+	}
+
+	local function ApplyToPart(v)
+		-- ยกเว้นโฟลเดอร์ Shops
+		local mapPhysical = workspace:FindFirstChild("MapPhysical")
+		if mapPhysical then
+			local shops = mapPhysical:FindFirstChild("Shops")
+			if shops and v:IsDescendantOf(shops) then return end
+		end
 
 		if v:IsA("BasePart") then
 			v.Material = Enum.Material.SmoothPlastic
@@ -162,6 +182,24 @@ ApplyAntiLag = function()
 		end
 	end
 
+	for _, folder in ipairs(targetFolders) do
+		if folder then
+			-- Scan current
+			for i, v in ipairs(folder:GetDescendants()) do
+				if i % 200 == 0 then task.wait() end
+				ApplyToPart(v)
+			end
+
+			-- Hook for new elements
+			table.insert(
+				AntiLagConnections,
+				folder.DescendantAdded:Connect(function(v)
+					if isAntiLag then ApplyToPart(v) end
+				end)
+			)
+		end
+	end
+
 	-- Rendering quality (safe)
 	pcall(function()
 		settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
@@ -169,6 +207,12 @@ ApplyAntiLag = function()
 end
 
 RestoreAntiLag = function()
+	-- Clean up connections
+	for _, conn in ipairs(AntiLagConnections) do
+		if conn then conn:Disconnect() end
+	end
+	table.clear(AntiLagConnections)
+
 	-- คืนค่า Lighting
 	Lighting.GlobalShadows = SettingCache.GlobalShadows
 	Lighting.FogEnd = SettingCache.FogEnd
@@ -183,9 +227,19 @@ RestoreAntiLag = function()
 	Terrain.WaterReflectance = SettingCache.WaterReflectance
 	Terrain.WaterTransparency = SettingCache.WaterTransparency
 
-	-- คืนค่าวัตถุใน Workspace
-	for i, v in ipairs(workspace:GetDescendants()) do
-		if i % 200 == 0 then task.wait() end
+	-- คืนค่าวัตถุใน Workspace: Targeted Folders Only
+	local targetFolders = {
+		workspace:FindFirstChild("ClientPlants"),
+		workspace:FindFirstChild("MapPhysical"),
+	}
+
+	local function RestorePart(v)
+		-- ยกเว้นโฟลเดอร์ Shops
+		local mapPhysical = workspace:FindFirstChild("MapPhysical")
+		if mapPhysical then
+			local shops = mapPhysical:FindFirstChild("Shops")
+			if shops and v:IsDescendantOf(shops) then return end
+		end
 
 		if v:IsA("BasePart") then
 			v.Material = Enum.Material.Plastic
@@ -194,6 +248,15 @@ RestoreAntiLag = function()
 			v.Enabled = true
 		elseif v:IsA("Decal") or v:IsA("Texture") then
 			v.Transparency = 0
+		end
+	end
+
+	for _, folder in ipairs(targetFolders) do
+		if folder then
+			for i, v in ipairs(folder:GetDescendants()) do
+				if i % 200 == 0 then task.wait() end
+				RestorePart(v)
+			end
 		end
 	end
 
@@ -307,7 +370,7 @@ end
 --MySpawnPoint = MySpawn:GetPivot()
 
 TweenToTarget = function(targetCFrame, speed)
-	local character = game.Players.LocalPlayer.Character
+	local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 	if not character then return false end
 	local rootPart = character:FindFirstChild("HumanoidRootPart")
 	if not rootPart then return false end
@@ -342,10 +405,26 @@ TweenToTarget = function(targetCFrame, speed)
 	local tween = TweenService:Create(rootPart, tweenInfo, { CFrame = finalCFrame })
 
 	tween:Play()
+
+	-- Timeout Protection (Max 5 Sec)
+	local connection
+	local timeout = false
+	task.delay(math.min(tweenTime + 2, 5), function()
+		if tween.PlaybackState == Enum.PlaybackState.Playing then
+			tween:Cancel()
+			timeout = true
+		end
+	end)
+
 	tween.Completed:Wait()
 
 	rootPart.Anchored = true
 	SetNoClip(false)
+
+	if timeout then
+		SafeTeleport(finalCFrame)
+		task.wait(0.2)
+	end
 
 	return true
 end
@@ -389,6 +468,701 @@ ParseFruitUuid = function(rawUuid)
 	return baseUuid, finalNumber
 end
 
+QuickSave = function()
+	if not IsLoading then SaveManager:Save("Horizons") end
+end
+
+GetSelectedItems = function(DropdownValue)
+	local Items = {}
+	if type(DropdownValue) == "table" then
+		for Value, State in pairs(DropdownValue) do
+			if State then table.insert(Items, Value) end
+		end
+	end
+	return Items
+end
+
+ResetControlVariable = function()
+	isBuyingSeed = false
+	isBuyingGear = false
+	isPlanting = false
+	isProcessing = false
+	HarvestPause = false
+	isHarvesting = false
+	isQuestClaiming = false
+	isRemovePlants = false
+	isRemoveCrops = false
+
+	table.clear(HarVestCropsList)
+	table.clear(actionQueue)
+end
+
+-- ==========================================
+-- 3. Core Logic & Automation Functions
+-- ==========================================
+
+GetHarvestConfig = function()
+	return {
+		mode = "Harvest",
+		wl = {
+			crops = GetSelectedItems(Options.ddHarvestCrops.Value),
+			mutants = GetSelectedItems(Options.ddHarvestMutants.Value),
+			ripeness = GetSelectedItems(Options.ddRipeness.Value),
+			ripenessMulti = tonumber(Options.ipRipenessMulti.Value) or 0,
+			variant = GetSelectedItems(Options.ddVariant.Value),
+			weightCondition = Options.ddWeight.Value,
+			weightValue = tonumber(Options.ipWeight.Value) or 0,
+			scaleCondition = "", --Options.ddScale.Value,
+			scaleValue = 0, --tonumber(Options.ipScale.Value) or 0,
+		},
+		bl = {
+			crops = GetSelectedItems(Options.ddHarvestBlackCrops.Value),
+			ripeness = GetSelectedItems(Options.ddBlackRipeness.Value),
+			variant = GetSelectedItems(Options.ddBackVariant.Value),
+			mutants = GetSelectedItems(Options.ddHarvestBackMutants.Value),
+		},
+	}
+end
+
+GetRemoveConfig = function()
+	return {
+		mode = "Remove",
+		wl = {
+			crops = GetSelectedItems(Options.ddRemoveCrops.Value),
+			mutants = GetSelectedItems(Options.ddRemoveMutants.Value),
+			ripeness = GetSelectedItems(Options.ddRemoveRipeness.Value),
+			ripenessMulti = tonumber(Options.ipRemoveRipenessMulti.Value) or 0,
+			variant = GetSelectedItems(Options.ddRemoveVariant.Value),
+			weightCondition = Options.ddRemoveWeight.Value,
+			weightValue = tonumber(Options.ipRemoveWeight.Value) or 0,
+			scaleCondition = Options.ddRemoveScale.Value,
+			scaleValue = tonumber(Options.ipRemoveScale.Value) or 0,
+		},
+		bl = {
+			crops = GetSelectedItems(Options.ddRemoveBlackCrops.Value),
+			ripeness = GetSelectedItems(Options.ddRemoveBlackRipeness.Value),
+			variant = GetSelectedItems(Options.ddRemoveBackVariant.Value),
+			mutants = GetSelectedItems(Options.ddRemoveBackMutants.Value),
+		},
+	}
+end
+
+CheckHarvestCrops = function(fruit, config)
+	local fruitName = fruit:GetAttribute("PlantType") or (fruit.Parent and fruit.Parent:GetAttribute("PlantType")) or "Fruit"
+	local fruitRipeness = fruit:GetAttribute("RipenessStage")
+	local fruitVariant = fruit:GetAttribute("Variant")
+	local CropsMutants = fruit:GetAttribute("Mutation")
+
+	if not table.find(config.wl.crops, "ALL") and not table.find(config.wl.crops, fruitName) then return false end
+	if fruit:GetAttribute("Favorited") == true then return false end
+	if not table.find(config.wl.ripeness, "ALL") and not table.find(config.wl.ripeness, fruitRipeness) then return false end
+	local fruitRipenessMulti = fruit:GetAttribute("RipenessMultiplier")
+	if config.wl.ripenessMulti ~= 0 and (not fruitRipenessMulti or fruitRipenessMulti < config.wl.ripenessMulti) then return false end
+	if not table.find(config.wl.variant, "ALL") and not table.find(config.wl.variant, fruitVariant) then return false end
+
+	if not table.find(config.wl.mutants, "ALL") then
+		if not CropsMutants or CropsMutants == "" then return false end
+		local CropsMutantsTable = string.split(CropsMutants, ",")
+		local isMutantMatch = false
+		for _, mutation in ipairs(CropsMutantsTable) do
+			if table.find(config.wl.mutants, mutation) then isMutantMatch = true end
+		end
+		if not isMutantMatch then return false end
+	end
+
+	local rawWeight = fruit:GetAttribute("FruitWeight") or fruit:GetAttribute("PlantWeight")
+	if not rawWeight then
+		if config.mode == "Harvest" then
+			return false
+		elseif config.mode == "Remove" then
+			if config.wl.scaleValue ~= 0 then
+				local rawScale = fruit:GetAttribute("HiddenNumber")
+				if not rawScale then return false end
+				local scale = tonumber(rawScale)
+				if config.wl.scaleCondition == "Below" and scale >= config.wl.scaleValue then return false end
+				if config.wl.scaleCondition == "Above" and scale <= config.wl.scaleValue then return false end
+			end
+		end
+	else
+		if config.wl.weightValue ~= 0 then
+			local weight = tonumber(rawWeight)
+			if config.wl.weightCondition == "Below" and weight >= config.wl.weightValue then return false end
+			if config.wl.weightCondition == "Above" and weight <= config.wl.weightValue then return false end
+		end
+	end
+
+	if not table.find(config.bl.crops, "NONE") and table.find(config.bl.crops, fruitName) then return false end
+	if not table.find(config.bl.ripeness, "NONE") and table.find(config.bl.ripeness, fruitRipeness) then return false end
+	if not table.find(config.bl.variant, "NONE") and table.find(config.bl.variant, fruitVariant) then return false end
+
+	if not table.find(config.bl.mutants, "NONE") then
+		if CropsMutants and CropsMutants ~= "" then
+			local CropsMutantsTable = string.split(CropsMutants, ",")
+			local isBackMutantMatch = false
+			for _, mutation in ipairs(CropsMutantsTable) do
+				if table.find(config.bl.mutants, mutation) then isBackMutantMatch = true end
+			end
+			if isBackMutantMatch then return false end
+		end
+	end
+
+	return true
+end
+
+ScanCrops = function()
+	if not Options.tgHarvestEnable.Value then return end
+	table.clear(HarVestCropsList)
+
+	-- 1. ค้นหาผ่าน Tag ที่ปุ่มกด
+	local dynHarvestConfig = GetHarvestConfig()
+	for _, prompt in pairs(CollectionService:GetTagged("HarvestPrompt")) do
+		if prompt.Enabled then
+			local fruit = prompt.Parent.Parent -- ย้อนกลับไปหา Model หลัก
+
+			if CheckHarvestCrops(fruit, dynHarvestConfig) then table.insert(HarVestCropsList, fruit) end
+		end
+	end
+
+	-- 2. เรียงลำดับตามชื่อผลไม้ (PlantType) เพื่อให้เก็บเป็นโซนๆ ไป
+	if #HarVestCropsList > 1 then
+		table.sort(HarVestCropsList, function(a, b)
+			local nameA = a:GetAttribute("PlantType") or (a.Parent and a.Parent:GetAttribute("PlantType")) or "Fruit"
+			local nameB = b:GetAttribute("PlantType") or (b.Parent and b.Parent:GetAttribute("PlantType")) or "Fruit"
+			return nameA < nameB
+		end)
+	end
+end
+
+HarvestCrops = function()
+	if HarvestPause or isProcessing or isHarvesting or not Options.tgHarvestEnable.Value then return end
+
+	if #HarVestCropsList > 0 then
+		isHarvesting = true
+		local fruit = table.remove(HarVestCropsList, 1)
+
+		local prompt = fruit:FindFirstChild("HarvestPrompt", true)
+		if not fruit or not fruit.Parent or not prompt or not prompt.Enabled then
+			isHarvesting = false
+			return
+		end
+
+		local targetCFrame = CFrame.new(fruit:GetPivot().Position + Vector3.new(3, 0, 0))
+
+		TweenToTarget(targetCFrame, 100)
+
+		-- จำลองการกดปุ่ม E
+		task.wait(0.1) -- พักนิดนึงให้ฟิสิกส์นิ่ง
+		--if prompt.Enabled then fireproximityprompt(prompt) end
+		local gUuid, gindex = ParseFruitUuid(fruit:GetAttribute("Uuid"))
+		local args = {}
+		if gindex then
+			args = {
+				{
+					{
+						GrowthAnchorIndex = gindex,
+						Uuid = gUuid,
+					},
+				},
+			}
+		else
+			args = {
+				{
+					{
+						Uuid = gUuid,
+					},
+				},
+			}
+		end
+		HarvestFruit:FireServer(unpack(args))
+		task.wait(0.1)
+	end
+	isHarvesting = false
+end
+
+AutoSellCrops = function()
+	if not Options.tgSellCropsEnable.Value then return end
+	SafeTeleport(Pos.Sell)
+	task.wait(0.3)
+	local args = {
+		"SellAll",
+	}
+	SellItems:InvokeServer(unpack(args))
+	task.wait(1)
+	SafeTeleport(MySpawnPoint)
+	task.wait(0.3)
+	HarvestPause = false
+end
+
+AutoBuyItem = function(ShopType, Items, DropdownValue)
+	if not Items then return end
+	if ShopType == "SeedShop" then
+		isBuyingSeed = true
+	else
+		isBuyingGear = true
+	end
+
+	local BuyList = GetSelectedItems(DropdownValue)
+	SafeTeleport(Pos[ShopType])
+	task.wait(0.5)
+
+	for Name, itemData in pairs(Items) do
+		if table.find(BuyList, "ALL") or table.find(BuyList, Name) then
+			for i = 1, tonumber(itemData.Amount) do
+				PurchaseShopItem:InvokeServer(ShopType, Name)
+				task.wait(0.2)
+			end
+		end
+	end
+
+	SafeTeleport(MySpawnPoint)
+	task.wait(1)
+	if ShopType == "SeedShop" then
+		isBuyingSeed = false
+	else
+		isBuyingGear = false
+	end
+	HarvestPause = false
+	task.wait(0.2)
+end
+
+AutoBuySeed = function(Items)
+	if not Options.tgBuySeedEnable.Value then return end
+	AutoBuyItem("SeedShop", Items, Options.ddBuySeeds.Value)
+end
+
+AutoBuyGear = function(Items)
+	if not Options.tgBuyGearEnable.Value then return end
+	AutoBuyItem("GearShop", Items, Options.ddBuyGear.Value)
+end
+
+AutoPlantsSeeds = function()
+	if not Options.tgPlantsEnable.Value or isPlanting then return end
+
+	pcall(function()
+		Humanoid:UnequipTools()
+	end)
+	local ddPlantsPos = Options.ddPlantsPos.Value
+	local PlantPos
+	local Backpack = LocalPlayer.Backpack
+	local SeedList = GetSelectedItems(Options.ddPlantsSeeds.Value)
+
+	if Backpack then
+		for _index, item in pairs(Backpack:GetChildren()) do
+			if not Options.tgPlantsEnable.Value then break end
+			if item:GetAttribute("Type") == "Seeds" and (table.find(SeedList, "ALL") or table.find(SeedList, item:GetAttribute("PlantType"))) then
+				isPlanting = true
+				pcall(function()
+					Humanoid:EquipTool(item)
+				end)
+				local ItemCount = item:GetAttribute("ItemCount") or 0
+				for i = 1, ItemCount do
+					if not Options.tgPlantsEnable.Value then
+						isPlanting = false
+						break
+					end
+					if ddPlantsPos == "Player" then
+						PlantPos = Character:GetPivot()
+					elseif ddPlantsPos == "Random" then
+						PlantPos = GetRandomPlantPosition()
+						TweenToTarget(CFrame.new(PlantPos.X + 3, PlantPos.Y, PlantPos.Z), 100)
+					end
+					local args = {
+						item:GetAttribute("PlantType"),
+						--Vector3.new(PlantPos.X, PlantPos.Y, PlantPos.Z),
+						PlantPos.Position,
+					}
+					PlantSeed:InvokeServer(unpack(args))
+					task.wait(0.3)
+				end
+				pcall(function()
+					Humanoid:UnequipTools()
+				end)
+			end
+		end
+		isPlanting = false
+	end
+end
+
+AutoClaimQuest = function(QuestData)
+	if not Options.tgQuestEnable.Value or isQuestClaiming or not QuestData then return end
+
+	isQuestClaiming = true
+	local Daily = QuestData.Daily.Active
+	for index, qDaily in pairs(Daily) do
+		if qDaily.CompletedAt and not qDaily.Claimed then game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ClaimQuest"):FireServer("Daily", index) end
+	end
+
+	local Weekly = QuestData.Weekly.Active
+	for index, qWeekly in pairs(Weekly) do
+		if qWeekly.CompletedAt and not qWeekly.Claimed then game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ClaimQuest"):FireServer("Weekly", index) end
+	end
+	isQuestClaiming = false
+end
+
+processQueue = function()
+	if isProcessing then return end
+	isProcessing = true
+	HarvestPause = true
+	task.wait(0.2)
+
+	while #actionQueue > 0 do
+		local taskData = table.remove(actionQueue, 1)
+		--local success, _ = pcall(function()
+		pcall(function()
+			if taskData.args then
+				taskData.FuncName(taskData.args)
+			else
+				taskData.FuncName()
+			end
+		end)
+		--[[
+		if not success then
+			table.insert(actionQueue, taskData)
+			task.wait(2)
+		end
+		]]
+	end
+	isProcessing = false
+	HarvestPause = false
+	task.wait(0.5)
+end
+
+RemoteReplicaSet = function(args)
+	if type(args[2]) ~= "table" then return end
+	local fType = args[2][1]
+	local fData = args[3]
+	if fType == "SeedShop" and not isBuyingSeed then
+		table.insert(actionQueue, {
+			FuncName = AutoBuyItem,
+			args = fData.Items,
+		})
+	elseif fType == "GearShop" and not isBuyingGear then
+		table.insert(actionQueue, {
+			FuncName = AutoBuyItem,
+			args = fData.Items,
+		})
+	elseif fType == "Money" then
+	end
+end
+
+RemoteNotification = function(args)
+	if args[1] and type(args[1]) == "string" then
+		if string.find(args[1], "inventory is full!") then
+			HarvestPause = true
+			table.clear(HarVestCropsList)
+			table.insert(actionQueue, {
+				FuncName = AutoSellCrops,
+			})
+		end
+	end
+end
+
+CreatESP = function(espfolder, obj, uuid, txt1, txt2, arg)
+	if not (espfolder and obj and uuid and txt1) then return end
+	local priority = arg or 0
+	if bGuiSession[uuid] then
+		bGuiSession[uuid]:Destroy()
+		bGuiSession[uuid] = nil
+	end
+
+	local bgui = Instance.new("BillboardGui")
+	bgui.Name = "ESP_" .. uuid
+	bgui.Adornee = obj
+	bgui.Size = UDim2.new(0, 200, 0, 80)
+	bgui.StudsOffset = Vector3.new(0, 3.5, 0)
+	bgui.AlwaysOnTop = true
+	bgui.LightInfluence = 0
+	bgui.Parent = espfolder
+
+	local textLabel = Instance.new("TextLabel")
+	textLabel.Parent = bgui
+	textLabel.Size = UDim2.new(1, 0, 0, 0)
+	textLabel.AutomaticSize = Enum.AutomaticSize.XY
+	textLabel.BackgroundTransparency = 1
+	textLabel.TextWrapped = false
+	if txt2 and txt2 ~= "" then
+		textLabel.Text = string.format("%s\n%s", tostring(txt1), tostring(txt2))
+	else
+		textLabel.Text = tostring(txt1)
+	end
+
+	if priority == 3 then
+		textLabel.TextColor3 = Color3.fromRGB(200, 200, 10)
+	elseif priority == 2 then
+		textLabel.TextColor3 = Color3.fromRGB(200, 50, 10)
+	elseif priority == 1 then
+		textLabel.TextColor3 = Color3.fromRGB(10, 200, 10)
+	else
+		textLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+	end
+
+	textLabel.TextStrokeTransparency = 0
+	textLabel.TextSize = 16
+	textLabel.Font = Enum.Font.FredokaOne
+
+	textLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+	textLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
+	bGuiSession[uuid] = bgui
+end
+
+SetespPlant = function(obj)
+	if not Options.tgPlantsESP.Value then return end
+	local plant = (obj:IsA("Model") and obj) or obj:FindFirstAncestorOfClass("Model")
+	if not plant then return end
+	local plantName = plant:GetAttribute("PlantType")
+	if not plantName then return end
+
+	local TargetFolder = gethui and gethui() or CoreGui
+	local ESPFolder = TargetFolder:FindFirstChild(PlantsESPFolderName)
+	local espPlantsList = GetSelectedItems(Options.ddPlantsESP.Value)
+
+	if table.find(espPlantsList, "NONE") then return end
+
+	if table.find(espPlantsList, plantName) then
+		local uuid = plant:GetAttribute("Uuid") or plant.Name
+		local scale = plant:GetAttribute("HiddenNumber") or 0
+		local Weight = plant:GetAttribute("PlantWeight") or 0
+		local arg = 0
+		if scale >= 2 then
+			arg = 3
+		elseif scale >= 1.5 then
+			arg = 2
+		elseif scale >= 1 then
+			arg = 1
+		end
+		if Weight > 0 then
+			CreatESP(ESPFolder, plant, uuid, "🌱 " .. plantName, string.format("Weight : %.2f kg", Weight), arg)
+		else
+			CreatESP(ESPFolder, plant, uuid, "🌱 " .. plantName, string.format("Scale : %.2f", scale), arg)
+		end
+	end
+end
+
+espPlants = function(State)
+	local TargetFolder = gethui and gethui() or CoreGui
+	local oldFolder = TargetFolder:FindFirstChild(PlantsESPFolderName)
+	if oldFolder then oldFolder:Destroy() end
+
+	if State ~= true then return end
+	local espPlantsList = GetSelectedItems(Options.ddPlantsESP.Value)
+	if table.find(espPlantsList, "NONE") then return end
+
+	local ESPFolder = Instance.new("Folder")
+	ESPFolder.Name = PlantsESPFolderName
+	ESPFolder.Parent = TargetFolder
+
+	local ClientPlants = workspace:FindFirstChild("ClientPlants")
+	if ClientPlants then
+		for _, plant in pairs(ClientPlants:GetChildren()) do
+			SetespPlant(plant)
+		end
+	end
+end
+
+SetespFruit = function(obj)
+	if not Options.tgFruitESP.Value then return end
+
+	local fruit = (obj:IsA("Model") and obj) or obj:FindFirstAncestorOfClass("Model")
+	if not fruit then return end
+
+	local fruitName = fruit:GetAttribute("PlantType") or (fruit.Parent and fruit.Parent:GetAttribute("PlantType"))
+	if not fruitName then return end
+
+	local TargetFolder = gethui and gethui() or CoreGui
+	local ESPFolder = TargetFolder:FindFirstChild(FruitESPFolderName)
+	local espFruitList = GetSelectedItems(Options.ddFruitESP.Value)
+
+	if table.find(espFruitList, "NONE") then return end
+
+	if table.find(espFruitList, fruitName) then
+		local uuid = fruit:GetAttribute("Uuid") or fruitName
+		local Weight = 0
+		for i = 1, 3 do
+			Weight = fruit:GetAttribute("FruitWeight") or fruit:GetAttribute("PlantWeight") or 0
+
+			if Weight > 0 then break end
+
+			task.wait(1)
+		end
+
+		local scale = fruit:GetAttribute("HiddenNumber") or 0
+		local arg = 0
+		if scale >= 2 then
+			arg = 3
+		elseif scale >= 1.5 then
+			arg = 2
+		elseif scale >= 1 then
+			arg = 1
+		end
+		if Weight > 0 then
+			CreatESP(ESPFolder, fruit, uuid, "🍎" .. fruitName, string.format("Weight : %.2f kg", Weight), arg)
+		else
+			CreatESP(ESPFolder, fruit, uuid, "🍎" .. fruitName, string.format("Scale : %.2f", scale), arg)
+		end
+	end
+end
+
+espFruit = function(State)
+	local TargetFolder = gethui and gethui() or CoreGui
+	local oldFolder = TargetFolder:FindFirstChild(FruitESPFolderName)
+	if oldFolder then oldFolder:Destroy() end
+	if ESPFruitConnection then
+		ESPFruitConnection:Disconnect()
+		ESPFruitConnection = nil
+	end
+	if State ~= true then return end
+
+	local espFruitList = GetSelectedItems(Options.ddFruitESP.Value)
+	if table.find(espFruitList, "NONE") then return end
+
+	local ESPFolder = Instance.new("Folder")
+	ESPFolder.Name = FruitESPFolderName
+	ESPFolder.Parent = TargetFolder
+
+	for _, prompt in pairs(CollectionService:GetTagged("HarvestPrompt")) do
+		--if prompt.Enabled then SetespFruit(prompt) end
+		SetespFruit(prompt)
+	end
+	ESPFruitConnection = CollectionService:GetInstanceAddedSignal("HarvestPrompt"):Connect(SetespFruit)
+end
+
+ProcessRemove = function(isFruit)
+	local ClientPlants = workspace:FindFirstChild("ClientPlants")
+	if not ClientPlants then return end
+
+	local Backpack = LocalPlayer.Backpack
+	local Shovel = Backpack:FindFirstChild("Shovel", true) or Character:FindFirstChild("Shovel", true)
+	local RemovePlant = RemoteEvents.RemovePlant
+
+	local RemoveList = isFruit and GetSelectedItems(Options.ddRemoveCrops.Value) or GetSelectedItems(Options.ddRemovePlants.Value)
+	local dynRemoveConfig = isFruit and GetRemoveConfig() or nil
+
+	local RemovePlantsScaleValue = 0
+	local RemovePlantsScale = ""
+	if not isFruit then
+		RemovePlantsScale = Options.ddRemovePlantsScale.Value
+		RemovePlantsScaleValue = tonumber(Options.ipRemovePlantsScale.Value) or 0
+	end
+
+	local function CheckPlantsScale(cPlant)
+		if RemovePlantsScaleValue == 0 then return true end
+		local rawScale = cPlant:GetAttribute("HiddenNumber")
+		if not rawScale then return false end
+		local scale = tonumber(rawScale)
+		if RemovePlantsScale == "Below" then
+			return scale < RemovePlantsScaleValue
+		elseif RemovePlantsScale == "Above" then
+			return scale > RemovePlantsScaleValue
+		end
+		return false
+	end
+
+	local function PerformDig(obj)
+		pcall(function()
+			Humanoid:UnequipTools()
+		end)
+		task.wait()
+		Humanoid:EquipTool(Shovel)
+		task.wait()
+		local targetCFrame = CFrame.new(obj:GetPivot().Position + Vector3.new(3, 0, 4))
+		TweenToTarget(targetCFrame, 100)
+
+		local gUuid, gindex = ParseFruitUuid(obj:GetAttribute("Uuid"))
+		if isFruit then
+			if gindex then
+				RemovePlant:FireServer(gUuid, gindex)
+			else
+				RemovePlant:FireServer(gUuid)
+			end
+		else
+			RemovePlant:FireServer(gUuid)
+		end
+		task.wait()
+	end
+
+	for _, plant in pairs(ClientPlants:GetChildren()) do
+		local enableOpt = isFruit and Options.tgRemoveFruitEnable.Value or Options.tgRemovePlantsEnable.Value
+		if not enableOpt then return false end
+
+		local PlantType = plant:GetAttribute("PlantType")
+		if PlantType and (table.find(RemoveList, "ALL") or table.find(RemoveList, PlantType)) then
+			if isFruit then
+				local CropsTable = plant:GetAttribute("HarvestablePlant") and { plant } or plant:GetChildren()
+				for _, crop in pairs(CropsTable) do
+					if not Options.tgRemoveFruitEnable.Value then return false end
+					if crop:IsA("Model") and CheckHarvestCrops(crop, dynRemoveConfig) then PerformDig(crop) end
+				end
+			else
+				if CheckPlantsScale(plant) then PerformDig(plant) end
+			end
+		end
+	end
+	return true
+end
+
+RemovePlants = function()
+	if not Options.tgRemovePlantsEnable.Value or isRemovePlants then return end
+	isRemovePlants = true
+	ProcessRemove(false)
+	isRemovePlants = false
+end
+
+RemoveCrops = function()
+	if not Options.tgRemoveFruitEnable.Value or isRemoveCrops then return end
+	isRemoveCrops = true
+	ProcessRemove(true)
+	isRemoveCrops = false
+end
+
+SetupTracker = function()
+	local ClientPlants = workspace:FindFirstChild("ClientPlants")
+	if not ClientPlants then return end
+
+	ClientPlants.DescendantAdded:Connect(function(newPlant)
+		task.wait(0.5)
+
+		for _, obj in ipairs(newPlant:GetDescendants()) do
+			if obj.Name == "PlantAnchor" then
+				local parent = obj.Parent
+
+				if Options.tgPlantsESP.Value then
+					if parent:GetAttribute("HarvestablePlant") then
+						SetespFruit(obj)
+					else
+						SetespPlant(obj)
+					end
+				end
+
+				if parent:GetAttribute("HarvestablePlant") then
+					if Options.tgHideFruit.Value then
+						for _, sibling in ipairs(obj.Parent:GetChildren()) do
+							SetVisibility(sibling, true)
+						end
+					end
+				else
+					if Options.tgHidePlant.Value then
+						for _, sibling in ipairs(parent:GetChildren()) do
+							SetVisibility(sibling, true)
+						end
+					end
+				end
+			elseif obj.Name == "FruitAnchor" then
+				local parent = obj.Parent
+				if Options.tgFruitESP.Value then SetespFruit(obj) end
+				if Options.tgHideFruit.Value then
+					for _, sibling in ipairs(parent:GetChildren()) do
+						SetVisibility(sibling, true)
+					end
+				end
+			end
+		end
+	end)
+end
+
+-- ==========================================
+-- 4. User Interface (UI)
+-- ==========================================
+
 local Window = Fluent:CreateWindow({
 	Title = "Garden Horizons",
 	SubTitle = "by EfHub v " .. fVersion,
@@ -408,7 +1182,6 @@ local Tabs = {
 	Misc = Window:AddTab({ Title = "Misc", Icon = "component" }),
 	Settings = Window:AddTab({ Title = "Settings", Icon = "settings" }),
 }
-local Options = Fluent.Options
 Window:SelectTab(1)
 
 local function getShopData(path)
@@ -604,7 +1377,7 @@ HarvestSection:AddDivider()
 HarvestSection:AddDropdown("ddRipeness", {
 	Title = "Ripeness Stage",
 	Values = { "ALL", "Unripe", "Ripened", "Lush" },
-	Default = { "ALL" },
+	Default = { "Lush" },
 	Multi = true,
 	Callback = function(Value)
 		if QuickSave then QuickSave() end
@@ -684,7 +1457,7 @@ local function tempBuySeed()
 	local SeedShop = GetShopData:InvokeServer("SeedShop")
 	if not SeedShop then return end
 	table.insert(actionQueue, {
-		FuncName = AutoBuySeed,
+		FuncName = AutoBuyItem,
 		args = SeedShop.Items,
 	})
 end
@@ -721,7 +1494,7 @@ local function tempBuyGear()
 	local GearShop = GetShopData:InvokeServer("GearShop")
 	if not GearShop then return end
 	table.insert(actionQueue, {
-		FuncName = AutoBuyGear,
+		FuncName = AutoBuyItem,
 		args = GearShop.Items,
 	})
 end
@@ -765,14 +1538,14 @@ QuestSection:AddToggle("tgQuestEnable", {
 	end,
 })
 
-local RemoveSection = Tabs.Auto:AddCollapsibleSection("Remove", false)
+local RemoveSection = Tabs.Auto:AddCollapsibleSection("Remove Plants", false)
 RemoveSection:AddToggle("tgRemovePlantsEnable", {
 	Title = "Auto Remove Plants",
 	Default = false,
 	Callback = function(Value)
-		if Value then table.insert(actionQueue, {
-			FuncName = RemovePlants,
-		}) end
+		--[[ 		if Value then table.insert(actionQueue, {
+			FuncName = ProcessRemove,
+		}) end ]]
 		if QuickSave then QuickSave() end
 	end,
 })
@@ -794,8 +1567,8 @@ RemoveSection:AddDropdown("ddRemovePlants", {
 })
 RemoveSection:AddDropdown("ddRemovePlantsScale", {
 	Title = "Plants Scale Threshold",
-	Values = { "ALL", "Below", "Above" },
-	Default = "ALL",
+	Values = { "Below", "Above" },
+	Default = "Below",
 	Multi = false,
 	Callback = function(Value)
 		if QuickSave then QuickSave() end
@@ -817,7 +1590,7 @@ RemoveFruitSection:AddToggle("tgRemoveFruitEnable", {
 	Default = false,
 	Callback = function(Value)
 		--[[ 		if Value then table.insert(actionQueue, {
-			FuncName = AutoRemoveFruit,
+			FuncName = ProcessRemove,
 		}) end ]]
 		if QuickSave then QuickSave() end
 	end,
@@ -908,7 +1681,7 @@ RemoveFruitSection:AddDropdown("ddRemoveRipeness", {
 
 RemoveFruitSection:AddInput("ipRemoveRipenessMulti", {
 	Title = "Ripeness Multiplier",
-	Default = 3,
+	Default = 0,
 	Numeric = false,
 	Finished = false,
 	Callback = function(Value)
@@ -955,8 +1728,28 @@ RemoveFruitSection:AddDropdown("ddRemoveWeight", {
 		if QuickSave then QuickSave() end
 	end,
 })
-HarvestSection:AddInput("ipRemoveWeight", {
+RemoveFruitSection:AddInput("ipRemoveWeight", {
 	Title = "Weight",
+	Default = 0,
+	Numeric = true,
+	Finished = true,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+
+RemoveFruitSection:AddDivider()
+RemoveFruitSection:AddDropdown("ddRemoveScale", {
+	Title = "Scale",
+	Values = { "Below", "Above" },
+	Default = "Below",
+	Multi = false,
+	Callback = function(Value)
+		if QuickSave then QuickSave() end
+	end,
+})
+RemoveFruitSection:AddInput("ipRemoveScale", {
+	Title = "Scale",
 	Default = 0,
 	Numeric = true,
 	Finished = true,
@@ -1100,39 +1893,15 @@ SaveManager:SetFolder("EfHub/HRZ")
 InterfaceManager:BuildInterfaceSection(Tabs.Settings)
 SaveManager:BuildConfigSection(Tabs.Settings)
 
-QuickSave = function()
-	if not IsLoading then SaveManager:Save("Horizons") end
-end
-
-GetSelectedItems = function(DropdownValue)
-	local Items = {}
-	if type(DropdownValue) == "table" then
-		for Value, State in pairs(DropdownValue) do
-			if State then table.insert(Items, Value) end
-		end
-	end
-	return Items
-end
-
-ResetControlVariable = function()
-	isBuyingSeed = false
-	isBuyingGear = false
-	isPlanting = false
-	isProcessing = false
-	HarvestPause = false
-	isHarvesting = false
-	isQuestClaiming = false
-	isRemovePlants = false
-
-	table.clear(HarVestCropsList)
-	table.clear(actionQueue)
-end
+-- ==========================================
+-- 5. Initialization, Hooks & Loops
+-- ==========================================
 
 task.spawn(function()
 	while not SaveManager.Options.SaveManager_ConfigList do
 		task.wait()
 	end
-	SaveManager.Options.SaveManager_ConfigList:SetValue("EfHub")
+	SaveManager.Options.SaveManager_ConfigList:SetValue("Horizons")
 	SaveManager:Load("Horizons")
 	task.wait(1)
 	IsLoading = false
@@ -1150,647 +1919,6 @@ LocalPlayer.Idled:Connect(function()
 	VirtualUser:ClickButton2(Vector2.new())
 end)
 
---[[ Function ]]
---[[ 
-CheckHarvestCrops = function(fruit)
-	-- ดึงค่า Attributes ของผลไม้มาเก็บไว้ก่อน เพื่อลดการเรียกฟังก์ชันซ้ำซ้อน
-	local fruitName = fruit:GetAttribute("PlantType") or (fruit.Parent and fruit.Parent:GetAttribute("PlantType")) or "Fruit"
-	local fruitRipeness = fruit:GetAttribute("RipenessStage")
-	local fruitVariant = fruit:GetAttribute("Variant")
-	local CropsMutants = fruit:GetAttribute("Mutation")
-
-	-- White list Variables
-	local ddHarvestCropsList = GetSelectedItems(Options.ddHarvestCrops.Value)
-	local ddHarvestMutantsList = GetSelectedItems(Options.ddHarvestMutants.Value)
-	local ddRipenessList = GetSelectedItems(Options.ddRipeness.Value)
-	local ipRipenessMulti = tonumber(Options.ipRipenessMulti.Value)
-	local ddVariantList = GetSelectedItems(Options.ddVariant.Value)
-	local ddWeight = Options.ddWeight.Value
-	local ipWeight = tonumber(Options.ipWeight.Value)
-
-	-- White list Checks
-	if not table.find(ddHarvestCropsList, "ALL") and not table.find(ddHarvestCropsList, fruitName) then return false end
-	if fruit:GetAttribute("Favorited") == true then return false end
-	if not table.find(ddRipenessList, "ALL") and not table.find(ddRipenessList, fruitRipeness) then return false end
-	if ipRipenessMulti ~= 0 and fruit:GetAttribute("RipenessMultiplier") < ipRipenessMulti then return false end
-	if not table.find(ddVariantList, "ALL") and not table.find(ddVariantList, fruitVariant) then return false end
-
-	if not table.find(ddHarvestMutantsList, "ALL") then
-		if not CropsMutants or CropsMutants == "" then return false end
-		local CropsMutantsTable = string.split(CropsMutants, ",")
-		local isMutantMatch = false
-		for _, mutation in ipairs(CropsMutantsTable) do
-			if table.find(ddHarvestMutantsList, mutation) then isMutantMatch = true end
-		end
-		if not isMutantMatch then return false end
-	end
-
-	if ipWeight ~= 0 then
-		local rawWeight = fruit:GetAttribute("FruitWeight")
-		if not rawWeight then return false end
-		local weight = tonumber(rawWeight)
-		if ddWeight == "Below" and weight >= ipWeight then return false end
-		if ddWeight == "Above" and weight <= ipWeight then return false end
-	end
-
-	-- Black list Variables
-	local ddHarvestBlackCropsList = GetSelectedItems(Options.ddHarvestBlackCrops.Value)
-	local ddBlackRipenessList = GetSelectedItems(Options.ddBlackRipeness.Value)
-	local ddHarvestBackVariantList = GetSelectedItems(Options.ddBackVariant.Value)
-	local ddHarvestBackMutantsList = GetSelectedItems(Options.ddHarvestBackMutants.Value)
-
-	-- Black list Checks (แก้ไข Logic Bug แล้ว)
-	if not table.find(ddHarvestBlackCropsList, "NONE") and table.find(ddHarvestBlackCropsList, fruitName) then return false end
-	if not table.find(ddBlackRipenessList, "NONE") and table.find(ddBlackRipenessList, fruitRipeness) then return false end
-	if not table.find(ddHarvestBackVariantList, "NONE") and table.find(ddHarvestBackVariantList, fruitVariant) then return false end -- แก้ไขเอา not ออก
-
-	if not table.find(ddHarvestBackMutantsList, "NONE") then
-		if CropsMutants and CropsMutants ~= "" then
-			local CropsMutantsTable = string.split(CropsMutants, ",")
-			local isBackMutantMatch = false
-			for _, mutation in ipairs(CropsMutantsTable) do
-				if table.find(ddHarvestBackMutantsList, mutation) then isBackMutantMatch = true end
-			end
-			if isBackMutantMatch then return false end
-		end
-	end
-
-	return true
-end ]]
-
--- สร้าง Wrapper function หรือดึงค่ามาก่อนจะโยนเข้า CheckHarvestCrops
-local function GetHarvestConfig()
-	return {
-		wl = {
-			crops = GetSelectedItems(Options.ddHarvestCrops.Value),
-			mutants = GetSelectedItems(Options.ddHarvestMutants.Value),
-			ripeness = GetSelectedItems(Options.ddRipeness.Value),
-			ripenessMulti = tonumber(Options.ipRipenessMulti.Value) or 0,
-			variant = GetSelectedItems(Options.ddVariant.Value),
-			weightCondition = Options.ddWeight.Value,
-			weightValue = tonumber(Options.ipWeight.Value) or 0,
-		},
-		bl = {
-			crops = GetSelectedItems(Options.ddHarvestBlackCrops.Value),
-			ripeness = GetSelectedItems(Options.ddBlackRipeness.Value),
-			variant = GetSelectedItems(Options.ddBackVariant.Value),
-			mutants = GetSelectedItems(Options.ddHarvestBackMutants.Value),
-		},
-	}
-end
-
-RemoveConfig = {
-	wl = {
-		crops = GetSelectedItems(Options.ddRemoveCrops.Value),
-		mutants = GetSelectedItems(Options.ddRemoveMutants.Value),
-		ripeness = GetSelectedItems(Options.ddRemoveRipeness.Value),
-		ripenessMulti = tonumber(Options.ipRemoveRipenessMulti.Value) or 0,
-		variant = GetSelectedItems(Options.ddRemoveVariant.Value),
-		weightCondition = Options.ddRemoveWeight.Value,
-		weightValue = tonumber(Options.ipRemoveWeight.Value) or 0,
-	},
-	bl = {
-		crops = GetSelectedItems(Options.ddRemoveBlackCrops.Value),
-		ripeness = GetSelectedItems(Options.ddRemoveBlackRipeness.Value),
-		variant = GetSelectedItems(Options.ddRemoveBackVariant.Value),
-		mutants = GetSelectedItems(Options.ddRemoveBackMutants.Value),
-	},
-}
-
-CheckHarvestCrops = function(fruit, config)
-	-- ดึงค่า Attributes ของผลไม้
-	local fruitName = fruit:GetAttribute("PlantType") or (fruit.Parent and fruit.Parent:GetAttribute("PlantType")) or "Fruit"
-	local fruitRipeness = fruit:GetAttribute("RipenessStage")
-	local fruitVariant = fruit:GetAttribute("Variant")
-	local CropsMutants = fruit:GetAttribute("Mutation")
-
-	-- White list Checks
-	if not table.find(config.wl.crops, "ALL") and not table.find(config.wl.crops, fruitName) then return false end
-	if fruit:GetAttribute("Favorited") == true then return false end
-	if not table.find(config.wl.ripeness, "ALL") and not table.find(config.wl.ripeness, fruitRipeness) then return false end
-	if config.wl.ripenessMulti ~= 0 and fruit:GetAttribute("RipenessMultiplier") < config.wl.ripenessMulti then return false end
-	if not table.find(config.wl.variant, "ALL") and not table.find(config.wl.variant, fruitVariant) then return false end
-
-	if not table.find(config.wl.mutants, "ALL") then
-		if not CropsMutants or CropsMutants == "" then return false end
-		local CropsMutantsTable = string.split(CropsMutants, ",")
-		local isMutantMatch = false
-		for _, mutation in ipairs(CropsMutantsTable) do
-			if table.find(config.wl.mutants, mutation) then isMutantMatch = true end
-		end
-		if not isMutantMatch then return false end
-	end
-
-	if config.wl.weightValue ~= 0 then
-		local rawWeight = fruit:GetAttribute("FruitWeight")
-		if not rawWeight then return false end
-		local weight = tonumber(rawWeight)
-		if config.wl.weightCondition == "Below" and weight >= config.wl.weightValue then return false end
-		if config.wl.weightCondition == "Above" and weight <= config.wl.weightValue then return false end
-	end
-
-	-- Black list Checks
-	if not table.find(config.bl.crops, "NONE") and table.find(config.bl.crops, fruitName) then return false end
-	if not table.find(config.bl.ripeness, "NONE") and table.find(config.bl.ripeness, fruitRipeness) then return false end
-	if not table.find(config.bl.variant, "NONE") and table.find(config.bl.variant, fruitVariant) then return false end
-
-	if not table.find(config.bl.mutants, "NONE") then
-		if CropsMutants and CropsMutants ~= "" then
-			local CropsMutantsTable = string.split(CropsMutants, ",")
-			local isBackMutantMatch = false
-			for _, mutation in ipairs(CropsMutantsTable) do
-				if table.find(config.bl.mutants, mutation) then isBackMutantMatch = true end
-			end
-			if isBackMutantMatch then return false end
-		end
-	end
-
-	return true
-end
-
-ScanCrops = function()
-	if not Options.tgHarvestEnable.Value then return end
-	table.clear(HarVestCropsList)
-
-	-- 1. ค้นหาผ่าน Tag ที่ปุ่มกด
-	local dynHarvestConfig = GetHarvestConfig()
-	for _, prompt in pairs(CollectionService:GetTagged("HarvestPrompt")) do
-		if prompt.Enabled then
-			local fruit = prompt.Parent.Parent -- ย้อนกลับไปหา Model หลัก
-
-			if CheckHarvestCrops(fruit, dynHarvestConfig) then table.insert(HarVestCropsList, fruit) end
-		end
-	end
-
-	-- 2. เรียงลำดับตามชื่อผลไม้ (PlantType) เพื่อให้เก็บเป็นโซนๆ ไป
-	if #HarVestCropsList > 1 then
-		table.sort(HarVestCropsList, function(a, b)
-			local nameA = a:GetAttribute("PlantType") or (a.Parent and a.Parent:GetAttribute("PlantType")) or "Fruit"
-			local nameB = b:GetAttribute("PlantType") or (b.Parent and b.Parent:GetAttribute("PlantType")) or "Fruit"
-			return nameA < nameB
-		end)
-	end
-end
-
-HarvestCrops = function()
-	if HarvestPause or isProcessing or isHarvesting or not Options.tgHarvestEnable.Value then return end
-
-	if #HarVestCropsList > 0 then
-		isHarvesting = true
-		local fruit = table.remove(HarVestCropsList, 1)
-
-		local prompt = fruit:FindFirstChild("HarvestPrompt", true)
-		if not fruit or not fruit.Parent or not prompt or not prompt.Enabled then
-			isHarvesting = false
-			return
-		end
-
-		local targetCFrame = CFrame.new(fruit:GetPivot().Position + Vector3.new(3, 0, 0))
-
-		TweenToTarget(targetCFrame, 100)
-
-		-- จำลองการกดปุ่ม E
-		task.wait(0.1) -- พักนิดนึงให้ฟิสิกส์นิ่ง
-		--if prompt.Enabled then fireproximityprompt(prompt) end
-		local gUuid, gindex = ParseFruitUuid(fruit:GetAttribute("Uuid"))
-		local args = {}
-		if gindex then
-			args = {
-				{
-					{
-						GrowthAnchorIndex = gindex,
-						Uuid = gUuid,
-					},
-				},
-			}
-		else
-			args = {
-				{
-					{
-						Uuid = gUuid,
-					},
-				},
-			}
-		end
-		HarvestFruit:FireServer(unpack(args))
-		task.wait(0.1)
-	end
-	isHarvesting = false
-end
-
-AutoSellCrops = function()
-	if not Options.tgSellCropsEnable.Value then return end
-	SafeTeleport(Pos.Sell)
-	task.wait(0.3)
-	local args = {
-		"SellAll",
-	}
-	SellItems:InvokeServer(unpack(args))
-	task.wait(1)
-	SafeTeleport(MySpawnPoint)
-	task.wait(0.3)
-	HarvestPause = false
-end
-
-AutoBuySeed = function(Items)
-	if not Options.tgBuySeedEnable.Value then return end
-	--[[ 	if not MySpawnPoint then
-		if not InitializePlotData() then return nil end
-	end ]]
-
-	if not Items then return end
-	isBuyingSeed = true
-	local SeedBuyList = GetSelectedItems(Options.ddBuySeeds.Value)
-	SafeTeleport(Pos.SeedShop)
-	task.wait(0.5)
-	for Name, Seed in pairs(Items) do
-		if table.find(SeedBuyList, "ALL") or table.find(SeedBuyList, Name) then
-			for i = 1, tonumber(Seed.Amount) do
-				PurchaseShopItem:InvokeServer("SeedShop", Name)
-				task.wait(0.2)
-			end
-		end
-	end
-	SafeTeleport(MySpawnPoint)
-	task.wait(1)
-	isBuyingSeed = false
-	HarvestPause = false
-	task.wait(0.2)
-end
-
-AutoBuyGear = function(Items)
-	if not Options.tgBuyGearEnable.Value then return end
-
-	if not Items then return end
-	isBuyingGear = true
-	local SeedGearList = GetSelectedItems(Options.ddBuyGear.Value)
-	SafeTeleport(Pos.GearShop)
-	task.wait(0.5)
-	for Name, Seed in pairs(Items) do
-		if table.find(SeedGearList, "ALL") or table.find(SeedGearList, Name) then
-			for i = 1, tonumber(Seed.Amount) do
-				PurchaseShopItem:InvokeServer("GearShop", Name)
-				task.wait(0.2)
-			end
-		end
-	end
-	SafeTeleport(MySpawnPoint)
-	task.wait(1)
-	isBuyingGear = false
-	HarvestPause = false
-	task.wait(0.2)
-end
-
-AutoPlantsSeeds = function()
-	if not Options.tgPlantsEnable.Value or isPlanting then return end
-
-	pcall(function()
-		Humanoid:UnequipTools()
-	end)
-	local ddPlantsPos = Options.ddPlantsPos.Value
-	local PlantPos
-	local Backpack = LocalPlayer.Backpack
-	local SeedList = GetSelectedItems(Options.ddPlantsSeeds.Value)
-
-	if Backpack then
-		for _index, item in pairs(Backpack:GetChildren()) do
-			if not Options.tgPlantsEnable.Value then break end
-			if item:GetAttribute("Type") == "Seeds" and (table.find(SeedList, "ALL") or table.find(SeedList, item:GetAttribute("PlantType"))) then
-				isPlanting = true
-				pcall(function()
-					Humanoid:EquipTool(item)
-				end)
-				local ItemCount = item:GetAttribute("ItemCount") or 0
-				for i = 1, ItemCount do
-					if not Options.tgPlantsEnable.Value then
-						isPlanting = false
-						break
-					end
-					if ddPlantsPos == "Player" then
-						PlantPos = Character:GetPivot()
-					elseif ddPlantsPos == "Random" then
-						PlantPos = GetRandomPlantPosition()
-						TweenToTarget(CFrame.new(PlantPos.X + 3, PlantPos.Y, PlantPos.Z), 100)
-					end
-					local args = {
-						item:GetAttribute("PlantType"),
-						--Vector3.new(PlantPos.X, PlantPos.Y, PlantPos.Z),
-						PlantPos.Position,
-					}
-					PlantSeed:InvokeServer(unpack(args))
-					task.wait(0.3)
-				end
-				pcall(function()
-					Humanoid:UnequipTools()
-				end)
-			end
-		end
-		isPlanting = false
-	end
-end
-
-AutoClaimQuest = function(QuestData)
-	if not Options.tgQuestEnable.Value or isQuestClaiming or not QuestData then return end
-
-	isQuestClaiming = true
-	local Daily = QuestData.Daily.Active
-	for index, qDaily in pairs(Daily) do
-		if qDaily.CompletedAt and not qDaily.Claimed then game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ClaimQuest"):FireServer("Daily", index) end
-	end
-
-	local Weekly = QuestData.Weekly.Active
-	for index, qWeekly in pairs(Weekly) do
-		if qWeekly.CompletedAt and not qWeekly.Claimed then game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ClaimQuest"):FireServer("Weekly", index) end
-	end
-	isQuestClaiming = false
-end
-
-processQueue = function()
-	if isProcessing then return end
-	isProcessing = true
-	HarvestPause = true
-	task.wait(0.2)
-
-	while #actionQueue > 0 do
-		local taskData = table.remove(actionQueue, 1)
-		local success, _ = pcall(function()
-			if taskData.args then
-				taskData.FuncName(taskData.args)
-			else
-				taskData.FuncName()
-			end
-		end)
-
-		if not success then
-			table.insert(actionQueue, taskData)
-			task.wait(2)
-		end
-	end
-	isProcessing = false
-	HarvestPause = false
-	task.wait(0.5)
-end
-
-RemoteReplicaSet = function(args)
-	if type(args[2]) ~= "table" then return end
-	local fType = args[2][1]
-	local fData = args[3]
-	if fType == "SeedShop" and not isBuyingSeed then
-		table.insert(actionQueue, {
-			FuncName = AutoBuySeed,
-			args = fData.Items,
-		})
-	elseif fType == "GearShop" and not isBuyingGear then
-		table.insert(actionQueue, {
-			FuncName = AutoBuyGear,
-			args = fData.Items,
-		})
-	elseif fType == "Money" then
-	end
-end
-
-RemoteNotification = function(args)
-	if args[1] and type(args[1]) == "string" then
-		if string.find(args[1], "inventory is full!") then
-			HarvestPause = true
-			table.clear(HarVestCropsList)
-			table.insert(actionQueue, {
-				FuncName = AutoSellCrops,
-			})
-		end
-	end
-end
-
-CreatESP = function(espfolder, obj, uuid, txt1, txt2, arg)
-	if not (espfolder and obj and uuid and txt1) then return end
-	local priority = arg or 0
-	if bGuiSession[uuid] then
-		bGuiSession[uuid]:Destroy()
-		bGuiSession[uuid] = nil
-	end
-
-	local bgui = Instance.new("BillboardGui")
-	bgui.Name = "ESP_" .. uuid
-	bgui.Adornee = obj
-	bgui.Size = UDim2.new(0, 200, 0, 80)
-	bgui.StudsOffset = Vector3.new(0, 3.5, 0)
-	bgui.AlwaysOnTop = true
-	bgui.LightInfluence = 0
-	bgui.Parent = espfolder
-
-	local textLabel = Instance.new("TextLabel")
-	textLabel.Parent = bgui
-	textLabel.Size = UDim2.new(1, 0, 0, 0)
-	textLabel.AutomaticSize = Enum.AutomaticSize.XY
-	textLabel.BackgroundTransparency = 1
-	textLabel.TextWrapped = false
-	if txt2 and txt2 ~= "" then
-		textLabel.Text = string.format("%s\n%s", tostring(txt1), tostring(txt2))
-	else
-		textLabel.Text = tostring(txt1)
-	end
-
-	if priority == 3 then
-		textLabel.TextColor3 = Color3.fromRGB(200, 200, 10)
-	elseif priority == 2 then
-		textLabel.TextColor3 = Color3.fromRGB(200, 50, 10)
-	elseif priority == 1 then
-		textLabel.TextColor3 = Color3.fromRGB(10, 200, 10)
-	else
-		textLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-	end
-
-	textLabel.TextStrokeTransparency = 0
-	textLabel.TextSize = 16
-	textLabel.Font = Enum.Font.FredokaOne
-
-	textLabel.AnchorPoint = Vector2.new(0.5, 0.5)
-	textLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
-	bGuiSession[uuid] = bgui
-end
-
-SetespPlant = function(obj)
-	if not Options.tgPlantsESP.Value then return end
-	local plant = (obj:IsA("Model") and obj) or obj:FindFirstAncestorOfClass("Model")
-	if not plant then return end
-	local plantName = plant:GetAttribute("PlantType")
-	if not plantName then return end
-
-	local TargetFolder = gethui and gethui() or CoreGui
-	local ESPFolder = TargetFolder:FindFirstChild(PlantsESPFolderName)
-	local espPlantsList = GetSelectedItems(Options.ddPlantsESP.Value)
-
-	if table.find(espPlantsList, "NONE") then return end
-
-	if table.find(espPlantsList, plantName) then
-		local uuid = plant:GetAttribute("Uuid") or plant.Name
-		local scale = plant:GetAttribute("HiddenNumber") or 0
-		local Weight = plant:GetAttribute("PlantWeight") or 0
-		local arg = 0
-		if scale >= 2 then
-			arg = 3
-		elseif scale >= 1.5 then
-			arg = 2
-		elseif scale >= 1 then
-			arg = 1
-		end
-		if Weight > 0 then
-			CreatESP(ESPFolder, plant, uuid, "🌱 " .. plantName, string.format("Weight : %.2f kg", Weight), arg)
-		else
-			CreatESP(ESPFolder, plant, uuid, "🌱 " .. plantName, string.format("Scale : %.2f", scale), arg)
-		end
-	end
-end
-
-espPlants = function(State)
-	local TargetFolder = gethui and gethui() or CoreGui
-	local oldFolder = TargetFolder:FindFirstChild(PlantsESPFolderName)
-	if oldFolder then oldFolder:Destroy() end
-
-	if State ~= true then return end
-	local espPlantsList = GetSelectedItems(Options.ddPlantsESP.Value)
-	if table.find(espPlantsList, "NONE") then return end
-
-	local ESPFolder = Instance.new("Folder")
-	ESPFolder.Name = PlantsESPFolderName
-	ESPFolder.Parent = TargetFolder
-
-	local ClientPlants = workspace:FindFirstChild("ClientPlants")
-	if ClientPlants then
-		for _, plant in pairs(ClientPlants:GetChildren()) do
-			SetespPlant(plant)
-		end
-	end
-end
-
-SetespFruit = function(obj)
-	if not Options.tgFruitESP.Value then return end
-
-	local fruit = (obj:IsA("Model") and obj) or obj:FindFirstAncestorOfClass("Model")
-	if not fruit then return end
-
-	local fruitName = fruit:GetAttribute("PlantType") or (fruit.Parent and fruit.Parent:GetAttribute("PlantType"))
-	if not fruitName then return end
-
-	local TargetFolder = gethui and gethui() or CoreGui
-	local ESPFolder = TargetFolder:FindFirstChild(FruitESPFolderName)
-	local espFruitList = GetSelectedItems(Options.ddFruitESP.Value)
-
-	if table.find(espFruitList, "NONE") then return end
-
-	if table.find(espFruitList, fruitName) then
-		local uuid = fruit:GetAttribute("Uuid") or fruitName
-		local Weight = 0
-		for i = 1, 3 do
-			Weight = fruit:GetAttribute("FruitWeight") or fruit:GetAttribute("PlantWeight") or 0
-
-			if Weight > 0 then break end
-
-			task.wait(1)
-		end
-
-		local scale = fruit:GetAttribute("HiddenNumber") or 0
-		local arg = 0
-		if scale >= 2 then
-			arg = 3
-		elseif scale >= 1.5 then
-			arg = 2
-		elseif scale >= 1 then
-			arg = 1
-		end
-		if Weight > 0 then
-			CreatESP(ESPFolder, fruit, uuid, "🍎" .. fruitName, string.format("Weight : %.2f kg", Weight), arg)
-		else
-			CreatESP(ESPFolder, fruit, uuid, "🍎" .. fruitName, string.format("Scale : %.2f", scale), arg)
-		end
-	end
-end
-
-espFruit = function(State)
-	local TargetFolder = gethui and gethui() or CoreGui
-	local oldFolder = TargetFolder:FindFirstChild(FruitESPFolderName)
-	if oldFolder then oldFolder:Destroy() end
-	if ESPFruitConnection then
-		ESPFruitConnection:Disconnect()
-		ESPFruitConnection = nil
-	end
-	if State ~= true then return end
-
-	local espFruitList = GetSelectedItems(Options.ddFruitESP.Value)
-	if table.find(espFruitList, "NONE") then return end
-
-	local ESPFolder = Instance.new("Folder")
-	ESPFolder.Name = FruitESPFolderName
-	ESPFolder.Parent = TargetFolder
-
-	for _, prompt in pairs(CollectionService:GetTagged("HarvestPrompt")) do
-		--if prompt.Enabled then SetespFruit(prompt) end
-		SetespFruit(prompt)
-	end
-	ESPFruitConnection = CollectionService:GetInstanceAddedSignal("HarvestPrompt"):Connect(SetespFruit)
-end
-
-RemovePlants = function()
-	if not Options.tgRemovePlantsEnable.Value or isRemovePlants then return end
-	local RemovePlantsList = GetSelectedItems(Options.ddRemovePlants.Value)
-
-	local ClientPlants = workspace:FindFirstChild("ClientPlants")
-	local Backpack = LocalPlayer.Backpack
-	local Shovel = Backpack:FindFirstChild("Shovel", true)
-	local RemovePlant = RemoteEvents.RemovePlant
-	if ClientPlants then
-		isRemovePlants = true
-		for _, plant in pairs(ClientPlants:GetChildren()) do
-			local PlantType = plant:GetAttribute("PlantType")
-			if PlantType then
-				if table.find(RemovePlantsList, "ALL") or table.find(RemovePlantsList, PlantType) then
-					pcall(function()
-						Humanoid:UnequipTools()
-					end)
-					print(PlantType)
-					task.wait()
-					Humanoid:EquipTool(Shovel)
-					task.wait()
-					local Uuid = plant:GetAttribute("Uuid")
-
-					local targetCFrame = CFrame.new(plant:GetPivot().Position + Vector3.new(3, 0, 4))
-					TweenToTarget(targetCFrame, 100)
-					RemovePlant:FireServer(Uuid)
-					task.wait()
-				end
-			end
-		end
-		isRemovePlants = false
-	end
-end
-
-RemoveCrops = function()
-	if not Options.tgRemoveFruitEnable.Value then return end
-	local RemoveCropsList = GetSelectedItems(Options.ddRemoveCrops.Value)
-	if table.find(RemoveCropsList, "NONE") then return end
-end
-
-local lastTriggerMinute = -1
-NewPlayer = function()
-	local timeData = os.date("!*t")
-	local currentMinute = timeData.min
-	local ipNewDelay = tonumber(Options.ipNewDelay.Value)
-	if currentMinute % ipNewDelay == 0 and currentMinute ~= lastTriggerMinute then
-		lastTriggerMinute = currentMinute
-		if Options.tgNewAutoSell.Value then
-			HarvestPause = true
-			table.clear(HarVestCropsList)
-			table.insert(actionQueue, {
-				FuncName = AutoSellCrops,
-			})
-		end
-		if Options.tgPlantsEnable.Value then table.insert(actionQueue, {
-			FuncName = AutoPlantsSeeds,
-		}) end
-	end
-end
-
---[[ Hook ]]
 local function hookIncoming(remote)
 	if remote:IsA("RemoteEvent") then
 		remote.OnClientEvent:Connect(function(...)
@@ -1819,87 +1947,57 @@ game.DescendantAdded:Connect(function(obj)
 end)
 
 task.spawn(function()
+	local lastTriggerMinute = -1
+	local lastWalkDog = tick()
+
 	while true do
+		local clock = tick()
 		task.wait(0.2)
+
+		-- 1. Harvest Crops
 		if Options.tgHarvestEnable.Value then
-			if #HarVestCropsList == 0 then 
-				ScanCrops() 
+			if #HarVestCropsList == 0 then
+				ScanCrops()
 			elseif not (HarvestPause or isProcessing or isHarvesting) then
 				HarvestCrops()
 			end
 		end
-	end
-end)
 
-task.spawn(function()
-	while true do
+		-- 2. Process Action Queue
 		if #actionQueue > 0 and not isProcessing then processQueue() end
-		task.wait(0.5)
-	end
-end)
 
-task.spawn(function()
-	while true do
-		pcall(NewPlayer)
-		task.wait(10)
-	end
-end)
-
---Watch Dog
-task.spawn(function()
-	while true do
-		task.wait(3600)
-		if Options.tgPlantsESP and Options.tgPlantsESP.Value == true then Options.tgPlantsESP:SetValue(false) end
-		if Options.tgFruitESP and Options.tgFruitESP.Value == true then Options.tgFruitESP:SetValue(false) end
-		if ResetControlVariable then ResetControlVariable() end
-	end
-end)
-
--- [[ Tracker System: ดักจับต้นไม้ที่ปลูกใหม่ ]]
-
-SetupTracker = function()
-	local ClientPlants = workspace:FindFirstChild("ClientPlants")
-	if not ClientPlants then return end
-
-	ClientPlants.DescendantAdded:Connect(function(newPlant)
-		task.wait(0.5)
-
-		for _, obj in ipairs(newPlant:GetDescendants()) do
-			if obj.Name == "PlantAnchor" then
-				local parent = obj.Parent
-
-				if Options.tgPlantsESP.Value then
-					if parent:GetAttribute("HarvestablePlant") then
-						SetespFruit(obj)
-					else
-						SetespPlant(obj)
-					end
-				end
-
-				if parent:GetAttribute("HarvestablePlant") then
-					if Options.tgHideFruit.Value then
-						for _, sibling in ipairs(obj.Parent:GetChildren()) do
-							SetVisibility(sibling, true)
-						end
-					end
-				else
-					if Options.tgHidePlant.Value then
-						for _, sibling in ipairs(parent:GetChildren()) do
-							SetVisibility(sibling, true)
-						end
-					end
-				end
-			elseif obj.Name == "FruitAnchor" then
-				local parent = obj.Parent
-				if Options.tgFruitESP.Value then SetespFruit(obj) end
-				if Options.tgHideFruit.Value then
-					for _, sibling in ipairs(parent:GetChildren()) do
-						SetVisibility(sibling, true)
-					end
-				end
-			end
+		-- 3. Remove Crops / Plants Queuing
+		local inQueueRemoveCrops = false
+		local inQueueRemovePlants = false
+		for _, action in ipairs(actionQueue) do
+			if type(action.args) == "table" and action.args[1] == true and action.FuncName == ProcessRemove then inQueueRemoveCrops = true end
+			if type(action.args) == "table" and action.args[1] == false and action.FuncName == ProcessRemove then inQueueRemovePlants = true end
 		end
-	end)
-end
+
+		if Options.tgRemoveFruitEnable.Value and not inQueueRemoveCrops and not isRemoveCrops then table.insert(actionQueue, { FuncName = ProcessRemove, args = { true } }) end
+		if Options.tgRemovePlantsEnable.Value and not inQueueRemovePlants and not isRemovePlants then table.insert(actionQueue, { FuncName = ProcessRemove, args = { false } }) end
+
+		-- 4. New Player check (roughly check every second)
+		local currentMinute = os.date("!*t").min
+		local ipNewDelay = tonumber(Options.ipNewDelay.Value)
+		if ipNewDelay and ipNewDelay > 0 and currentMinute % ipNewDelay == 0 and currentMinute ~= lastTriggerMinute then
+			lastTriggerMinute = currentMinute
+			if Options.tgNewAutoSell.Value then
+				HarvestPause = true
+				table.clear(HarVestCropsList)
+				table.insert(actionQueue, { FuncName = AutoSellCrops })
+			end
+			if Options.tgPlantsEnable.Value then table.insert(actionQueue, { FuncName = AutoPlantsSeeds }) end
+		end
+
+		-- 5. Watch Dog (Run every 3600 seconds)
+		if clock - lastWalkDog >= 3600 then
+			lastWalkDog = clock
+			if Options.tgPlantsESP and Options.tgPlantsESP.Value == true then Options.tgPlantsESP:SetValue(false) end
+			if Options.tgFruitESP and Options.tgFruitESP.Value == true then Options.tgFruitESP:SetValue(false) end
+			if ResetControlVariable then ResetControlVariable() end
+		end
+	end
+end)
 
 SetupTracker()
