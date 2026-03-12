@@ -59,10 +59,9 @@ local isQuestClaiming = false
 local isRemovePlants = false
 local isRemoveCrops = false
 --End of Control Variable
-local NewPlayer
 local QuickSave, GetSelectedItems, TweenToTarget, ParseFruitUuid, SetNoClip, SafeTeleport
 local CheckHarvestCrops, ScanCrops, HarvestCrops
-local AutoBuyItem, AutoSellCrops, AutoClaimQuest, AutoPlantsSeeds
+local AutoBuyItem, AutoBuySeed, AutoBuyGear, AutoSellCrops, AutoClaimQuest, AutoPlantsSeeds
 local processQueue
 local InitializePlotData, GetRandomPlantPosition, ResetControlVariable
 local RemoteNotification, RemoteReplicaSet
@@ -74,7 +73,7 @@ local ESPFruitConnection
 local bGuiSession = {}
 
 local GetHarvestConfig, GetRemoveConfig
-local ProcessRemove
+local ProcessRemove, RemovePlants, RemoveCrops, SetupTracker
 
 local isAntiLag = false
 
@@ -407,7 +406,6 @@ TweenToTarget = function(targetCFrame, speed)
 	tween:Play()
 
 	-- Timeout Protection (Max 5 Sec)
-	local connection
 	local timeout = false
 	task.delay(math.min(tweenTime + 2, 5), function()
 		if tween.PlaybackState == Enum.PlaybackState.Playing then
@@ -809,7 +807,7 @@ processQueue = function()
 		local taskData = table.remove(actionQueue, 1)
 		--local success, _ = pcall(function()
 		pcall(function()
-			if taskData.args then
+			if taskData.args ~= nil then
 				taskData.FuncName(taskData.args)
 			else
 				taskData.FuncName()
@@ -833,12 +831,12 @@ RemoteReplicaSet = function(args)
 	local fData = args[3]
 	if fType == "SeedShop" and not isBuyingSeed then
 		table.insert(actionQueue, {
-			FuncName = AutoBuyItem,
+			FuncName = AutoBuySeed,
 			args = fData.Items,
 		})
 	elseif fType == "GearShop" and not isBuyingGear then
 		table.insert(actionQueue, {
-			FuncName = AutoBuyItem,
+			FuncName = AutoBuyGear,
 			args = fData.Items,
 		})
 	elseif fType == "Money" then
@@ -1457,7 +1455,7 @@ local function tempBuySeed()
 	local SeedShop = GetShopData:InvokeServer("SeedShop")
 	if not SeedShop then return end
 	table.insert(actionQueue, {
-		FuncName = AutoBuyItem,
+		FuncName = AutoBuySeed,
 		args = SeedShop.Items,
 	})
 end
@@ -1494,7 +1492,7 @@ local function tempBuyGear()
 	local GearShop = GetShopData:InvokeServer("GearShop")
 	if not GearShop then return end
 	table.insert(actionQueue, {
-		FuncName = AutoBuyItem,
+		FuncName = AutoBuyGear,
 		args = GearShop.Items,
 	})
 end
@@ -1947,12 +1945,31 @@ game.DescendantAdded:Connect(function(obj)
 end)
 
 task.spawn(function()
-	local lastTriggerMinute = -1
+	local lastNewPlayerTrigger = -1
 	local lastWalkDog = tick()
 
 	while true do
 		local clock = tick()
 		task.wait(0.2)
+
+		-- 4. New Player check (roughly check every second)
+		-- 4. New Player check (ใช้ระบบจับเวลาด้วย clock)
+		local ipNewDelay = tonumber(Options.ipNewDelay.Value) or 5
+		local delaySeconds = ipNewDelay * 60 -- แปลงนาทีเป็นวินาที
+
+		-- เช็กว่าผ่านไปครบ X วินาทีแล้วหรือยัง
+		if delaySeconds > 0 and (clock - lastNewPlayerTrigger) >= delaySeconds then
+			lastNewPlayerTrigger = clock -- รีเซ็ตเวลาจับเวลารอบใหม่
+
+			-- จากนั้นค่อยเช็ก Toggle
+			if Options.tgNewAutoSell.Value then
+				HarvestPause = true
+				table.clear(HarVestCropsList)
+				table.insert(actionQueue, { FuncName = AutoSellCrops })
+			end
+
+			if Options.tgPlantsEnable.Value then table.insert(actionQueue, { FuncName = AutoPlantsSeeds }) end
+		end
 
 		-- 1. Harvest Crops
 		if Options.tgHarvestEnable.Value then
@@ -1970,25 +1987,12 @@ task.spawn(function()
 		local inQueueRemoveCrops = false
 		local inQueueRemovePlants = false
 		for _, action in ipairs(actionQueue) do
-			if type(action.args) == "table" and action.args[1] == true and action.FuncName == ProcessRemove then inQueueRemoveCrops = true end
-			if type(action.args) == "table" and action.args[1] == false and action.FuncName == ProcessRemove then inQueueRemovePlants = true end
+			if action.FuncName == RemoveCrops then inQueueRemoveCrops = true end
+			if action.FuncName == RemovePlants then inQueueRemovePlants = true end
 		end
 
-		if Options.tgRemoveFruitEnable.Value and not inQueueRemoveCrops and not isRemoveCrops then table.insert(actionQueue, { FuncName = ProcessRemove, args = { true } }) end
-		if Options.tgRemovePlantsEnable.Value and not inQueueRemovePlants and not isRemovePlants then table.insert(actionQueue, { FuncName = ProcessRemove, args = { false } }) end
-
-		-- 4. New Player check (roughly check every second)
-		local currentMinute = os.date("!*t").min
-		local ipNewDelay = tonumber(Options.ipNewDelay.Value)
-		if ipNewDelay and ipNewDelay > 0 and currentMinute % ipNewDelay == 0 and currentMinute ~= lastTriggerMinute then
-			lastTriggerMinute = currentMinute
-			if Options.tgNewAutoSell.Value then
-				HarvestPause = true
-				table.clear(HarVestCropsList)
-				table.insert(actionQueue, { FuncName = AutoSellCrops })
-			end
-			if Options.tgPlantsEnable.Value then table.insert(actionQueue, { FuncName = AutoPlantsSeeds }) end
-		end
+		if Options.tgRemoveFruitEnable.Value and not inQueueRemoveCrops and not isRemoveCrops then table.insert(actionQueue, { FuncName = RemoveCrops }) end
+		if Options.tgRemovePlantsEnable.Value and not inQueueRemovePlants and not isRemovePlants then table.insert(actionQueue, { FuncName = RemovePlants }) end
 
 		-- 5. Watch Dog (Run every 3600 seconds)
 		if clock - lastWalkDog >= 3600 then
