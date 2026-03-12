@@ -439,12 +439,9 @@ SafeTeleport = function(targetCFrame)
 
 	-- 1. เคลียร์สถานะท่านั่งและการเดิน
 	if humanoid then
-		if humanoid.Sit then
-			humanoid.Sit = false
-			humanoid.Jump = true
-			task.wait(0.05)
-		end
-
+		if humanoid.Sit then humanoid.Sit = false end
+		humanoid.Jump = true
+		task.wait(0.05)
 		humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
 	end
 
@@ -1982,14 +1979,14 @@ local function hookIncoming(remote)
 					FuncName = AutoClaimQuest,
 					args = args[1],
 				})
-			elseif RemoteName == "MannyMishapScoreUpdate" then
+				--[[ 			elseif RemoteName == "MannyMishapScoreUpdate" then
 				if tonumber(args[1]) >= 300 then
 					MannyMishapEnable = false
 					ResetControlVariable()
 					actionQueue = table.clone(backupQueue)
 					SafeTeleport(MySpawnPoint)
 					task.wait(1)
-				end
+				end ]]
 			end
 		end)
 	end
