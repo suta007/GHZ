@@ -516,8 +516,8 @@ GetHarvestConfig = function()
 		bl = {
 			crops = GetSelectedItems(Options.ddHarvestBlackCrops.Value),
 			ripeness = GetSelectedItems(Options.ddBlackRipeness.Value),
-			variant = GetSelectedItems(Options.ddBackVariant.Value),
-			mutants = GetSelectedItems(Options.ddHarvestBackMutants.Value),
+			variant = GetSelectedItems(Options.ddBlackVariant.Value),
+			mutants = GetSelectedItems(Options.ddHarvestBlackMutants.Value),
 		},
 	}
 end
@@ -539,8 +539,8 @@ GetRemoveConfig = function()
 		bl = {
 			crops = GetSelectedItems(Options.ddRemoveBlackCrops.Value),
 			ripeness = GetSelectedItems(Options.ddRemoveBlackRipeness.Value),
-			variant = GetSelectedItems(Options.ddRemoveBackVariant.Value),
-			mutants = GetSelectedItems(Options.ddRemoveBackMutants.Value),
+			variant = GetSelectedItems(Options.ddRemoveBlackVariant.Value),
+			mutants = GetSelectedItems(Options.ddRemoveBlackMutants.Value),
 		},
 	}
 end
@@ -596,11 +596,11 @@ CheckHarvestCrops = function(fruit, config)
 	if not table.find(config.bl.mutants, "NONE") then
 		if CropsMutants and CropsMutants ~= "" then
 			local CropsMutantsTable = string.split(CropsMutants, ",")
-			local isBackMutantMatch = false
+			local isBlackMutantMatch = false
 			for _, mutation in ipairs(CropsMutantsTable) do
-				if table.find(config.bl.mutants, mutation) then isBackMutantMatch = true end
+				if table.find(config.bl.mutants, mutation) then isBlackMutantMatch = true end
 			end
-			if isBackMutantMatch then return false end
+			if isBlackMutantMatch then return false end
 		end
 	end
 
@@ -678,7 +678,7 @@ HarvestCrops = function()
 end
 
 AutoSellCrops = function()
-	if not Options.tgSellCropsEnable.Value then return end
+	if not (Options.tgSellCropsEnable.Value or Options.tgNewAutoSell) then return end
 	SafeTeleport(Pos.Sell)
 	task.wait(0.3)
 	local args = {
@@ -1204,14 +1204,14 @@ for MutationName, _ in pairs(require(MutationData)) do
 	table.insert(MutationDataTable, MutationName)
 end
 
-local PlantDataBackTable = table.clone(PlantDataTable)
-PlantDataBackTable[1] = "NONE"
+local PlantDataBlackTable = table.clone(PlantDataTable)
+PlantDataBlackTable[1] = "NONE"
 
-local SeedDataBackTable = table.clone(SeedDataTable)
-SeedDataBackTable[1] = "NONE"
+local SeedDataBlackTable = table.clone(SeedDataTable)
+SeedDataBlackTable[1] = "NONE"
 
-local MutationDataBackTable = table.clone(MutationDataTable)
-MutationDataBackTable[1] = "NONE"
+local MutationDataBlackTable = table.clone(MutationDataTable)
+MutationDataBlackTable[1] = "NONE"
 
 ------------------------------------------------------
 -- ระบบปุ่มลอย (Floating Button) สำหรับ Android
@@ -1325,7 +1325,7 @@ HarvestSection:AddButton({
 })
 HarvestSection:AddDropdown("ddHarvestBlackCrops", {
 	Title = "Blacklist Crops",
-	Values = PlantDataBackTable,
+	Values = PlantDataBlackTable,
 	Multi = true,
 	Default = { "NONE" },
 	Searchable = true,
@@ -1356,13 +1356,13 @@ HarvestSection:AddDropdown("ddHarvestMutants", {
 HarvestSection:AddButton({
 	Title = "Clear Backlist Mutant",
 	Callback = function()
-		Options.ddHarvestBackMutants:SetValue({ NONE = true })
+		Options.ddHarvestBlackMutants:SetValue({ NONE = true })
 	end,
 })
 
-HarvestSection:AddDropdown("ddHarvestBackMutants", {
+HarvestSection:AddDropdown("ddHarvestBlackMutants", {
 	Title = "Backlist Mutants",
-	Values = MutationDataBackTable,
+	Values = MutationDataBlackTable,
 	Multi = true,
 	Default = { "NONE" },
 	Searchable = true,
@@ -1412,7 +1412,7 @@ HarvestSection:AddDropdown("ddVariant", {
 		if QuickSave then QuickSave() end
 	end,
 })
-HarvestSection:AddDropdown("ddBackVariant", {
+HarvestSection:AddDropdown("ddBlackVariant", {
 	Title = "Backlist Variant",
 	Values = { "NONE", "Silver", "Gold" },
 	Default = { "NONE" },
@@ -1620,7 +1620,7 @@ RemoveFruitSection:AddButton({
 })
 RemoveFruitSection:AddDropdown("ddRemoveBlackCrops", {
 	Title = "Blacklist Remove Crops",
-	Values = PlantDataBackTable,
+	Values = PlantDataBlackTable,
 	Multi = true,
 	Default = { "NONE" },
 	Searchable = true,
@@ -1651,13 +1651,13 @@ RemoveFruitSection:AddDropdown("ddRemoveMutants", {
 RemoveFruitSection:AddButton({
 	Title = "Clear Backlist Mutant",
 	Callback = function()
-		Options.ddRemoveBackMutants:SetValue({ NONE = true })
+		Options.ddRemoveBlackMutants:SetValue({ NONE = true })
 	end,
 })
 
-RemoveFruitSection:AddDropdown("ddRemoveBackMutants", {
+RemoveFruitSection:AddDropdown("ddRemoveBlackMutants", {
 	Title = "Backlist Mutants",
-	Values = MutationDataBackTable,
+	Values = MutationDataBlackTable,
 	Multi = true,
 	Default = { "NONE" },
 	Searchable = true,
@@ -1707,7 +1707,7 @@ RemoveFruitSection:AddDropdown("ddRemoveVariant", {
 		if QuickSave then QuickSave() end
 	end,
 })
-RemoveFruitSection:AddDropdown("ddRemoveBackVariant", {
+RemoveFruitSection:AddDropdown("ddRemoveBlackVariant", {
 	Title = "Backlist Variant",
 	Values = { "NONE", "Silver", "Gold" },
 	Default = { "NONE" },
@@ -1847,7 +1847,7 @@ espSection:AddButton({
 })
 espSection:AddDropdown("ddPlantsESP", {
 	Title = "Select Plants",
-	Values = PlantDataBackTable,
+	Values = PlantDataBlackTable,
 	Multi = true,
 	Default = { "NONE" },
 	Searchable = true,
@@ -1872,7 +1872,7 @@ espSection:AddButton({
 })
 espSection:AddDropdown("ddFruitESP", {
 	Title = "Select Fruit",
-	Values = PlantDataBackTable,
+	Values = PlantDataBlackTable,
 	Multi = true,
 	Default = { "NONE" },
 	Searchable = true,
