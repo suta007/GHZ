@@ -27,13 +27,14 @@ end
 
 function Window.Initialize(reg)
 	Registry = reg
+	Registry.IsLoading = true
 	--local Constants = reg.Constants
 
-	local interface = Fluent:CreateWindow({
+	Registry.Interface = Fluent:CreateWindow({
 		Title = "Garden Horizons",
 		SubTitle = "by EfHub",
 		TabWidth = 100,
-		Size = UDim2.fromOffset(580, 460),
+		Size = UDim2.fromOffset(600, 460),
 		Resize = true,
 		MinSize = Vector2.new(580, 460),
 		Acrylic = true,
@@ -41,17 +42,27 @@ function Window.Initialize(reg)
 		MinimizeKey = Enum.KeyCode.RightControl,
 	})
 
-	local Tabs = {
-		Main = interface:AddTab({ Title = "Main", Icon = "house" }),
-		Shop = interface:AddTab({ Title = "Shop", Icon = "shopping-cart" }),
-		Auto = interface:AddTab({ Title = "Automatic", Icon = "bot" }),
-		Event = interface:AddTab({ Title = "Event", Icon = "calendar" }),
-		Misc = interface:AddTab({ Title = "Misc", Icon = "component" }),
-		Settings = interface:AddTab({ Title = "Settings", Icon = "settings" }),
-	}
+	SaveManager:SetLibrary(Fluent)
+	InterfaceManager:SetLibrary(Fluent)
+	InterfaceManager:SetFolder("EfHub")
+	SaveManager:SetFolder("EfHub/GHZs")
+
+	Registry.Tabs = {}
+	Registry.Fluent = Fluent
+	Registry.SaveManager = SaveManager
+	Registry.InterfaceManager = InterfaceManager
+
+	--[[ 	local Tabs = {
+		Main = Interface:AddTab({ Title = "Main", Icon = "house" }),
+		Shop = Interface:AddTab({ Title = "Shop", Icon = "shopping-cart" }),
+		Auto = Interface:AddTab({ Title = "Automatic", Icon = "bot" }),
+		Event = Interface:AddTab({ Title = "Event", Icon = "calendar" }),
+		Misc = Interface:AddTab({ Title = "Misc", Icon = "component" }),
+		Settings = Interface:AddTab({ Title = "Settings", Icon = "settings" }),
+	} ]]
 
 	-- Data for Dropdowns
-	local UIData = {
+	--[[ 	local UIData = {
 		SeedShopTable = getShopData("SeedShopData"),
 		GearShopTable = getShopData("GearShopData"),
 		PlantDataTable = { "ALL" },
@@ -78,17 +89,7 @@ function Window.Initialize(reg)
 	UIData.MutationDataBlackTable = table.clone(UIData.MutationDataTable)
 	UIData.MutationDataBlackTable[1] = "NONE"
 
-	Registry.UIData = UIData
-
-	SaveManager:SetLibrary(Fluent)
-	InterfaceManager:SetLibrary(Fluent)
-	--SaveManager:IgnoreThemeSettings()
-	--SaveManager:SetIgnoreIndexes({})
-	InterfaceManager:SetFolder("EfHub")
-	SaveManager:SetFolder("EfHub/GHZs")
-
-	InterfaceManager:BuildInterfaceSection(Tabs.Settings)
-	SaveManager:BuildConfigSection(Tabs.Settings)
+	Registry.UIData = UIData ]]
 
 	------------------------------------------------------
 	-- ระบบปุ่มลอย (Floating Button) สำหรับ Android
@@ -116,12 +117,31 @@ function Window.Initialize(reg)
 
 		ToggleButton.MouseButton1Click:Connect(function()
 			pcall(function()
-				interface.Instance.Enabled = not interface.Instance.Enabled
+				if Registry.Interface then
+					Registry.Interface.Instance.Enabled = not Registry.Interface.Instance.Enabled
+				elseif Registry.Interface.Instance then
+					Registry.Interface.Instance.Enabled = not Registry.Interface.Instance.Enabled
+				elseif Registry.Interface.Root then
+					Registry.Interface.Root.Visible = not Registry.Interface.Root.Visible
+				end
 			end)
 		end)
 	end)
+end
 
-	return interface, Tabs, Fluent, SaveManager, InterfaceManager
+function Window.Finalize()
+	Registry.Tabs.Settings = Registry.Interface:AddTab({ Title = "Settings", Icon = "settings" })
+	Registry.InterfaceManager:BuildInterfaceSection(Registry.Tabs.Settings)
+	Registry.SaveManager:BuildConfigSection(Registry.Tabs.Settings)
+
+	task.spawn(function()
+		while not Registry.SaveManager.Options.SaveManager_ConfigList do
+			task.wait()
+		end
+		Registry.SaveManager.Options.SaveManager_ConfigList:SetValue("Horizons")
+		Registry.SaveManager:Load("Horizons")
+		Registry.IsLoading = false
+	end)
 end
 
 return Window
