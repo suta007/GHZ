@@ -1,26 +1,35 @@
-local State = {}
-
-State.isBuyingSeed = false
-State.isBuyingGear = false
-State.isPlanting = false
-State.isProcessing = false
-State.HarvestPause = false
-State.isHarvesting = false
-State.isQuestClaiming = false
-State.isRemovePlants = false
-State.isRemoveCrops = false
-State.MannyMishapEnable = false
-State.isAntiLag = false
-State.IsLoading = true
-
-State.HarVestCropsList = {}
-State.actionQueue = {}
-State.backupQueue = {}
-State.bGuiSession = {}
-State.MyPlantableParts = {}
-State.MyPlot = nil
-State.MySpawn = nil
-State.MySpawnPoint = nil
+--!nocheck
+local State = {
+	IsLoading = true,
+	
+	-- Control Flags
+	isBuyingSeed = false,
+	isBuyingGear = false,
+	isPlanting = false,
+	isProcessing = false,
+	HarvestPause = false,
+	isHarvesting = false,
+	isQuestClaiming = false,
+	isRemovePlants = false,
+	isRemoveCrops = false,
+	
+	MannyMishapEnable = false,
+	isAntiLag = false,
+	
+	-- Data Containers
+	HarVestCropsList = {},
+	actionQueue = {},
+	backupQueue = {},
+	
+	-- Plot Specific
+	MyPlot = nil,
+	MySpawn = nil,
+	MySpawnPoint = nil,
+	MyPlantableParts = {},
+	
+	-- ESP/Session Data
+	bGuiSession = {},
+}
 
 function State:ResetControlVariable()
 	self.isBuyingSeed = false
