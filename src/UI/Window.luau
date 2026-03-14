@@ -144,4 +144,8 @@ function Window.Finalize()
 	end)
 end
 
+function Window.QuickSave()
+	if not Registry.IsLoading then Registry.SaveManager:Save("Horizons") end
+end
+
 return Window
