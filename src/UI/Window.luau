@@ -33,7 +33,7 @@ function Window.Initialize(reg)
 		Title = "Garden Horizons",
 		SubTitle = "by EfHub",
 		TabWidth = 100,
-		Size = UDim2.fromOffset(1400, 800),
+		Size = UDim2.fromOffset(580, 460),
 		Resize = true,
 		MinSize = Vector2.new(580, 460),
 		Acrylic = true,
