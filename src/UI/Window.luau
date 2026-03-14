@@ -51,6 +51,7 @@ function Window.Initialize(reg)
 	Registry.Fluent = Fluent
 	Registry.SaveManager = SaveManager
 	Registry.InterfaceManager = InterfaceManager
+	Registry.Options = Fluent.Options
 
 	--[[ 	local Tabs = {
 		Main = Interface:AddTab({ Title = "Main", Icon = "house" }),
@@ -92,40 +93,41 @@ function Window.Initialize(reg)
 	Registry.UIData = UIData ]]
 
 	------------------------------------------------------
-	-- ระบบปุ่มลอย (Floating Button) สำหรับ Android
+	-- ระบบปุ่มลอย (Floating Button) - ฉบับแก้ไข
 	------------------------------------------------------
-	local success, result = pcall(function()
-		local ToggleGui = Instance.new("ScreenGui")
-		local ToggleButton = Instance.new("TextButton")
+	local ToggleGui = Instance.new("ScreenGui")
+	local ToggleButton = Instance.new("TextButton")
+	local UICorner = Instance.new("UICorner")
 
-		ToggleGui.Name = "EfHub_Toggle"
-		ToggleGui.Parent = game:GetService("CoreGui")
-		ToggleGui.ResetOnSpawn = false
+	ToggleGui.Name = "EfHub_Toggle"
+	ToggleGui.Parent = game:GetService("CoreGui")
+	ToggleGui.ResetOnSpawn = false
 
-		ToggleButton.Name = "ToggleButton"
-		ToggleButton.Parent = ToggleGui
-		ToggleButton.BackgroundColor3 = Color3.fromRGB(20, 20, 100)
-		ToggleButton.Position = UDim2.new(0, 10, 0.5, 0)
-		ToggleButton.Size = UDim2.new(0, 50, 0, 50)
-		ToggleButton.Text = "EfHub"
-		ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-		ToggleButton.Draggable = true
+	ToggleButton.Name = "ToggleButton"
+	ToggleButton.Parent = ToggleGui
+	ToggleButton.BackgroundColor3 = Color3.fromRGB(20, 20, 100)
+	ToggleButton.Position = UDim2.new(0, 10, 0.5, 0)
+	ToggleButton.Size = UDim2.new(0, 50, 0, 50)
+	ToggleButton.Text = "EfHub"
+	ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+	ToggleButton.Draggable = true -- สำหรับ Delta Executor ตัวนี้ยังใช้ได้ดีค่ะ
+	ToggleButton.Active = true
 
-		local UICorner = Instance.new("UICorner")
-		UICorner.CornerRadius = UDim.new(0, 25)
-		UICorner.Parent = ToggleButton
+	UICorner.CornerRadius = UDim.new(0, 25)
+	UICorner.Parent = ToggleButton
 
-		ToggleButton.MouseButton1Click:Connect(function()
-			pcall(function()
-				if Registry.Interface then
-					Registry.Interface.Instance.Enabled = not Registry.Interface.Instance.Enabled
-				elseif Registry.Interface.Instance then
-					Registry.Interface.Instance.Enabled = not Registry.Interface.Instance.Enabled
-				elseif Registry.Interface.Root then
-					Registry.Interface.Root.Visible = not Registry.Interface.Root.Visible
-				end
-			end)
-		end)
+	-- ฟังก์ชันคลิกที่แยกออกมาให้ชัดเจน
+	ToggleButton.MouseButton1Click:Connect(function()
+		local UI = Registry.Interface
+		if UI then
+			-- เช็ค Instance (หน้าต่างหลัก)
+			if UI.Instance then
+				UI.Instance.Enabled = not UI.Instance.Enabled
+			-- เช็ค Root (เผื่อบางเวอร์ชันของ Fluent ใช้ตัวแปรนี้)
+			elseif UI.Root then
+				UI.Root.Visible = not UI.Root.Visible
+			end
+		end
 	end)
 end
 
