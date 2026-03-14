@@ -1,6 +1,6 @@
 --!nocheck
 local Window = {}
-local Registry = nil
+local reg = nil
 
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
@@ -9,24 +9,8 @@ local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.
 local CollapsibleAddon = loadstring(game:HttpGet("https://raw.githubusercontent.com/suta007/Lua_EfHub/refs/heads/master/Core/CollapsibleSection.lua"))()
 CollapsibleAddon(Fluent)
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ShopData = ReplicatedStorage:WaitForChild("Shop"):WaitForChild("ShopData")
-local PlantData = ReplicatedStorage:WaitForChild("Plants"):WaitForChild("Definitions"):WaitForChild("PlantDataDefinitions")
-local MutationData = ReplicatedStorage:WaitForChild("Plants"):WaitForChild("Definitions"):WaitForChild("MutationDataDefinitions")
-
-local function getShopData(path)
-	local names = { "ALL" }
-	local success, data = pcall(require, ShopData[path])
-	if success then
-		for _, item in pairs(data.ShopData) do
-			table.insert(names, item.Name)
-		end
-	end
-	return names
-end
-
-function Window.Initialize(reg)
-	Registry = reg
+function Window.Initialize(Registry)
+	reg = Registry
 	Registry.IsLoading = true
 	--local Constants = reg.Constants
 
@@ -52,45 +36,6 @@ function Window.Initialize(reg)
 	Registry.SaveManager = SaveManager
 	Registry.InterfaceManager = InterfaceManager
 	Registry.Options = Fluent.Options
-
-	--[[ 	local Tabs = {
-		Main = Interface:AddTab({ Title = "Main", Icon = "house" }),
-		Shop = Interface:AddTab({ Title = "Shop", Icon = "shopping-cart" }),
-		Auto = Interface:AddTab({ Title = "Automatic", Icon = "bot" }),
-		Event = Interface:AddTab({ Title = "Event", Icon = "calendar" }),
-		Misc = Interface:AddTab({ Title = "Misc", Icon = "component" }),
-		Settings = Interface:AddTab({ Title = "Settings", Icon = "settings" }),
-	} ]]
-
-	-- Data for Dropdowns
-	--[[ 	local UIData = {
-		SeedShopTable = getShopData("SeedShopData"),
-		GearShopTable = getShopData("GearShopData"),
-		PlantDataTable = { "ALL" },
-		SeedDataTable = { "ALL" },
-		MutationDataTable = { "ALL" },
-		PlantDataBlackTable = {},
-		MutationDataBlackTable = {},
-	}
-
-	local pData = require(PlantData)
-	for PlantName, _ in pairs(pData) do
-		table.insert(UIData.PlantDataTable, PlantName)
-		table.insert(UIData.SeedDataTable, PlantName .. " Seed")
-	end
-
-	local mData = require(MutationData)
-	for MutationName, _ in pairs(mData) do
-		table.insert(UIData.MutationDataTable, MutationName)
-	end
-
-	UIData.PlantDataBlackTable = table.clone(UIData.PlantDataTable)
-	UIData.PlantDataBlackTable[1] = "NONE"
-
-	UIData.MutationDataBlackTable = table.clone(UIData.MutationDataTable)
-	UIData.MutationDataBlackTable[1] = "NONE"
-
-	Registry.UIData = UIData ]]
 
 	------------------------------------------------------
 	-- ระบบปุ่มลอย (Floating Button) - ฉบับแก้ไข
@@ -132,22 +77,24 @@ function Window.Initialize(reg)
 end
 
 function Window.Finalize()
-	Registry.Tabs.Settings = Registry.Interface:AddTab({ Title = "Settings", Icon = "settings" })
-	Registry.InterfaceManager:BuildInterfaceSection(Registry.Tabs.Settings)
-	Registry.SaveManager:BuildConfigSection(Registry.Tabs.Settings)
+	reg.Tabs.Settings = reg.Interface:AddTab({ Title = "Settings", Icon = "settings" })
+	reg.InterfaceManager:BuildInterfaceSection(reg.Tabs.Settings)
+	reg.SaveManager:BuildConfigSection(reg.Tabs.Settings)
+
+	reg.Interface:SelectTab(1)
 
 	task.spawn(function()
-		while not Registry.SaveManager.Options.SaveManager_ConfigList do
+		while not reg.SaveManager.Options.SaveManager_ConfigList do
 			task.wait()
 		end
-		Registry.SaveManager.Options.SaveManager_ConfigList:SetValue("Horizons")
-		Registry.SaveManager:Load("Horizons")
-		Registry.IsLoading = false
+		reg.SaveManager.Options.SaveManager_ConfigList:SetValue("Horizons")
+		reg.SaveManager:Load("Horizons")
+		reg.IsLoading = false
 	end)
 end
 
 function Window.QuickSave()
-	if not Registry.IsLoading then Registry.SaveManager:Save("Horizons") end
+	if not reg.IsLoading then reg.SaveManager:Save("Horizons") end
 end
 
 return Window

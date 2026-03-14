@@ -5,19 +5,20 @@ function MainTab.Initialize(reg)
 	local Tabs = reg.Tabs
 	local Options = reg.Options
 	local QuickSave = reg.Window.QuickSave
+	local sData = reg.sData
 	Tabs.Main = Interface:AddTab({ Title = "Main", Icon = "rbxassetid://10723345661" })
 	local PlantsSection = Tabs.Main:AddCollapsibleSection("Plants", false)
 	PlantsSection:AddToggle("tgPlantsEnable", {
 		Title = "Auto Plants",
 		Default = false,
 		Callback = function(Value)
-			--[[ 		if Value then
-			table.insert(actionQueue, {
-				FuncName = AutoPlantsSeeds,
-			})
-		else
-			isPlanting = false
-		end ]]
+			if Value then
+				table.insert(reg.fVar.actionQueue, {
+					FuncName = reg.Main.AutoPlantsSeeds,
+				})
+			else
+				reg.fVar.isPlanting = false
+			end
 			QuickSave()
 		end,
 	})
@@ -29,7 +30,7 @@ function MainTab.Initialize(reg)
 	})
 	PlantsSection:AddDropdown("ddPlantsSeeds", {
 		Title = "Select Seeds",
-		Values = { "1", "2", "3" }, -- PlantDataTable,
+		Values = sData.PlantDataTable,
 		Multi = true,
 		Default = {},
 		Searchable = true,
@@ -40,7 +41,7 @@ function MainTab.Initialize(reg)
 
 	PlantsSection:AddDropdown("ddPlantsPos", {
 		Title = "Select Plants Position",
-		Values = { "Player", "Random" },
+		Values = { "Player", "Random", "Here" },
 		Default = "Player",
 		Callback = function(Value)
 			QuickSave()
