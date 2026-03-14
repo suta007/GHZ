@@ -84,8 +84,11 @@ function Window.Initialize(reg)
 	InterfaceManager:SetLibrary(Fluent)
 	--SaveManager:IgnoreThemeSettings()
 	--SaveManager:SetIgnoreIndexes({})
-	SaveManager:SetFolder("EfHub/GHZs")
 	InterfaceManager:SetFolder("EfHub")
+	SaveManager:SetFolder("EfHub/GHZs")
+
+	InterfaceManager:BuildInterfaceSection(Tabs.Settings)
+	SaveManager:BuildConfigSection(Tabs.Settings)
 
 	------------------------------------------------------
 	-- ระบบปุ่มลอย (Floating Button) สำหรับ Android
