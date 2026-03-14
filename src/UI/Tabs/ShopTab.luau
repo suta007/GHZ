@@ -5,33 +5,84 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ShopData = ReplicatedStorage.Shop.ShopData
 
 function ShopTab.Setup(tab, Options, SaveManager, Registry)
+	local UIData = Registry.UIData
+	local State = Registry.State
 	local Network = Registry.Network
 	local Trading = Registry.Trading
 
-	-- Seed Shop Section
-	local SeedSection = tab:AddCollapsibleSection("Seed Shop", false)
-	SeedSection:AddToggle("tgBuySeedEnable", { 
-		Title = "Auto Buy Seeds", 
+	local function tempBuySeed()
+		local success, SeedShop = pcall(function() return Network.Functions.GetShopData:InvokeServer("SeedShop") end)
+		if not success or not SeedShop then return end
+		table.insert(State.actionQueue, {
+			FuncName = Trading.AutoBuySeed,
+			args = SeedShop.Items,
+		})
+	end
+
+	-- 1. Seed Shop Section
+	local BuySeedSection = tab:AddCollapsibleSection("Buy Seed", false)
+	BuySeedSection:AddToggle("tgBuySeedEnable", {
+		Title = "Auto Buy Seed",
 		Default = false,
 		Callback = function(Value)
 			if Value then
-				local SeedShop = Network.Functions.GetShopData:InvokeServer("SeedShop")
-				if SeedShop then table.insert(Registry.State.actionQueue, { FuncName = Trading.AutoBuySeed, args = SeedShop.Items }) end
+				tempBuySeed()
+			end
+			SaveManager:Save("Horizons")
+		end,
+	})
+	BuySeedSection:AddButton({
+		Title = "Clear Selected Seeds",
+		Callback = function()
+			Options.ddBuySeeds:SetValue({})
+		end,
+	})
+	BuySeedSection:AddDropdown("ddBuySeeds", {
+		Title = "Select Seeds",
+		Values = UIData.SeedShopTable,
+		Multi = true,
+		Default = {},
+		Searchable = true,
+		Callback = function(Value)
+			SaveManager:Save("Horizons")
+		end,
+	})
+
+	local function tempBuyGear()
+		local success, GearShop = pcall(function() return Network.Functions.GetShopData:InvokeServer("GearShop") end)
+		if not success or not GearShop then return end
+		table.insert(State.actionQueue, {
+			FuncName = Trading.AutoBuyGear,
+			args = GearShop.Items,
+		})
+	end
+
+	-- 2. Gear Shop Section
+	local BuyGearSection = tab:AddCollapsibleSection("Buy Gear", false)
+	BuyGearSection:AddToggle("tgBuyGearEnable", {
+		Title = "Auto Buy Gear",
+		Default = false,
+		Callback = function(Value)
+			if Value then
+				tempBuyGear()
 			end
 			SaveManager:Save("Horizons")
 		end,
 	})
 
-	-- Gear Shop Section
-	local GearSection = tab:AddCollapsibleSection("Gear Shop", false)
-	GearSection:AddToggle("tgBuyGearEnable", {
-		Title = "Auto Buy Gear",
-		Default = false,
+	BuyGearSection:AddButton({
+		Title = "Clear Selected Gears",
+		Callback = function()
+			Options.ddBuyGear:SetValue({})
+		end,
+	})
+	BuyGearSection:AddDropdown("ddBuyGear", {
+		Title = "Select Gears",
+		Values = UIData.GearShopTable,
+		Multi = true,
+		Default = {},
+		Searchable = true,
 		Callback = function(Value)
-			if Value then
-				local GearShop = Network.Functions.GetShopData:InvokeServer("GearShop")
-				if GearShop then table.insert(Registry.State.actionQueue, { FuncName = Trading.AutoBuyGear, args = GearShop.Items }) end
-			end
 			SaveManager:Save("Horizons")
 		end,
 	})

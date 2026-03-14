@@ -177,4 +177,61 @@ function Utils.GetRandomPlantPosition()
 	return CFrame.new(worldCFrame.Position.X, cframe.Position.Y, worldCFrame.Position.Z)
 end
 
+function Utils.SetVisibility(obj, isHidden)
+	if obj:IsA("BasePart") or obj:IsA("Decal") or obj:IsA("Texture") then
+		if isHidden then
+			if not obj:GetAttribute("OriginalTrans") then obj:SetAttribute("OriginalTrans", obj.Transparency) end
+			obj.Transparency = 1
+		else
+			local orig = obj:GetAttribute("OriginalTrans")
+			if orig then obj.Transparency = orig end
+		end
+	elseif obj:IsA("ParticleEmitter") or obj:IsA("Sparkles") or obj:IsA("Fire") or obj:IsA("Trail") then
+		if isHidden then
+			if obj:GetAttribute("OriginalEnabled") == nil then obj:SetAttribute("OriginalEnabled", obj.Enabled) end
+			obj.Enabled = false
+		else
+			local orig = obj:GetAttribute("OriginalEnabled")
+			if orig ~= nil then obj.Enabled = orig end
+		end
+	end
+end
+
+function Utils.UpdateVisibilityFromAnchor(anchorName, state, isPlantCheck)
+	local ClientPlants = workspace:FindFirstChild("ClientPlants")
+	if not ClientPlants then return end
+
+	for _, obj in ipairs(ClientPlants:GetDescendants()) do
+		if obj.Name == anchorName then
+			local parent = obj.Parent
+			if parent then
+				if isPlantCheck and parent:FindFirstChild("FruitAnchor") then
+					continue
+				end
+				for _, sibling in ipairs(parent:GetChildren()) do
+					Utils.SetVisibility(sibling, state)
+				end
+			end
+		end
+	end
+end
+
+function Utils.HidePlant(state)
+	Utils.UpdateVisibilityFromAnchor("PlantAnchor", state, true)
+end
+
+function Utils.HideFruit(state)
+	Utils.UpdateVisibilityFromAnchor("FruitAnchor", state, false)
+end
+
+function Utils.GetSelectedItems(DropdownValue)
+	local Items = {}
+	if type(DropdownValue) == "table" then
+		for Value, State in pairs(DropdownValue) do
+			if State then table.insert(Items, Value) end
+		end
+	end
+	return Items
+end
+
 return Utils

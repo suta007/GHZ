@@ -20,6 +20,7 @@ local function LoadModules()
 	Registry.Trading = GHZ_REMOTE("Modules/Trading")
 	Registry.ESP = GHZ_REMOTE("Modules/ESP")
 	Registry.AntiLag = GHZ_REMOTE("Modules/AntiLag")
+	Registry.Removal = GHZ_REMOTE("Modules/Removal")
 	Registry.Quest = GHZ_REMOTE("Modules/Quest")
 	Registry.MannyMishap = GHZ_REMOTE("Modules/Events/MannyMishap")
 
@@ -39,8 +40,8 @@ function Main.Initialize()
 	local Registry = LoadModules()
 	local State = Registry.State
 	local Utils = Registry.Utils
-	local Constants = Registry.Constants
-	local Network = Registry.Network
+	local _Constants = Registry.Constants
+	local _Network = Registry.Network
 	
 	-- 1. Initialize Functional Modules with Registry
 	Utils.Initialize(Registry)
@@ -49,6 +50,7 @@ function Main.Initialize()
 	Registry.Trading.Initialize(Registry)
 	Registry.ESP.Initialize(Registry)
 	Registry.AntiLag.Initialize(Registry)
+	Registry.Removal.Initialize(Registry)
 	Registry.Quest.Initialize(Registry)
 	Registry.MannyMishap.Initialize(Registry)
 
@@ -66,6 +68,15 @@ function Main.Initialize()
 	Registry.AutoTab.Setup(Tabs.Auto, Options, SaveManager, Registry)
 	Registry.MiscTab.Setup(Tabs.Misc, Options, SaveManager, Registry)
 	
+	-- Set Options for modules
+	Registry.Harvest.SetOptions(Options)
+	Registry.Planting.SetOptions(Options)
+	Registry.Trading.SetOptions(Options)
+	Registry.ESP.SetOptions(Options)
+	Registry.Removal.SetOptions(Options)
+	Registry.Quest.SetOptions(Options)
+	Registry.MannyMishap.SetOptions(Options)
+	
 	InterfaceManager:BuildInterfaceSection(Tabs.Settings)
 	SaveManager:BuildConfigSection(Tabs.Settings)
 
@@ -77,12 +88,30 @@ function Main.Initialize()
 
 	-- 6. Main Loops
 	task.spawn(function()
-		local _lastNewPlayerTrigger = -1
+		local lastNewPlayerTrigger = -1
 		local lastWalkDog = tick()
 
 		while true do
 			local clock = tick()
 			task.wait(0.2)
+
+			-- 0. New Player check
+			local ipNewDelay = tonumber(Options.ipNewDelay.Value) or 5
+			local delaySeconds = ipNewDelay * 60
+
+			if delaySeconds > 0 and (clock - lastNewPlayerTrigger) >= delaySeconds then
+				lastNewPlayerTrigger = clock
+
+				if Options.tgNewAutoSell.Value then
+					State.HarvestPause = true
+					table.clear(State.HarVestCropsList)
+					table.insert(State.actionQueue, { FuncName = Registry.Trading.AutoSell, args = LocalPlayer.Backpack:GetChildren() })
+				end
+
+				if Options.tgPlantsEnable.Value then
+					table.insert(State.actionQueue, { FuncName = Registry.Planting.AutoPlantsSeeds })
+				end
+			end
 
 			-- Auto Harvest
 			if Options.tgHarvestEnable.Value then
@@ -90,6 +119,22 @@ function Main.Initialize()
 					Registry.Harvest.Scan()
 				elseif not (State.HarvestPause or State.isProcessing or State.isHarvesting) then
 					Registry.Harvest.Run()
+				end
+			end
+
+			-- Auto Planting
+			if Options.tgPlantsEnable.Value and not (State.HarvestPause or State.isProcessing or State.isPlanting) then
+				Registry.Planting.AutoPlantsSeeds()
+			end
+
+			-- Auto Sell (Condition based, e.g., every 1 min if enabled)
+			if Options.tgSellCropsEnable.Value and not (State.HarvestPause or State.isProcessing) then
+				local backpack = LocalPlayer:FindFirstChild("Backpack")
+				if backpack and #backpack:GetChildren() >= 10 then -- Simple threshold or notification based
+					table.insert(State.actionQueue, {
+						FuncName = Registry.Trading.AutoSell,
+						args = backpack:GetChildren()
+					})
 				end
 			end
 
@@ -136,14 +181,29 @@ function Main.Initialize()
 			-- Dog Watch
 			if clock - lastWalkDog >= 3600 then
 				lastWalkDog = clock
+				if Options.tgPlantsESP then Options.tgPlantsESP:SetValue(false) end
+				if Options.tgFruitESP then Options.tgFruitESP:SetValue(false) end
 				State:ResetControlVariable()
+			end
+
+			-- ESP Refresh
+			Registry.ESP.Update()
+
+			-- Auto Removal (Queued status check)
+			local inQueueRemove = false
+			for _, action in ipairs(State.actionQueue) do
+				if action.FuncName == Registry.Removal.Run then inQueueRemove = true break end
+			end
+
+			if not inQueueRemove and (Options.tgRemovePlantsEnable.Value or Options.tgRemoveFruitEnable.Value) then
+				table.insert(State.actionQueue, { FuncName = Registry.Removal.Run })
 			end
 		end
 	end)
 
 	-- 8. Hook Incoming Remotes
 	local _ReplicatedStorage = game:GetService("ReplicatedStorage")
-	local function hookIncoming(remote)
+	local function _hookIncoming(remote)
 		if remote:IsA("RemoteEvent") then
 			remote.OnClientEvent:Connect(function(...)
 				local RemoteName = remote.Name
@@ -155,13 +215,41 @@ function Main.Initialize()
 					})
 				elseif RemoteName == "MannyMishapScoreUpdate" then
 					Registry.MannyMishap.HandleScoreUpdate(args)
+				elseif RemoteName == "Notification" then
+					local data = args[1]
+					if data and data.Title == "Inventory Full" and Options.tgSellCropsEnable.Value then
+						local backpack = LocalPlayer:FindFirstChild("Backpack")
+						if backpack then
+							table.insert(State.actionQueue, {
+								FuncName = Registry.Trading.AutoSell,
+								args = backpack:GetChildren()
+							})
+						end
+					end
+				elseif RemoteName == "Replica_Set" or RemoteName == "ReplicaSet" then
+					local dataArgs = args[1]
+					if type(dataArgs) == "table" and dataArgs[1] == "Shop" then
+						local shopType = dataArgs[2]
+						local shopItems = args[3] -- fData is args[3] in original
+						if shopType == "SeedShop" and not State.isBuyingSeed then
+							table.insert(State.actionQueue, {
+								FuncName = Registry.Trading.AutoBuySeed,
+								args = shopItems
+							})
+						elseif shopType == "GearShop" and not State.isBuyingGear then
+							table.insert(State.actionQueue, {
+								FuncName = Registry.Trading.AutoBuyGear,
+								args = shopItems
+							})
+						end
+					end
 				end
 			end)
 		end
 	end
 
-	for _, obj in ipairs(game:GetDescendants()) do hookIncoming(obj) end
-	game.DescendantAdded:Connect(hookIncoming)
+	for _, obj in ipairs(game:GetDescendants()) do _hookIncoming(obj) end
+	game.DescendantAdded:Connect(_hookIncoming)
 
 	-- 9. Load Settings
 	task.spawn(function()

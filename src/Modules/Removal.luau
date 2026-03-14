@@ -1,6 +1,6 @@
 --!nocheck
-local Harvest = {}
-local Registry = nil
+local Removal = {}
+local _Registry = nil
 local State = nil
 local Utils = nil
 local Network = nil
@@ -9,41 +9,58 @@ local CollectionService = game:GetService("CollectionService")
 
 local Options = nil
 
-function Harvest.Initialize(reg)
+function Removal.Initialize(reg)
 	Registry = reg
 	State = reg.State
 	Utils = reg.Utils
 	Network = reg.Network
 end
 
-function Harvest.SetOptions(opts)
+function Removal.SetOptions(opts)
 	Options = opts
 end
 
-function Harvest.GetConfig()
+function Removal.GetConfig()
 	return {
-		mode = "Harvest",
+		mode = "Removal",
 		wl = {
-			crops = Utils.GetSelectedItems(Options.ddHarvestCrops.Value),
-			mutants = Utils.GetSelectedItems(Options.ddHarvestMutants.Value),
-			ripeness = Utils.GetSelectedItems(Options.ddRipeness.Value),
-			ripenessMulti = tonumber(Options.ipRipenessMulti.Value) or 0,
-			variant = Utils.GetSelectedItems(Options.ddVariant.Value),
-			weightCondition = Options.ddWeight.Value,
-			weightValue = tonumber(Options.ipWeight.Value) or 0,
-			scaleCondition = "",
-			scaleValue = 0,
+			plants = Utils.GetSelectedItems(Options.ddRemovePlants.Value),
+			plantsScaleCondition = Options.ddRemovePlantsScale.Value,
+			plantsScaleValue = tonumber(Options.ipRemovePlantsScale.Value) or 0,
+			
+			crops = Utils.GetSelectedItems(Options.ddRemoveCrops.Value),
+			mutants = Utils.GetSelectedItems(Options.ddRemoveMutants.Value),
+			ripeness = Utils.GetSelectedItems(Options.ddRemoveRipeness.Value),
+			ripenessMulti = tonumber(Options.ipRemoveRipenessMulti.Value) or 0,
+			variant = Utils.GetSelectedItems(Options.ddRemoveVariant.Value),
+			weightCondition = Options.ddRemoveWeight.Value,
+			weightValue = tonumber(Options.ipRemoveWeight.Value) or 0,
+			scaleCondition = Options.ddRemoveScale.Value,
+			scaleValue = tonumber(Options.ipRemoveScale.Value) or 0,
 		},
 		bl = {
-			crops = Utils.GetSelectedItems(Options.ddHarvestBlackCrops.Value),
-			ripeness = Utils.GetSelectedItems(Options.ddBlackRipeness.Value),
-			variant = Utils.GetSelectedItems(Options.ddBlackRipeness.Value),
-			mutants = Utils.GetSelectedItems(Options.ddHarvestBlackMutants.Value),
+			crops = Utils.GetSelectedItems(Options.ddRemoveBlackCrops.Value),
+			ripeness = Utils.GetSelectedItems(Options.ddRemoveBlackRipeness.Value),
+			variant = Utils.GetSelectedItems(Options.ddRemoveBlackVariant.Value),
+			mutants = Utils.GetSelectedItems(Options.ddRemoveBlackMutants.Value),
 		},
 	}
 end
 
-function Harvest.CheckCrops(fruit, config)
+function Removal.CheckPlants(plant, config)
+	if not table.find(config.wl.plants, "ALL") and not table.find(config.wl.plants, plant.Name) then return false end
+	
+	local rawScale = plant:GetAttribute("Scale")
+	if rawScale and config.wl.plantsScaleValue ~= 0 then
+		local scale = tonumber(rawScale)
+		if config.wl.plantsScaleCondition == "Below" and scale >= config.wl.plantsScaleValue then return false end
+		if config.wl.plantsScaleCondition == "Above" and scale <= config.wl.plantsScaleValue then return false end
+	end
+	
+	return true
+end
+
+function Removal.CheckCrops(fruit, config)
 	local fruitName = fruit:GetAttribute("PlantType") or (fruit.Parent and fruit.Parent:GetAttribute("PlantType")) or "Fruit"
 	local fruitRipeness = fruit:GetAttribute("RipenessStage")
 	local fruitVariant = fruit:GetAttribute("Variant")
@@ -52,6 +69,7 @@ function Harvest.CheckCrops(fruit, config)
 	if not table.find(config.wl.crops, "ALL") and not table.find(config.wl.crops, fruitName) then return false end
 	if fruit:GetAttribute("Favorited") == true then return false end
 	if not table.find(config.wl.ripeness, "ALL") and not table.find(config.wl.ripeness, fruitRipeness) then return false end
+	
 	local fruitRipenessMulti = fruit:GetAttribute("RipenessMultiplier")
 	if config.wl.ripenessMulti ~= 0 and (not fruitRipenessMulti or fruitRipenessMulti < config.wl.ripenessMulti) then return false end
 	if not table.find(config.wl.variant, "ALL") and not table.find(config.wl.variant, fruitVariant) then return false end
@@ -74,8 +92,6 @@ function Harvest.CheckCrops(fruit, config)
 			local scale = tonumber(rawScale)
 			if config.wl.scaleCondition == "Below" and scale >= config.wl.scaleValue then return false end
 			if config.wl.scaleCondition == "Above" and scale <= config.wl.scaleValue then return false end
-		else
-			return false
 		end
 	else
 		if config.wl.weightValue ~= 0 then
@@ -103,56 +119,41 @@ function Harvest.CheckCrops(fruit, config)
 	return true
 end
 
-function Harvest.Scan()
-	if not Options.tgHarvestEnable.Value then return end
-	table.clear(State.HarVestCropsList)
-
-	local config = Harvest.GetConfig()
-	for _, prompt in pairs(CollectionService:GetTagged("HarvestPrompt")) do
-		if prompt.Enabled then
-			local fruit = prompt.Parent.Parent
-			if Harvest.CheckCrops(fruit, config) then table.insert(State.HarVestCropsList, fruit) end
+function Removal.Run()
+	if State.HarvestPause or State.isProcessing or not (Options.tgRemovePlantsEnable.Value or Options.tgRemoveFruitEnable.Value) then return end
+	
+	local config = Removal.GetConfig()
+	
+	-- 1. Remove Plants
+	if Options.tgRemovePlantsEnable.Value then
+		for _, anchor in ipairs(CollectionService:GetTagged("PlantAnchor")) do
+			local plant = anchor.Parent
+			if plant and Removal.CheckPlants(plant, config) then
+				Network.Events.RemovePlant:FireServer(plant)
+				task.wait(0.1)
+			end
 		end
 	end
-
-	if #State.HarVestCropsList > 1 then
-		table.sort(State.HarVestCropsList, function(a, b)
-			local nameA = a:GetAttribute("PlantType") or (a.Parent and a.Parent:GetAttribute("PlantType")) or "Fruit"
-			local nameB = b:GetAttribute("PlantType") or (b.Parent and b.Parent:GetAttribute("PlantType")) or "Fruit"
-			return nameA < nameB
-		end)
+	
+	-- 2. Remove Fruit
+	if Options.tgRemoveFruitEnable.Value then
+		for _, prompt in pairs(CollectionService:GetTagged("HarvestPrompt")) do
+			if prompt.Enabled then
+				local fruit = prompt.Parent.Parent
+				if fruit and Removal.CheckCrops(fruit, config) then
+					local gUuid, gindex = Utils.ParseFruitUuid(fruit:GetAttribute("Uuid"))
+					local args = {}
+					if gindex then
+						args = { { { GrowthAnchorIndex = gindex, Uuid = gUuid } } }
+					else
+						args = { { { Uuid = gUuid } } }
+					end
+					Network.Events.RemovePlant:FireServer(unpack(args))
+					task.wait(0.1)
+				end
+			end
+		end
 	end
 end
 
-function Harvest.Run()
-	if State.HarvestPause or State.isProcessing or State.isHarvesting or not Options.tgHarvestEnable.Value then return end
-
-	if #State.HarVestCropsList > 0 then
-		State.isHarvesting = true
-		local fruit = table.remove(State.HarVestCropsList, 1)
-
-		local prompt = fruit:FindFirstChild("HarvestPrompt", true)
-		if not fruit or not fruit.Parent or not prompt or not prompt.Enabled then
-			State.isHarvesting = false
-			return
-		end
-
-		local targetCFrame = CFrame.new(fruit:GetPivot().Position + Vector3.new(3, 0, 0))
-		Utils.TweenToTarget(targetCFrame, 100)
-
-		task.wait(0.1)
-		local gUuid, gindex = Utils.ParseFruitUuid(fruit:GetAttribute("Uuid"))
-		local args = {}
-		if gindex then
-			args = { { { GrowthAnchorIndex = gindex, Uuid = gUuid } } }
-		else
-			args = { { { Uuid = gUuid } } }
-		end
-		
-		Network.Events.HarvestFruit:FireServer(unpack(args))
-		task.wait(0.1)
-	end
-	State.isHarvesting = false
-end
-
-return Harvest
+return Removal
