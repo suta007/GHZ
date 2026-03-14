@@ -1,10 +1,16 @@
 --!nocheck
 local MannyMishap = {}
-
-local State = require(script.Parent.Parent.Parent.Core.State)
-local Utils = require(script.Parent.Parent.Parent.Core.Utils)
+local Registry = nil
+local State = nil
+local Utils = nil
 
 local Options = {}
+
+function MannyMishap.Initialize(reg)
+	Registry = reg
+	State = reg.State
+	Utils = reg.Utils
+end
 
 function MannyMishap.SetOptions(opts)
 	Options = opts

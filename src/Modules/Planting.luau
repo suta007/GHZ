@@ -1,81 +1,39 @@
 --!nocheck
 local Planting = {}
+local Registry = nil
+local State = nil
+local Utils = nil
+local Network = nil
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
-local State = require(script.Parent.Parent.Core.State)
-local Utils = require(script.Parent.Parent.Core.Utils)
-local Network = require(script.Parent.Parent.Core.Network)
-
 local Options = {}
+
+function Planting.Initialize(reg)
+	Registry = reg
+	State = reg.State
+	Utils = reg.Utils
+	Network = reg.Network
+end
 
 function Planting.SetOptions(opts)
 	Options = opts
 end
 
-local function GetSelectedItems(DropdownValue)
-	local Items = {}
-	if type(DropdownValue) == "table" then
-		for Value, State in pairs(DropdownValue) do
-			if State then table.insert(Items, Value) end
-		end
+function Planting.Run(seedUuid)
+	if not State.MyPlot then Utils.InitializePlotData() end
+	if not State.MyPlot then return end
+
+	State.isPlanting = true
+	local pos = Utils.GetRandomPlantPosition()
+	if pos then
+		Utils.SafeTeleport(pos)
+		task.wait(0.2)
+		Network.Events.PlantSeed:FireServer(seedUuid, pos)
+		task.wait(0.5)
 	end
-	return Items
-end
-
-function Planting.Run()
-	if not Options.tgPlantsEnable.Value or State.isPlanting then return end
-
-	local character = LocalPlayer.Character
-	local humanoid = character and character:FindFirstChild("Humanoid")
-	if not humanoid then return end
-
-	pcall(function() humanoid:UnequipTools() end)
-	
-	local ddPlantsPos = Options.ddPlantsPos.Value
-	local Backpack = LocalPlayer.Backpack
-	local SeedList = GetSelectedItems(Options.ddPlantsSeeds.Value)
-
-	if Backpack then
-		for _, item in pairs(Backpack:GetChildren()) do
-			if not Options.tgPlantsEnable.Value then break end
-			
-			local itemType = item:GetAttribute("Type")
-			local plantType = item:GetAttribute("PlantType")
-			
-			if itemType == "Seeds" and (table.find(SeedList, "ALL") or table.find(SeedList, plantType)) then
-				State.isPlanting = true
-				pcall(function() humanoid:EquipTool(item) end)
-				
-				local itemCount = item:GetAttribute("ItemCount") or 0
-				for i = 1, itemCount do
-					if not Options.tgPlantsEnable.Value then
-						State.isPlanting = false
-						break
-					end
-					
-					local plantPosCFrame
-					if ddPlantsPos == "Player" then
-						plantPosCFrame = character:GetPivot()
-					elseif ddPlantsPos == "Random" then
-						local randPos = Utils.GetRandomPlantPosition()
-						if randPos then
-							plantPosCFrame = randPos
-							Utils.TweenToTarget(CFrame.new(randPos.X + 3, randPos.Y, randPos.Z), 100)
-						end
-					end
-					
-					if plantPosCFrame then
-						Network.Events.PlantSeed:InvokeServer(plantType, plantPosCFrame.Position)
-						task.wait(0.3)
-					end
-				end
-				pcall(function() humanoid:UnequipTools() end)
-			end
-		end
-		State.isPlanting = false
-	end
+	State.isPlanting = false
 end
 
 return Planting

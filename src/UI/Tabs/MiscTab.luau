@@ -1,44 +1,18 @@
 --!nocheck
 local MiscTab = {}
 
-local State = require(script.Parent.Parent.Parent.Core.State)
-local AntiLag = require(script.Parent.Parent.Parent.Modules.AntiLag)
-local ESP = require(script.Parent.Parent.Parent.Modules.ESP)
+function MiscTab.Setup(tab, Options, SaveManager, Registry)
+	local State = Registry.State
+	local AntiLag = Registry.AntiLag
+	local ESP = Registry.ESP
 
-function MiscTab.Setup(tab, Options, SaveManager)
 	-- Anti-Lag Section
 	local AntiLagSection = tab:AddCollapsibleSection("Anti-Lag", false)
 	AntiLagSection:AddToggle("tgAntiLag", {
 		Title = "Anti-Lag",
 		Default = false,
 		Callback = function(Value)
-			pcall(function()
-				if Value then 
-					AntiLag.Apply() 
-					State.isAntiLag = true 
-				else 
-					AntiLag.Restore() 
-					State.isAntiLag = false 
-				end
-			end)
-			SaveManager:Save("Horizons")
-		end,
-	})
-
-	AntiLagSection:AddToggle("tgHideFruit", {
-		Title = "Hide Fruit",
-		Default = false,
-		Callback = function(Value)
-			AntiLag.UpdateVisibilityFromAnchor("FruitAnchor", Value, false)
-			SaveManager:Save("Horizons")
-		end,
-	})
-
-	AntiLagSection:AddToggle("tgHidePlant", {
-		Title = "Hide Plant",
-		Default = false,
-		Callback = function(Value)
-			AntiLag.UpdateVisibilityFromAnchor("PlantAnchor", Value, true)
+			if Value then AntiLag.Apply() else AntiLag.Restore() end
 			SaveManager:Save("Horizons")
 		end,
 	})
@@ -50,15 +24,6 @@ function MiscTab.Setup(tab, Options, SaveManager)
 		Default = false,
 		Callback = function(Value)
 			ESP.TogglePlants(Value)
-			SaveManager:Save("Horizons")
-		end,
-	})
-  
-	espSection:AddToggle("tgFruitESP", {
-		Title = "ESP Fruit",
-		Default = false,
-		Callback = function(Value)
-			ESP.ToggleFruit(Value)
 			SaveManager:Save("Horizons")
 		end,
 	})

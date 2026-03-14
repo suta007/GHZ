@@ -1,16 +1,20 @@
 --!nocheck
 local Utils = {}
+local State = nil
+local Constants = nil
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
-local Constants = require(script.Parent.Constants)
-local State = require(script.Parent.State)
-
 local noclipConnection = nil
 local RNG = Random.new()
+
+function Utils.Initialize(reg)
+	State = reg.State
+	Constants = reg.Constants
+end
 
 function Utils.ShowData(tbl, indent)
 	local lclIndent = indent or 0

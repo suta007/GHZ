@@ -5,51 +5,65 @@ local Players = game:GetService("Players")
 local VirtualUser = game:GetService("VirtualUser")
 local LocalPlayer = Players.LocalPlayer
 
--- Core
-local _State = require(script.Core.State)
-local _Constants = require(script.Core.Constants)
-local Utils = require(script.Core.Utils)
-local _Network = require(script.Core.Network)
+local function LoadModules()
+	local Registry = {}
+	
+	-- 1. Core
+	Registry.State = GHZ_REMOTE("Core/State")
+	Registry.Constants = GHZ_REMOTE("Core/Constants")
+	Registry.Utils = GHZ_REMOTE("Core/Utils")
+	Registry.Network = GHZ_REMOTE("Core/Network")
 
--- Modules
-local Harvest = require(script.Modules.Harvest)
-local Planting = require(script.Modules.Planting)
-local Trading = require(script.Modules.Trading)
-local ESP = require(script.Modules.ESP)
-local _AntiLag = require(script.Modules.AntiLag)
-local _Quest = require(script.Parent.Parent.Parent.Modules.Quest)
-local MannyMishap = require(script.Modules.Events.MannyMishap)
+	-- 2. Functional Modules
+	Registry.Harvest = GHZ_REMOTE("Modules/Harvest")
+	Registry.Planting = GHZ_REMOTE("Modules/Planting")
+	Registry.Trading = GHZ_REMOTE("Modules/Trading")
+	Registry.ESP = GHZ_REMOTE("Modules/ESP")
+	Registry.AntiLag = GHZ_REMOTE("Modules/AntiLag")
+	Registry.Quest = GHZ_REMOTE("Modules/Quest")
+	Registry.MannyMishap = GHZ_REMOTE("Modules/Events/MannyMishap")
 
--- UI
-local Window = require(script.UI.Window)
-local MainTab = require(script.UI.Tabs.MainTab)
-local ShopTab = require(script.UI.Tabs.ShopTab)
-local EventTab = require(script.UI.Tabs.EventTab)
-local AutoTab = require(script.UI.Tabs.AutoTab)
-local MiscTab = require(script.UI.Tabs.MiscTab)
+	-- 3. UI Modules
+	Registry.Window = GHZ_REMOTE("UI/Window")
+	Registry.MainTab = GHZ_REMOTE("UI/Tabs/MainTab")
+	Registry.ShopTab = GHZ_REMOTE("UI/Tabs/ShopTab")
+	Registry.EventTab = GHZ_REMOTE("UI/Tabs/EventTab")
+	Registry.AutoTab = GHZ_REMOTE("UI/Tabs/AutoTab")
+	Registry.MiscTab = GHZ_REMOTE("UI/Tabs/MiscTab")
+
+	return Registry
+end
 
 function Main.Initialize()
-	-- 1. Initialize State & Plot
+	-- 0. Load All Modules into Registry
+	local Registry = LoadModules()
+	local State = Registry.State
+	local Utils = Registry.Utils
+	local Constants = Registry.Constants
+	local Network = Registry.Network
+	
+	-- 1. Initialize Functional Modules with Registry
+	Registry.Harvest.Initialize(Registry)
+	Registry.Planting.Initialize(Registry)
+	Registry.Trading.Initialize(Registry)
+	Registry.ESP.Initialize(Registry)
+	Registry.AntiLag.Initialize(Registry)
+	Registry.Quest.Initialize(Registry)
+	Registry.MannyMishap.Initialize(Registry)
+
+	-- 2. Initialize Plot Data
 	Utils.InitializePlotData()
 
-	-- 2. Setup UI
-	local _, Tabs, Fluent, SaveManager, InterfaceManager = Window.Initialize()
+	-- 3. Setup UI
+	local _, Tabs, Fluent, SaveManager, InterfaceManager = Registry.Window.Initialize(Registry)
 	local Options = Fluent.Options
 
-	-- 3. Link Options to Modules
-	Harvest.SetOptions(Options)
-	Planting.SetOptions(Options)
-	Trading.SetOptions(Options)
-	ESP.SetOptions(Options)
-	Quest.SetOptions(Options)
-	MannyMishap.SetOptions(Options)
-
 	-- 4. Setup Tabs
-	MainTab.Setup(Tabs.Main, Options, SaveManager)
-	ShopTab.Setup(Tabs.Shop, Options, SaveManager)
-	EventTab.Setup(Tabs.Event, Options, SaveManager)
-	AutoTab.Setup(Tabs.Auto, Options, SaveManager)
-	MiscTab.Setup(Tabs.Misc, Options, SaveManager)
+	Registry.MainTab.Setup(Tabs.Main, Options, SaveManager, Registry)
+	Registry.ShopTab.Setup(Tabs.Shop, Options, SaveManager, Registry)
+	Registry.EventTab.Setup(Tabs.Event, Options, SaveManager, Registry)
+	Registry.AutoTab.Setup(Tabs.Auto, Options, SaveManager, Registry)
+	Registry.MiscTab.Setup(Tabs.Misc, Options, SaveManager, Registry)
 	
 	InterfaceManager:BuildInterfaceSection(Tabs.Settings)
 	SaveManager:BuildConfigSection(Tabs.Settings)
@@ -72,9 +86,9 @@ function Main.Initialize()
 			-- Auto Harvest
 			if Options.tgHarvestEnable.Value then
 				if #State.HarVestCropsList == 0 then
-					Harvest.Scan()
+					Registry.Harvest.Scan()
 				elseif not (State.HarvestPause or State.isProcessing or State.isHarvesting) then
-					Harvest.Run()
+					Registry.Harvest.Run()
 				end
 			end
 
@@ -100,7 +114,7 @@ function Main.Initialize()
 					State:LockDownControlVariable()
 					task.wait(1)
 					State.MannyMishapEnable = true
-					task.spawn(MannyMishap.Run)
+					task.spawn(Registry.MannyMishap.Run)
 				elseif not Options.tgMannyMishapEnable.Value and State.MannyMishapEnable then
 					State.MannyMishapEnable = false
 					State:ResetControlVariable()
@@ -135,11 +149,11 @@ function Main.Initialize()
 				local args = { ... }
 				if RemoteName == "UpdateQuests" then
 					table.insert(State.actionQueue, {
-						FuncName = Quest.AutoClaim,
+						FuncName = Registry.Quest.AutoClaim,
 						args = args[1],
 					})
 				elseif RemoteName == "MannyMishapScoreUpdate" then
-					MannyMishap.HandleScoreUpdate(args)
+					Registry.MannyMishap.HandleScoreUpdate(args)
 				end
 			end)
 		end
