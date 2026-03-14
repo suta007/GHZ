@@ -27,7 +27,7 @@ end
 
 function Window.Initialize(reg)
 	Registry = reg
-	local Constants = reg.Constants
+	--local Constants = reg.Constants
 
 	local interface = Fluent:CreateWindow({
 		Title = "Garden Horizons",
@@ -82,9 +82,9 @@ function Window.Initialize(reg)
 
 	SaveManager:SetLibrary(Fluent)
 	InterfaceManager:SetLibrary(Fluent)
-	SaveManager:IgnoreThemeSettings()
-	SaveManager:SetIgnoreIndexes({})
-	SaveManager:SetFolder("EfHub/HRZ")
+	--SaveManager:IgnoreThemeSettings()
+	--SaveManager:SetIgnoreIndexes({})
+	SaveManager:SetFolder("EfHub/GHZs")
 	InterfaceManager:SetFolder("EfHub")
 
 	------------------------------------------------------
