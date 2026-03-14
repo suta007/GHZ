@@ -10,7 +10,7 @@ local function LoadModules()
 	return Registry
 end
 
-function Main.Initailize()
+function Main.Initialize()
 	local Registry = LoadModules()
 	Registry.Window.Initialize(Registry)
 end
