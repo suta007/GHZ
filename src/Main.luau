@@ -1,3 +1,5 @@
+---@diagnostic disable-next-line: undefined-global
+local GHZ_REMOTE = GHZ_REMOTE or getgenv().GHZ_REMOTE
 local Main = {}
 
 local function LoadModules()

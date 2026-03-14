@@ -1,0 +1,6 @@
+{
+    "diagnostics.globals": [
+        "GHZ_REMOTE",
+        "getgenv"
+    ]
+}
