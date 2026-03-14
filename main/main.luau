@@ -59,6 +59,7 @@ local isHarvesting = false
 local isQuestClaiming = false
 local isRemovePlants = false
 local isRemoveCrops = false
+local FinishEvent = false
 
 local MannyMishapEnable = false
 --End of Control Variable
@@ -1985,6 +1986,7 @@ local function hookIncoming(remote)
 					ResetControlVariable()
 					actionQueue = table.clone(backupQueue)
 					SafeTeleport(MySpawnPoint)
+					FinishEvent = true
 					task.wait(1)
 				end
 			end
@@ -2065,7 +2067,7 @@ task.spawn(function()
 		--เช็คเวลา ถ้า นาที = 00 เริ่ม ถ้านาที = 05 หยุด
 		local currentMin = os.date("*t").min
 
-		if currentMin >= 0 and currentMin < 5 then
+		if currentMin >= 0 and currentMin < 5 and not FinishEvent then
 			if Options.tgMannyMishapEnable.Value and not MannyMishapEnable then
 				LockDownControlVariable()
 				task.wait(1)
@@ -2087,6 +2089,8 @@ task.spawn(function()
 				task.wait(1)
 			end
 		end
+
+		if currentMin >= 5 and FinishEvent then FinishEvent = false end
 		task.wait(5)
 	end
 end)
