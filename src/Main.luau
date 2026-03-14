@@ -43,6 +43,7 @@ function Main.Initialize()
 	local Network = Registry.Network
 	
 	-- 1. Initialize Functional Modules with Registry
+	Utils.Initialize(Registry)
 	Registry.Harvest.Initialize(Registry)
 	Registry.Planting.Initialize(Registry)
 	Registry.Trading.Initialize(Registry)
