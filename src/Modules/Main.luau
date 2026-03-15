@@ -248,7 +248,9 @@ function Main.HarvestCrops()
 		TweenToTarget(targetCFrame, 100)
 
 		task.wait(0.1)
+		local fruitName = fruit:GetAttribute("PlantType") or (fruit.Parent and fruit.Parent:GetAttribute("PlantType"))
 		local gUuid, gindex = ParseFruitUuid(fruit:GetAttribute("Uuid"))
+		print(string.format("Name: %s, gUuid: %s, gindex: %s", fruitName, gUuid, gindex))
 		local args = {}
 		if gindex then
 			args = {
