@@ -6,9 +6,12 @@ local function LoadModules()
 	local Registry = {}
 	-- 1. Core
 	Registry.sData = GHZ_REMOTE("Core/sData")
+	Registry.fVar = GHZ_REMOTE("Core/fVar")
+
 	-- 2. Functional Modules
 	Registry.Utils = GHZ_REMOTE("Modules/Utils")
 	Registry.Main = GHZ_REMOTE("Modules/Main")
+	Registry.Process = GHZ_REMOTE("Modules/Process")
 	-- 3. UI Modules
 	Registry.Window = GHZ_REMOTE("UI/Window")
 	Registry.MainTab = GHZ_REMOTE("UI/Tabs/MainTab")

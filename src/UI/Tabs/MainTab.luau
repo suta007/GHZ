@@ -1,11 +1,21 @@
 local MainTab = {}
 
+local Interface
+local Tabs
+local Options
+local QuickSave
+local sData
+local fVar
+local Main
+
 function MainTab.Initialize(reg)
-	local Interface = reg.Interface
-	local Tabs = reg.Tabs
-	local Options = reg.Options
-	local QuickSave = reg.Window.QuickSave
-	local sData = reg.sData
+	Interface = reg.Interface
+	Tabs = reg.Tabs
+	Options = reg.Options
+	QuickSave = reg.Window.QuickSave
+	sData = reg.sData
+	fVar = reg.fVar
+	Main = reg.Main
 	Tabs.Main = Interface:AddTab({ Title = "Main", Icon = "rbxassetid://10723345661" })
 	local PlantsSection = Tabs.Main:AddCollapsibleSection("Plants", false)
 	PlantsSection:AddToggle("tgPlantsEnable", {
@@ -13,11 +23,11 @@ function MainTab.Initialize(reg)
 		Default = false,
 		Callback = function(Value)
 			if Value then
-				table.insert(reg.fVar.actionQueue, {
-					FuncName = reg.Main.AutoPlantsSeeds,
+				table.insert(fVar.actionQueue, {
+					FuncName = Main.AutoPlantsSeeds,
 				})
 			else
-				reg.fVar.isPlanting = false
+				fVar.isPlanting = false
 			end
 			QuickSave()
 		end,
