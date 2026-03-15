@@ -16,21 +16,27 @@ function EventDrive.Initialize(Registry)
 end
 
 local function RemoteReplicaSet(args)
-	--[[ 	if type(args[2]) ~= "table" then return end
+	local fVar = reg.fVar
+
+	local actionQueue = fVar.actionQueue
+	local AutoBuySeed = reg.Shop.AutoBuySeed
+	local AutoBuyGear = reg.Shop.AutoBuyGear
+
+	if type(args[2]) ~= "table" then return end
 	local fType = args[2][1]
 	local fData = args[3]
-	if fType == "SeedShop" and not isBuyingSeed then
+	if fType == "SeedShop" and not fVar.isBuyingSeed then
 		table.insert(actionQueue, {
 			FuncName = AutoBuySeed,
 			args = fData.Items,
 		})
-	elseif fType == "GearShop" and not isBuyingGear then
+	elseif fType == "GearShop" and not fVar.isBuyingGear then
 		table.insert(actionQueue, {
 			FuncName = AutoBuyGear,
 			args = fData.Items,
 		})
 	elseif fType == "Money" then
-	end ]]
+	end
 end
 
 local function RemoteNotification(args)
@@ -50,7 +56,25 @@ local function RemoteNotification(args)
 	end
 end
 
+local function AutoClaimQuest(QuestData)
+	local fVar = reg.fVar
+	if fVar.isQuestClaiming or not QuestData then return end
+
+	fVar.isQuestClaiming = true
+	local Daily = QuestData.Daily.Active
+	for index, qDaily in pairs(Daily) do
+		if qDaily.CompletedAt and not qDaily.Claimed then game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ClaimQuest"):FireServer("Daily", index) end
+	end
+
+	local Weekly = QuestData.Weekly.Active
+	for index, qWeekly in pairs(Weekly) do
+		if qWeekly.CompletedAt and not qWeekly.Claimed then game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ClaimQuest"):FireServer("Weekly", index) end
+	end
+	fVar.isQuestClaiming = false
+end
+
 function EventDrive.hookIncoming(remote)
+	local actionQueue = reg.fVar.actionQueue
 	if remote:IsA("RemoteEvent") then
 		remote.OnClientEvent:Connect(function(...)
 			local RemoteName = remote.Name
@@ -59,12 +83,12 @@ function EventDrive.hookIncoming(remote)
 				RemoteReplicaSet(args)
 			elseif RemoteName == "Notification" then
 				RemoteNotification(args)
-				--[[	elseif RemoteName == "UpdateQuests" then
+			elseif RemoteName == "UpdateQuests" then
 				table.insert(actionQueue, {
 					FuncName = AutoClaimQuest,
 					args = args[1],
 				})
-				 elseif RemoteName == "MannyMishapScoreUpdate" then
+				--[[ elseif RemoteName == "MannyMishapScoreUpdate" then
 				if tonumber(args[1]) >= 300 then
 					MannyMishapEnable = false
 					ResetControlVariable()

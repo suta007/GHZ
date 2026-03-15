@@ -17,9 +17,12 @@ fVar.Pos = {
 --Control Variable
 fVar.isPlanting = false
 fVar.isBuyingSeed = false
+fVar.isBuyingGear = false
+fVar.isProcessing = false
 fVar.isSelling = false
 fVar.HarvestPause = false
 fVar.Harvesting = false
+fVar.isQuestClaiming = false
 
 function fVar.ResetControlVar()
 	fVar.isPlanting = false
@@ -29,6 +32,7 @@ function fVar.ResetControlVar()
 	fVar.isSelling = false
 	fVar.HarvestPause = false
 	fVar.Harvesting = false
+	fVar.isQuestClaiming = false
 
 	table.clear(fVar.actionQueue)
 end
@@ -41,6 +45,7 @@ function fVar.LockDownControlVar()
 	fVar.isSelling = true
 	fVar.HarvestPause = true
 	fVar.Harvesting = true
+	fVar.isQuestClaiming = true
 end
 
 function fVar.IsBuying()

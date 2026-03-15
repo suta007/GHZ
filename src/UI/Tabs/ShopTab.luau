@@ -3,7 +3,6 @@ local reg
 
 function ShopTab.Initialize(Registry)
 	reg = Registry
-	local fVar = reg.fVar
 	local Options = reg.Options
 	local Interface = reg.Interface
 	local Tabs = reg.Tabs
@@ -25,7 +24,7 @@ function ShopTab.Initialize(Registry)
 			Options.ddBuySeeds:SetValue({ ALL = true })
 		end,
 	})
-	BuySeedSection:AddDropdown("ddBuySeed", {
+	BuySeedSection:AddDropdown("ddBuySeeds", {
 		Title = "Select Seed",
 		Values = sData.SeedShopTable,
 		Multi = true,
