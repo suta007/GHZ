@@ -3,13 +3,16 @@ local reg
 
 function EventDrive.Initialize(Registry)
 	reg = Registry
-	for _, obj in ipairs(game:GetDescendants()) do
-		EventDrive.hookIncoming(obj)
-	end
 
+	-- Connect event first to avoid missing any newly added remotes
 	game.DescendantAdded:Connect(function(obj)
 		EventDrive.hookIncoming(obj)
 	end)
+
+	-- Hook existing remotes
+	for _, obj in ipairs(game:GetDescendants()) do
+		EventDrive.hookIncoming(obj)
+	end
 end
 
 local function RemoteReplicaSet(args)
@@ -32,11 +35,14 @@ end
 
 local function RemoteNotification(args)
 	local fVar = reg.fVar
-	local actionQueue = reg.actionQueue
+	local actionQueue = fVar.actionQueue -- Fixed: actionQueue is in fVar
 	if args[1] and type(args[1]) == "string" then
-		if string.find(args[1], "inventory is full!") then
+		local message = string.lower(args[1])
+		if string.find(message, "inventory is full!") then
 			fVar.HarvestPause = true
-			table.clear(fVar.HarVestCropsList)
+			if reg.HarVestCropsList then
+				table.clear(reg.HarVestCropsList) -- Fixed: HarVestCropsList is in reg
+			end
 			table.insert(actionQueue, {
 				FuncName = reg.Main.AutoSellCrops,
 			})
