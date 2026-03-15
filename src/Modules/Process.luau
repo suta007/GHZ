@@ -16,18 +16,12 @@ function Process.processQueue()
 	while #fVar.actionQueue > 0 do
 		local taskData = table.remove(fVar.actionQueue, 1)
 		pcall(function()
-			if taskData.args ~= nil then
-				taskData.FuncName(taskData.args)
+			if taskData.Args ~= nil then
+				taskData.FuncName(taskData.Args)
 			else
 				taskData.FuncName()
 			end
 		end)
-		--[[
-		if not success then
-			table.insert(actionQueue, taskData)
-			task.wait(2)
-		end
-		]]
 	end
 	fVar.isProcessing = false
 	fVar.HarvestPause = false

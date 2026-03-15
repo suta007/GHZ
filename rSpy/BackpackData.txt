@@ -1,0 +1,495 @@
+📋 Script initialized successfully.
+=======================================
+🔍 ข้อมูลของ Object: x2 Dandelion Seed
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+PlantType = Dandelion (string)
+BaseName = Dandelion Seed (string)
+UUID = 607fb34f-38cf-4c7f-9fa5-a7564be9c7ee (string)
+Type = Seeds (string)
+InventoryPosition = 1 (number)
+ItemCount = 2 (number)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: Cherry Seed
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+PlantType = Cherry (string)
+BaseName = Cherry Seed (string)
+UUID = 979f1444-f90e-492b-bd0c-91d9ef39d352 (string)
+Type = Seeds (string)
+InventoryPosition = 11 (number)
+ItemCount = 1 (number)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x12 Turbo Sprinkler
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+BaseName = Turbo Sprinkler (string)
+UUID = 16b17a7e-a5f9-45a0-9f7c-f7b7a5581f24 (string)
+GearName = Good Sprinkler (string)
+Type = Tools (string)
+InventoryPosition = 12 (number)
+ItemCount = 12 (number)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x3 Gardener Seed Pack
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+BaseName = Gardener Seed Pack (string)
+UUID = a1eecbe5-f312-49f0-919a-418e2f3cc6c6 (string)
+Type = Seeds (string)
+ItemCount = 3 (number)
+InventoryPosition = 13 (number)
+IsCrate = true (boolean)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x80 Basic Sprinkler
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+BaseName = Basic Sprinkler (string)
+UUID = fb1164e8-b9ba-42a3-98f3-4d32f67fd6b7 (string)
+GearName = Bad Sprinkler (string)
+Type = Tools (string)
+InventoryPosition = 14 (number)
+ItemCount = 80 (number)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x47 Favorite Tool
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+BaseName = Favorite Tool (string)
+UUID = e7899e00-22c9-4b6f-9750-109c086c4b25 (string)
+GearName = Favorite Tool (string)
+Type = Tools (string)
+InventoryPosition = 15 (number)
+ItemCount = 47 (number)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x44 Mushroom Seed
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+PlantType = Mushroom (string)
+BaseName = Mushroom Seed (string)
+UUID = e72cc2d5-25b6-41cf-837b-8b0a5c65ec82 (string)
+Type = Seeds (string)
+InventoryPosition = 16 (number)
+ItemCount = 44 (number)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x20 Rose Seed
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+PlantType = Rose (string)
+BaseName = Rose Seed (string)
+UUID = 453a4f78-fbf6-4d85-840f-dcc1ff830eda (string)
+Type = Seeds (string)
+InventoryPosition = 17 (number)
+ItemCount = 20 (number)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x28 Tomato Seed
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+PlantType = Tomato (string)
+BaseName = Tomato Seed (string)
+UUID = b304451f-221c-4ada-8c0f-9063bc8e756e (string)
+Type = Seeds (string)
+InventoryPosition = 18 (number)
+ItemCount = 28 (number)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x7 Royal Seed Pack
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+BaseName = Royal Seed Pack (string)
+UUID = 2ca3ad21-fb6f-4b6f-980a-b02db49b6562 (string)
+Type = Seeds (string)
+ItemCount = 7 (number)
+InventoryPosition = 19 (number)
+IsCrate = true (boolean)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x225 Corn Seed
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+PlantType = Corn (string)
+BaseName = Corn Seed (string)
+UUID = 453710df-e8e8-43e7-93d1-1a8c68e29279 (string)
+Type = Seeds (string)
+InventoryPosition = 20 (number)
+ItemCount = 225 (number)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x12 Apple Seed
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+PlantType = Apple (string)
+BaseName = Apple Seed (string)
+UUID = ca6ff2a2-87b9-4a77-a079-a14f58e6924c (string)
+Type = Seeds (string)
+InventoryPosition = 21 (number)
+ItemCount = 12 (number)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x4 IGMA Seed Pack
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+BaseName = IGMA Seed Pack (string)
+UUID = 0abb3cd0-43b2-4324-a46b-771ecb0ad820 (string)
+Type = Seeds (string)
+ItemCount = 4 (number)
+InventoryPosition = 22 (number)
+IsCrate = true (boolean)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x2 Mango Seed
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+PlantType = Mango (string)
+BaseName = Mango Seed (string)
+UUID = 852aab5f-6593-4d45-af26-c2b5279fa0ea (string)
+Type = Seeds (string)
+InventoryPosition = 23 (number)
+ItemCount = 2 (number)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x5 Banana Seed
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+PlantType = Banana (string)
+BaseName = Banana Seed (string)
+UUID = 6f91e314-82db-429d-b705-cf18d0434945 (string)
+Type = Seeds (string)
+InventoryPosition = 24 (number)
+ItemCount = 5 (number)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x7 Dawn Seed Pack
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+BaseName = Dawn Seed Pack (string)
+UUID = c29d260b-cc8e-462a-ad8e-66b91b3c1edb (string)
+Type = Seeds (string)
+ItemCount = 7 (number)
+InventoryPosition = 25 (number)
+IsCrate = true (boolean)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x166 Onion Seed
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+PlantType = Onion (string)
+BaseName = Onion Seed (string)
+UUID = 5a74bd8a-7078-48c9-a17b-b88c61039b62 (string)
+Type = Seeds (string)
+InventoryPosition = 26 (number)
+ItemCount = 166 (number)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x32 Beetroot Seed
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+PlantType = Beetroot (string)
+BaseName = Beetroot Seed (string)
+UUID = b92ba242-2d6b-4f10-940e-9372b6dc46f2 (string)
+Type = Seeds (string)
+InventoryPosition = 27 (number)
+ItemCount = 32 (number)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x64 Strawberry Seed
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+PlantType = Strawberry (string)
+BaseName = Strawberry Seed (string)
+UUID = 8ab6443f-6970-4c15-9481-4675f2afbd73 (string)
+Type = Seeds (string)
+InventoryPosition = 28 (number)
+ItemCount = 64 (number)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x560 Carrot Seed
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+PlantType = Carrot (string)
+BaseName = Carrot Seed (string)
+UUID = ae788fcf-9e88-4f3c-8b9e-455a17a84d5a (string)
+Type = Seeds (string)
+InventoryPosition = 29 (number)
+ItemCount = 560 (number)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x22 Harvest Bell
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+BaseName = Harvest Bell (string)
+UUID = 7972a0e3-84d5-44f1-a313-9be5da5573c1 (string)
+GearName = Harvest Bell (string)
+Type = Tools (string)
+InventoryPosition = 30 (number)
+ItemCount = 22 (number)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x14 Wheat Seed
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+PlantType = Wheat (string)
+BaseName = Wheat Seed (string)
+UUID = 7a4d9957-1c82-4808-8e0d-6e2e635a36a1 (string)
+Type = Seeds (string)
+InventoryPosition = 31 (number)
+ItemCount = 14 (number)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x3 Super Sprinkler
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+BaseName = Super Sprinkler (string)
+UUID = 3bee47fe-75d5-4be0-88bd-e9228b730c9c (string)
+GearName = Amazing Sprinkler (string)
+Type = Tools (string)
+InventoryPosition = 32 (number)
+ItemCount = 3 (number)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x3 Potato Seed
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+PlantType = Potato (string)
+BaseName = Potato Seed (string)
+UUID = 7455aab0-9249-4553-8dd6-fc92f373694e (string)
+Type = Seeds (string)
+InventoryPosition = 33 (number)
+ItemCount = 3 (number)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x4 Plum Seed
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+PlantType = Plum (string)
+BaseName = Plum Seed (string)
+UUID = b8b95bc3-bd86-4ccb-bce0-4e43eb4320ad (string)
+Type = Seeds (string)
+InventoryPosition = 34 (number)
+ItemCount = 4 (number)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: Shovel
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+BaseName = Shovel (string)
+UUID = 7d26403f-837f-4409-8267-3d956dd8ab5a (string)
+Type = Tools (string)
+InventoryPosition = 35 (number)
+ItemCount = 1 (number)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x60 Trowel
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+BaseName = Trowel (string)
+UUID = 37141510-0009-41b1-90c8-83e973c831a2 (string)
+GearName = Trowel (string)
+Type = Tools (string)
+InventoryPosition = 36 (number)
+ItemCount = 60 (number)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x110 Watering Can
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+BaseName = Watering Can (string)
+UUID = 845b88ba-5022-42bd-999d-c038d75e4527 (string)
+GearName = Watering Can (string)
+Type = Tools (string)
+InventoryPosition = 37 (number)
+ItemCount = 110 (number)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: Lumenbark Seed
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+PlantType = Lumenbark (string)
+BaseName = Lumenbark Seed (string)
+UUID = afedba08-54d8-452f-adf3-7a00ce7e3cfd (string)
+Type = Seeds (string)
+InventoryPosition = 38 (number)
+ItemCount = 1 (number)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: x2 Reverter
+🏷️ ประเภท (Class): Tool
+=======================================
+
+--- 🟢 Attributes ---
+BaseName = Reverter (string)
+UUID = 2132cb97-2fce-44fc-b8d3-0e17e72cf4cb (string)
+GearName = Reverter (string)
+Type = Tools (string)
+InventoryPosition = 39 (number)
+ItemCount = 2 (number)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: Bellpepper (0.17 KG)
+🏷️ ประเภท (Class): Tool
+=======================================
+635
+--- 🟢 Attributes ---
+FruitValue = 553 (number)
+FruitWeight = 0.17003000000000001 (number)
+Type = Plants (string)
+RipenessStage = Lush (string)
+BaseName = Bellpepper (string)
+IsHarvested = true (boolean)
+HiddenNumber = 1.2145 (number)
+RipenessMultiplier = 3 (number)
+Mutation = Sandy (string)
+FruitTemplateName = Fruit1 (string)
+HarvestedFrom = Bellpepper (string)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: Tomato (0.12 KG)
+🏷️ ประเภท (Class): Tool
+=======================================
+351
+--- 🟢 Attributes ---
+FruitValue = 306 (number)
+FruitWeight = 0.12193679999999998 (number)
+Type = Plants (string)
+RipenessStage = Unripe (string)
+BaseName = Tomato (string)
+IsHarvested = true (boolean)
+HiddenNumber = 0.812912 (number)
+RipenessMultiplier = 1.9324533088603708 (number)
+Mutation = Strange (string)
+FruitTemplateName = Fruit1 (string)
+HarvestedFrom = Tomato (string)
+=======================================
+
+=======================================
+🔍 ข้อมูลของ Object: Twisted Sunflower (0.05 KG)
+🏷️ ประเภท (Class): Tool
+=======================================
+3690
+--- 🟢 Attributes ---
+FruitValue = 3209 (number)
+FruitWeight = 0.050359999999999995 (number)
+Type = Plants (string)
+RipenessStage = Lush (string)
+BaseName = Twisted Sunflower (string)
+IsHarvested = true (boolean)
+PlantTemplateName = Twisted Sunflower1 (string)
+RipenessMultiplier = 3 (number)
+Mutation = Starstruck,Frostbit,Sandy,Soaked,Mossy,Foggy (string)
+HiddenNumber = 1.259 (number)
+HarvestedFrom = Twisted Sunflower (string)
+=======================================
+=======================================
+🔍 ข้อมูลของ Object: Amberpine (0.11 KG)
+🏷️ ประเภท (Class): Tool
+=======================================
+1899
+--- 🟢 Attributes ---
+FruitValue = 1652 (number)
+FruitWeight = 0.11157784000000001 (number)
+Type = Plants (string)
+BaseName = Amberpine (string)
+RipenessStage = Ripe (string)
+IsHarvested = true (boolean)
+RipenessMultiplier = 2.124338624338624 (number)
+HiddenNumber = 1.3947230000000002 (number)
+FruitTemplateName = Fruit1 (string)
+HarvestedFrom = Amberpine (string)
+=======================================
+
+

@@ -7,8 +7,8 @@ local QuickSave
 local sData
 local fVar
 local Main
---local actionQueue
-local TaskPlantsSeeds, TaskHarvestCrops
+local actionQueue
+local TaskPlantsSeeds, TaskHarvestCrops, TaskSellCrops
 function MainTab.Initialize(reg)
 	Interface = reg.Interface
 	Tabs = reg.Tabs
@@ -17,7 +17,7 @@ function MainTab.Initialize(reg)
 	sData = reg.sData
 	fVar = reg.fVar
 	Main = reg.Main
-	--actionQueue = reg.fVar.actionQueue
+	actionQueue = reg.fVar.actionQueue
 	Tabs.Main = Interface:AddTab({ Title = "Main", Icon = "rbxassetid://10723345661" })
 	local PlantsSection = Tabs.Main:AddCollapsibleSection("Plants", false)
 	PlantsSection:AddToggle("tgPlantsEnable", {
@@ -36,6 +36,7 @@ function MainTab.Initialize(reg)
 					task.cancel(TaskPlantsSeeds)
 					TaskPlantsSeeds = nil
 				end
+				fVar.isPlanting = false
 			end
 			QuickSave()
 		end,
@@ -89,6 +90,7 @@ function MainTab.Initialize(reg)
 					task.cancel(TaskHarvestCrops)
 					TaskHarvestCrops = nil
 				end
+				fVar.isHarvesting = false
 			end
 			QuickSave()
 		end,
@@ -243,6 +245,147 @@ function MainTab.Initialize(reg)
 	SellSection:AddToggle("tgSellCropsEnable", {
 		Title = "Sell",
 		Default = false,
+		Callback = function(Value)
+			if Value then
+				local data = { FuncName = Main.AutoSellCrops, Args = {} }
+				table.insert(actionQueue, data)
+			end
+			QuickSave()
+		end,
+	})
+	--Sell All Toggle
+	SellSection:AddToggle("tgSellAllCropsEnable", {
+		Title = "Sell All Crops",
+		Default = false,
+		Callback = function(Value)
+			QuickSave()
+		end,
+	})
+
+	SellSection:AddDivider()
+
+	SellSection:AddButton({
+		Title = "Clear Sell Crops",
+		Callback = function()
+			Options.ddSellCrops:SetValue({ ALL = true })
+		end,
+	})
+	SellSection:AddDropdown("ddSellCrops", {
+		Title = "Select Crops to Sell",
+		Values = sData.PlantDataTable,
+		Multi = true,
+		Default = { "ALL" },
+		Searchable = true,
+		Callback = function(Value)
+			QuickSave()
+		end,
+	})
+	SellSection:AddButton({
+		Title = "Clear Blacklist Crops",
+		Callback = function()
+			Options.ddSellBlackCrops:SetValue({ NONE = true })
+		end,
+	})
+	SellSection:AddDropdown("ddSellBlackCrops", {
+		Title = "Blacklist Crops",
+		Values = sData.PlantDataBlackTable,
+		Multi = true,
+		Default = { "NONE" },
+		Searchable = true,
+		Callback = function(Value)
+			QuickSave()
+		end,
+	})
+
+	SellSection:AddDivider()
+	SellSection:AddDropdown("ddSellRipeness", {
+		Title = "Ripeness Stage",
+		Values = { "ALL", "Unripe", "Ripened", "Lush" },
+		Default = { "ALL" },
+		Multi = true,
+		Callback = function(Value)
+			QuickSave()
+		end,
+	})
+	SellSection:AddDropdown("ddSellBlackRipeness", {
+		Title = "Blacklist Ripeness Stage",
+		Values = { "NONE", "Unripe", "Ripened", "Lush" },
+		Default = { "NONE" },
+		Multi = true,
+		Callback = function(Value)
+			QuickSave()
+		end,
+	})
+
+	SellSection:AddDivider()
+	SellSection:AddButton({
+		Title = "Clear Selected Mutant",
+		Callback = function()
+			Options.ddSellMutants:SetValue({ ALL = true })
+		end,
+	})
+	SellSection:AddDropdown("ddSellMutants", {
+		Title = "Select Mutants",
+		Values = sData.MutationDataTable,
+		Multi = true,
+		Default = { "ALL" },
+		Searchable = true,
+		Callback = function(Value)
+			QuickSave()
+		end,
+	})
+	SellSection:AddButton({
+		Title = "Clear Blacklist Mutant",
+		Callback = function()
+			Options.ddSellBlackMutants:SetValue({ NONE = true })
+		end,
+	})
+	SellSection:AddDropdown("ddSellBlackMutants", {
+		Title = "Blacklist Mutants",
+		Values = sData.MutationDataBlackTable,
+		Multi = true,
+		Default = { "NONE" },
+		Searchable = true,
+		Callback = function(Value)
+			QuickSave()
+		end,
+	})
+
+	SellSection:AddDivider()
+	SellSection:AddDropdown("ddSellWeight", {
+		Title = "Weight Filter",
+		Values = { "Below", "Above" },
+		Default = "Below",
+		Multi = false,
+		Callback = function(Value)
+			QuickSave()
+		end,
+	})
+	SellSection:AddInput("ipSellWeight", {
+		Title = "Weight Value",
+		Default = 0,
+		Numeric = true,
+		Finished = true,
+		Callback = function(Value)
+			QuickSave()
+		end,
+	})
+
+	SellSection:AddDivider()
+	SellSection:AddDropdown("ddSellValue", {
+		Title = "Value (Price) Filter",
+		Values = { "Below", "Above" },
+		Default = "Below",
+		Multi = false,
+		Callback = function(Value)
+			QuickSave()
+		end,
+	})
+	SellSection:AddInput("ipSellValue", {
+		Title = "Price Value",
+		Default = 0,
+		Numeric = true,
+		Finished = true,
 		Callback = function(Value)
 			QuickSave()
 		end,

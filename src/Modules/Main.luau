@@ -16,6 +16,10 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
 local PlantSeed = RemoteEvents:WaitForChild("PlantSeed")
 local HarvestFruit = RemoteEvents:WaitForChild("HarvestFruit")
+local SellItems = RemoteEvents:WaitForChild("SellItems")
+local GetShopData = RemoteEvents:WaitForChild("GetShopData")
+local PurchaseShopItem = RemoteEvents:WaitForChild("PurchaseShopItem")
+local ClaimQuest = RemoteEvents:WaitForChild("ClaimQuest")
 
 local CollectionService = game:GetService("CollectionService")
 
@@ -268,6 +272,139 @@ function Main.HarvestCrops()
 		task.wait(0.1)
 	end
 	fVar.isHarvesting = false
+end
+
+local function GetSellConfig()
+	local Options = reg.Options
+	return {
+		mode = "Sell",
+		wl = {
+			crops = GetSelectedItems(Options.ddSellCrops.Value),
+			ripeness = GetSelectedItems(Options.ddSellRipeness.Value),
+			mutants = GetSelectedItems(Options.ddSellMutants.Value),
+			weightCondition = Options.ddSellWeight.Value,
+			weightValue = tonumber(Options.ipSellWeight.Value) or 0,
+			valueCondition = Options.ddSellValue.Value,
+			valueValue = tonumber(Options.ipSellValue.Value) or 0,
+		},
+		bl = {
+			crops = GetSelectedItems(Options.ddSellBlackCrops.Value),
+			ripeness = GetSelectedItems(Options.ddSellBlackRipeness.Value),
+			mutants = GetSelectedItems(Options.ddSellBlackMutants.Value),
+		},
+	}
+end
+
+function Main.CheckSellItem(item, config)
+	local itemName = item:GetAttribute("BaseName") or item.Name
+	local itemRipeness = item:GetAttribute("RipenessStage")
+	local itemMutants = item:GetAttribute("Mutation")
+	local itemWeight = tonumber(item:GetAttribute("FruitWeight")) or 0
+	local itemValue = tonumber(item:GetAttribute("FruitValue")) or 0
+
+	-- 1. Crops (Names)
+	if not table.find(config.wl.crops, "ALL") and not table.find(config.wl.crops, itemName) then return false end
+	if not table.find(config.bl.crops, "NONE") and table.find(config.bl.crops, itemName) then return false end
+
+	-- 2. Ripeness
+	if not table.find(config.wl.ripeness, "ALL") and not table.find(config.wl.ripeness, itemRipeness) then return false end
+	if not table.find(config.bl.ripeness, "NONE") and table.find(config.bl.ripeness, itemRipeness) then return false end
+
+	-- 3. Mutants
+	if not table.find(config.wl.mutants, "ALL") then
+		if not itemMutants or itemMutants == "" then return false end
+		local mutantsTable = string.split(itemMutants, ",")
+		local isMutantMatch = false
+		for _, mutation in ipairs(mutantsTable) do
+			if table.find(config.wl.mutants, mutation) then isMutantMatch = true end
+		end
+		if not isMutantMatch then return false end
+	end
+	if not table.find(config.bl.mutants, "NONE") then
+		if itemMutants and itemMutants ~= "" then
+			local mutantsTable = string.split(itemMutants, ",")
+			local isBlackMutantMatch = false
+			for _, mutation in ipairs(mutantsTable) do
+				if table.find(config.bl.mutants, mutation) then isBlackMutantMatch = true end
+			end
+			if isBlackMutantMatch then return false end
+		end
+	end
+
+	-- 4. Weight
+	if config.wl.weightValue ~= 0 then
+		if config.wl.weightCondition == "Below" and itemWeight >= config.wl.weightValue then return false end
+		if config.wl.weightCondition == "Above" and itemWeight <= config.wl.weightValue then return false end
+	end
+
+	-- 5. Value (Price)
+	if config.wl.valueValue ~= 0 then
+		if config.wl.valueCondition == "Below" and itemValue >= config.wl.valueValue then return false end
+		if config.wl.valueCondition == "Above" and itemValue <= config.wl.valueValue then return false end
+	end
+
+	return true
+end
+
+function Main.AutoSellCrops()
+	local Options = reg.Options
+	local EquipItem = reg.Utils.EquipItem
+	local UnequipTools = reg.Utils.UnequipTools
+	if not Options.tgSellCropsEnable.Value or fVar.isSelling then return end
+
+	local Backpack = LocalPlayer.Backpack
+	if not Backpack then return end
+
+	local itemsToSell = {}
+	local config = GetSellConfig()
+
+	-- 1. Scan for items first to avoid empty teleports
+	if not Options.tgSellAllCropsEnable.Value then
+		for _, item in ipairs(Backpack:GetChildren()) do
+			if item:IsA("Tool") and item:GetAttribute("IsHarvested") then
+				if Main.CheckSellItem(item, config) then table.insert(itemsToSell, item) end
+			end
+		end
+	else
+		for _, item in ipairs(Backpack:GetChildren()) do
+			if item:IsA("Tool") and item:GetAttribute("IsHarvested") then
+				table.insert(itemsToSell, item)
+				break -- Found at least one item
+			end
+		end
+	end
+
+	-- 2. Process selling if items were found
+	if #itemsToSell > 0 then
+		fVar.isSelling = true
+		fVar.HarvestPause = true
+		UnequipTools() -- Call once before teleporting
+
+		SafeTeleport(fVar.Pos.Sell)
+		task.wait(0.5)
+
+		if not Options.tgSellAllCropsEnable.Value then
+			-- Sell filtered items individually
+			for _, item in ipairs(itemsToSell) do
+				if item and item.Parent == Backpack then
+					EquipItem(item)
+					task.wait(0.1)
+					SellItems:InvokeServer("SellSingle")
+					task.wait(0.1)
+				end
+			end
+		else
+			-- Sell everything at once
+			SellItems:InvokeServer("SellAll")
+			task.wait(1)
+		end
+
+		-- Teleport back
+		SafeTeleport(reg.MySpawnPoint or Character:GetPivot())
+		task.wait(0.3)
+		fVar.isSelling = false
+		fVar.HarvestPause = false
+	end
 end
 
 return Main

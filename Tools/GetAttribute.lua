@@ -147,20 +147,20 @@ local function InspectObject(obj)
 	AddLog("\n--- 🟢 Attributes ---")
 	local attributes = obj:GetAttributes()
 	local hasAttributes = false
-	if attributes["BaseName"] == "Carrot" then
-		for attrName, attrValue in pairs(attributes) do
-			AddLog(attrName .. " = " .. tostring(attrValue) .. " (" .. typeof(attrValue) .. ")")
-			hasAttributes = true
-		end
+	--if attributes["BaseName"] == "Carrot" then
+	for attrName, attrValue in pairs(attributes) do
+		AddLog(attrName .. " = " .. tostring(attrValue) .. " (" .. typeof(attrValue) .. ")")
+		hasAttributes = true
 	end
+	--end
 
 	if not hasAttributes then AddLog("ไม่มี Attributes ค่ะ") end
 
-	-- 2. ตรวจสอบ Properties (ใช้ความสามารถของ Executor)
+	--[[ 	-- 2. ตรวจสอบ Properties (ใช้ความสามารถของ Executor)
 	AddLog("\n--- 🔵 Properties ---")
 
 	-- เช็คก่อนว่า Delta ที่รันอยู่รองรับคำสั่งนี้ไหม (กันสคริปต์พัง)
-	--[[ 	if type(getproperties) == "function" then
+	if type(getproperties) == "function" then
 		local success, props = pcall(function()
 			return getproperties(obj)
 		end)
@@ -196,7 +196,7 @@ local LocalPlayer = Players.LocalPlayer
 local Backpack = LocalPlayer.Backpack
 ---local myCharacter = workspace:FindFirstChild(myName)
 
-for _, item in ipairs(Backpack:GetChildren()) do
+for _, item in pairs(Backpack:GetChildren()) do
 	InspectObject(item)
 end
 

@@ -187,4 +187,22 @@ function Utils.ParseFruitUuid(rawUuid)
 	return gUuid, gindex
 end
 
+function Utils.EquipItem(item)
+	local humanoid = Character:FindFirstChild("Humanoid")
+	if humanoid and item then
+		pcall(function()
+			humanoid:EquipTool(item)
+		end)
+	end
+end
+
+function Utils.UnequipTools()
+	local humanoid = Character:FindFirstChild("Humanoid")
+	if humanoid then
+		pcall(function()
+			humanoid:UnequipTools()
+		end)
+	end
+end
+
 return Utils

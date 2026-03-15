@@ -29,10 +29,7 @@ function EfHub.Initialize()
 	Registry.Main.Initialize(Registry)
 	Registry.Process.Initialize(Registry)
 
-	-- Initialize Tabs (สร้าง toggles/dropdowns เข้า Options)
-	Registry.MainTab.Initialize(Registry)
-
-	Registry.Window.Finalize()
+	-- Initialize Tabs (สร้�	Registry.Window.Finalize()
 
 	return Registry
 end
@@ -46,4 +43,5 @@ function EfHub.RunTask(Registry)
 		end
 	end)
 end
+
 return EfHub
