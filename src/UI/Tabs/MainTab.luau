@@ -26,8 +26,9 @@ function MainTab.Initialize(reg)
 		Callback = function(Value)
 			if Value then
 				TaskPlantsSeeds = task.spawn(function()
-					while task.wait(30) do
+					while true do
 						Main.AutoPlantsSeeds()
+						task.wait(30)
 					end
 				end)
 			else

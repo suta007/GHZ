@@ -21,12 +21,13 @@ local CollectionService = game:GetService("CollectionService")
 
 function Main.Initialize(Registry)
 	reg = Registry
-
 	fVar = Registry.fVar
 	GetSelectedItems = Registry.Utils.GetSelectedItems
 	GetRandomPlantPosition = Registry.Utils.GetRandomPlantPosition
 	TweenToTarget = Registry.Utils.TweenToTarget
 	SafeTeleport = Registry.Utils.SafeTeleport
+
+	reg.HarVestCropsList = HarVestCropsList
 end
 
 function Main.AutoPlantsSeeds()
