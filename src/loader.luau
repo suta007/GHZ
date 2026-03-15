@@ -24,6 +24,6 @@ end
 getgenv().GHZ_REMOTE = GetRemote
 
 local EfHub = GetRemote("EfHub")
-EfHub.Initialize()
+local Registry = EfHub.Initialize()
 task.wait(1)
-EfHub.RunTask(EfHub.Registry)
+EfHub.RunTask(Registry)
