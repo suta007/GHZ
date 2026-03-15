@@ -194,7 +194,7 @@ function Main.CheckCrops(fruit, config)
 	return true
 end
 
-local function ScanCrops()
+function Main.ScanCrops()
 	local Options = reg.Options
 	if not Options.tgHarvestEnable.Value then return end
 	table.clear(HarVestCropsList)
