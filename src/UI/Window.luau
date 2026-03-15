@@ -92,6 +92,11 @@ function Window.Finalize()
 		reg.SaveManager.Options.SaveManager_ConfigList:SetValue("Horizons")
 		reg.SaveManager:Load("Horizons")
 		reg.IsLoading = false
+		reg.Fluent:Notify({
+			Title = "EfHub",
+			Content = "Settings loaded automatically",
+			Duration = 3,
+		})
 	end)
 end
 

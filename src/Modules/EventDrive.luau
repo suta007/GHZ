@@ -12,8 +12,8 @@ function EventDrive.Initialize(Registry)
 	end)
 end
 
-RemoteReplicaSet = function(args)
-	if type(args[2]) ~= "table" then return end
+local function RemoteReplicaSet(args)
+	--[[ 	if type(args[2]) ~= "table" then return end
 	local fType = args[2][1]
 	local fData = args[3]
 	if fType == "SeedShop" and not isBuyingSeed then
@@ -27,16 +27,18 @@ RemoteReplicaSet = function(args)
 			args = fData.Items,
 		})
 	elseif fType == "Money" then
-	end
+	end ]]
 end
 
-RemoteNotification = function(args)
+local function RemoteNotification(args)
+	local fVar = reg.fVar
+	local actionQueue = reg.actionQueue
 	if args[1] and type(args[1]) == "string" then
 		if string.find(args[1], "inventory is full!") then
-			HarvestPause = true
-			table.clear(HarVestCropsList)
+			fVar.HarvestPause = true
+			table.clear(fVar.HarVestCropsList)
 			table.insert(actionQueue, {
-				FuncName = AutoSellCrops,
+				FuncName = reg.Main.AutoSellCrops,
 			})
 		end
 	end
@@ -51,12 +53,12 @@ function EventDrive.hookIncoming(remote)
 				RemoteReplicaSet(args)
 			elseif RemoteName == "Notification" then
 				RemoteNotification(args)
-			elseif RemoteName == "UpdateQuests" then
+				--[[	elseif RemoteName == "UpdateQuests" then
 				table.insert(actionQueue, {
 					FuncName = AutoClaimQuest,
 					args = args[1],
 				})
-			elseif RemoteName == "MannyMishapScoreUpdate" then
+				 elseif RemoteName == "MannyMishapScoreUpdate" then
 				if tonumber(args[1]) >= 300 then
 					MannyMishapEnable = false
 					ResetControlVariable()
@@ -64,7 +66,7 @@ function EventDrive.hookIncoming(remote)
 					SafeTeleport(MySpawnPoint)
 					FinishEvent = true
 					task.wait(1)
-				end
+				end ]]
 			end
 		end)
 	end

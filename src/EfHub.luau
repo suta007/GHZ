@@ -12,6 +12,7 @@ local function LoadModules()
 	Registry.Utils = GHZ_REMOTE("Modules/Utils")
 	Registry.Main = GHZ_REMOTE("Modules/Main")
 	Registry.Process = GHZ_REMOTE("Modules/Process")
+	Registry.EventDrive = GHZ_REMOTE("Modules/EventDrive")
 	-- 3. UI Modules
 	Registry.Window = GHZ_REMOTE("UI/Window")
 	Registry.MainTab = GHZ_REMOTE("UI/Tabs/MainTab")
@@ -28,9 +29,11 @@ function EfHub.Initialize()
 	Registry.Utils.Initialize(Registry)
 	Registry.Main.Initialize(Registry)
 	Registry.Process.Initialize(Registry)
+	Registry.EventDrive.Initialize(Registry)
 
 	Registry.MainTab.Initialize(Registry)
 
+	Registry.Window.Finalize()
 	return Registry
 end
 

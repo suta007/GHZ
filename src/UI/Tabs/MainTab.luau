@@ -246,10 +246,10 @@ function MainTab.Initialize(reg)
 		Title = "Sell",
 		Default = false,
 		Callback = function(Value)
-			if Value then
+			--[[ 			if Value then
 				local data = { FuncName = Main.AutoSellCrops, Args = {} }
 				table.insert(actionQueue, data)
-			end
+			end ]]
 			QuickSave()
 		end,
 	})
@@ -390,5 +390,6 @@ function MainTab.Initialize(reg)
 			QuickSave()
 		end,
 	})
+	SellSection:AddSpacer(10)
 end
 return MainTab
