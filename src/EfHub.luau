@@ -29,7 +29,7 @@ function EfHub.Initialize()
 	Registry.Main.Initialize(Registry)
 	Registry.Process.Initialize(Registry)
 
-	-- Initialize Tabs (สร้�	Registry.Window.Finalize()
+	Registry.MainTab.Initialize(Registry)
 
 	return Registry
 end
