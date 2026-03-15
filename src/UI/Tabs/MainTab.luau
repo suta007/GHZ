@@ -31,7 +31,10 @@ function MainTab.Initialize(reg)
 					end
 				end)
 			else
-				task.cancel(TaskPlantsSeeds)
+				if TaskPlantsSeeds then
+					task.cancel(TaskPlantsSeeds)
+					TaskPlantsSeeds = nil
+				end
 			end
 			QuickSave()
 		end,
@@ -81,7 +84,10 @@ function MainTab.Initialize(reg)
 					end
 				end)
 			else
-				task.cancel(TaskHarvestCrops)
+				if TaskHarvestCrops then
+					task.cancel(TaskHarvestCrops)
+					TaskHarvestCrops = nil
+				end
 			end
 			QuickSave()
 		end,
