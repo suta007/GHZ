@@ -1,20 +1,37 @@
 local ShopTab = {}
 local reg
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
+local GetShopData = RemoteEvents:WaitForChild("GetShopData")
 function ShopTab.Initialize(Registry)
 	reg = Registry
 	local Options = reg.Options
 	local Interface = reg.Interface
 	local Tabs = reg.Tabs
 	local QuickSave = reg.Window.QuickSave
+	local actionQueue = reg.fVar.actionQueue
 	local sData = reg.sData
 
 	Tabs.Shop = Interface:AddTab({ Title = "Shop", Icon = "shopping-cart" })
 	local BuySeedSection = Tabs.Shop:AddCollapsibleSection("Buy Seed", false)
+
+	local function tempBuySeed()
+		local SeedShop = GetShopData:InvokeServer("SeedShop")
+		if not SeedShop then return end
+		table.insert(actionQueue, {
+			FuncName = reg.Shop.AutoBuySeed,
+			args = SeedShop.Items,
+		})
+	end
+
 	BuySeedSection:AddToggle("tgBuySeedEnable", {
 		Title = "Auto Buy Seed",
 		Default = false,
 		Callback = function(Value)
+			if Value then
+				if tempBuySeed then tempBuySeed() end
+			end
 			QuickSave()
 		end,
 	})
@@ -28,7 +45,7 @@ function ShopTab.Initialize(Registry)
 		Title = "Select Seed",
 		Values = sData.SeedShopTable,
 		Multi = true,
-		Default = {},
+		Default = { "ALL" },
 		Searchable = true,
 		Callback = function(Value)
 			QuickSave()
@@ -53,7 +70,7 @@ function ShopTab.Initialize(Registry)
 		Title = "Select Gear",
 		Values = sData.GearShopTable,
 		Multi = true,
-		Default = {},
+		Default = { "ALL" },
 		Searchable = true,
 		Callback = function(Value)
 			QuickSave()
