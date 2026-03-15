@@ -6,7 +6,7 @@ function ShopTab.Initialize(Registry)
 	local Options = reg.Options
 	local Interface = reg.Interface
 	local Tabs = reg.Tabs
-	local QuickSave = reg.QuickSave
+	local QuickSave = reg.Window.QuickSave
 	local sData = reg.sData
 
 	Tabs.Shop = Interface:AddTab({ Title = "Shop", Icon = "shopping-cart" })
