@@ -226,7 +226,7 @@ function Main.HarvestCrops()
 	local ParseFruitUuid = reg.Utils.ParseFruitUuid
 	local TweenToTarget = reg.Utils.TweenToTarget
 	HarVestCropsList = reg.HarVestCropsList
-	if fVar.isPlanting or fVar.isBuying() then return end
+	if fVar.isPlanting or fVar.IsBuying() then return end
 	if fVar.HarvestPause or fVar.isProcessing or fVar.isHarvesting or not Options.tgHarvestEnable.Value then return end
 
 	if #HarVestCropsList > 0 then
