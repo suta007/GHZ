@@ -20,7 +20,7 @@ function MainTab.Initialize(reg)
 	actionQueue = reg.fVar.actionQueue
 	Tabs.Main = Interface:AddTab({ Title = "Main", Icon = "rbxassetid://10723345661" })
 	local PlantsSection = Tabs.Main:AddCollapsibleSection("Plants", false)
-	PlantsSection:AddToggle("tgPlantsEnable", {
+	Options.tgPlantsEnable = PlantsSection:AddToggle("tgPlantsEnable", {
 		Title = "Auto Plants",
 		Default = false,
 		Callback = function(Value)
@@ -41,7 +41,7 @@ function MainTab.Initialize(reg)
 			Options.ddPlantsSeeds:SetValue({})
 		end,
 	})
-	PlantsSection:AddDropdown("ddPlantsSeeds", {
+	Options.ddPlantsSeeds = PlantsSection:AddDropdown("ddPlantsSeeds", {
 		Title = "Select Seeds",
 		Values = sData.PlantDataTable,
 		Multi = true,
