@@ -246,28 +246,8 @@ function Main.HarvestCrops()
 		local targetCFrame = CFrame.new(fruit:GetPivot().Position + Vector3.new(3, 0, 0))
 
 		TweenToTarget(targetCFrame, 100)
-
 		task.wait(0.1)
-		local fruitName = fruit:GetAttribute("PlantType") or (fruit.Parent and fruit.Parent:GetAttribute("PlantType"))
-
-		local Uuid = fruit:GetAttribute("Uuid")
-		if Uuid then
-			print(string.format("Uuid: %s", Uuid))
-		else
-			print("No Uuid")
-		end
-
 		local gUuid, gindex = ParseFruitUuid(fruit:GetAttribute("Uuid"))
-		if gUuid then
-			print(string.format("gUuid: %s", gUuid))
-		else
-			print("No gUuid")
-		end
-		if gindex then
-			print(string.format("gindex: %s", gindex))
-		else
-			print("No gindex")
-		end
 		local args = {}
 		if gindex then
 			args = {

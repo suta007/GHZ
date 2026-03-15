@@ -173,36 +173,25 @@ function Utils.TweenToTarget(targetCFrame, speed)
 end
 
 function Utils.ParseFruitUuid(rawUuid)
-	local gUuid = 0
-	local gindex = 0
-	if type(rawUuid) == "string" then
-		local split = string.split(rawUuid, ":")
-		if #split == 2 then
-			gUuid = tonumber(split[1])
-			gindex = tonumber(split[2])
-		end
-	elseif type(rawUuid) == "number" then
-		gUuid = rawUuid
-	end
-	return gUuid, gindex
+	local baseUuid = string.split(rawUuid, ":")[1]
+	local numberSuffixStr = string.match(rawUuid, ":(%d+)$")
+	local finalNumber = nil
+	if numberSuffixStr then finalNumber = tonumber(numberSuffixStr) end
+	return baseUuid, finalNumber
 end
 
 function Utils.EquipItem(item)
 	local humanoid = Character:FindFirstChild("Humanoid")
-	if humanoid and item then
-		pcall(function()
-			humanoid:EquipTool(item)
-		end)
-	end
+	if humanoid and item then pcall(function()
+		humanoid:EquipTool(item)
+	end) end
 end
 
 function Utils.UnequipTools()
 	local humanoid = Character:FindFirstChild("Humanoid")
-	if humanoid then
-		pcall(function()
-			humanoid:UnequipTools()
-		end)
-	end
+	if humanoid then pcall(function()
+		humanoid:UnequipTools()
+	end) end
 end
 
 return Utils
