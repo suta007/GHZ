@@ -2,7 +2,8 @@
 local Window = {}
 local reg = nil
 
-local Fluent = loadstring(game:HttpGet("https://github.com/ActualMasterOogway/Fluent-Renewed/releases/latest/download/Fluent.luau"))()
+--local Fluent = loadstring(game:HttpGet("https://github.com/ActualMasterOogway/Fluent-Renewed/releases/latest/download/Fluent.luau"))()
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
 local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
 
@@ -16,9 +17,9 @@ function Window.Initialize(Registry)
 
 	Registry.Interface = Fluent:CreateWindow({
 		Title = "Garden Horizons",
-		SubTitle = "by EfHub",
+		SubTitle = "by EfHub - Fluent",
 		TabWidth = 100,
-		Size = UDim2.fromScale(0.8, 0.8), -- UDim2.fromOffset(600, 460),
+		Size = UDim2.fromOffset(600, 460),
 		Resize = true,
 		MinSize = Vector2.new(580, 460),
 		Acrylic = true,
