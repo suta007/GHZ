@@ -21,13 +21,15 @@ end
 
 function EfHub.Initialize()
 	local Registry = LoadModules()
-	-- Initialize Modules
+	-- Initialize UI (ต้องทำก่อน เพราะ Window สร้าง Registry.Options = Fluent.Options)
+	Registry.Window.Initialize(Registry)
+
+	-- Initialize Modules (ตอนนี้ Registry.Options มีค่าแล้ว)
 	Registry.Utils.Initialize(Registry)
 	Registry.Main.Initialize(Registry)
 	Registry.Process.Initialize(Registry)
 
-	-- Initialize UI
-	Registry.Window.Initialize(Registry)
+	-- Initialize Tabs (สร้าง toggles/dropdowns เข้า Options)
 	Registry.MainTab.Initialize(Registry)
 
 	Registry.Window.Finalize()

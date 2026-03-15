@@ -17,7 +17,7 @@ local PlantSeed = RemoteEvents:WaitForChild("PlantSeed")
 
 function Main.Initialize(Registry)
 	reg = Registry
-	Options = Registry.Options
+
 	fVar = Registry.fVar
 	GetSelectedItems = Registry.Utils.GetSelectedItems
 	GetRandomPlantPosition = Registry.Utils.GetRandomPlantPosition
@@ -26,6 +26,7 @@ function Main.Initialize(Registry)
 end
 
 function Main.AutoPlantsSeeds()
+	Options = reg.Options
 	if not Options.tgPlantsEnable.Value or fVar.isPlanting then return end
 
 	pcall(function()
