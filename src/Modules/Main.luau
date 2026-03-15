@@ -249,8 +249,22 @@ function Main.HarvestCrops()
 
 		task.wait(0.1)
 		local fruitName = fruit:GetAttribute("PlantType") or (fruit.Parent and fruit.Parent:GetAttribute("PlantType"))
+		if fruitName then
+			print(string.format("Name: %s", fruitName))
+		else
+			print("No Name")
+		end
 		local gUuid, gindex = ParseFruitUuid(fruit:GetAttribute("Uuid"))
-		print(string.format("Name: %s, gUuid: %s, gindex: %s", fruitName, gUuid, gindex))
+		if gUuid then
+			print(string.format("gUuid: %s", gUuid))
+		else
+			print("No gUuid")
+		end
+		if gindex then
+			print(string.format("gindex: %s", gindex))
+		else
+			print("No gindex")
+		end
 		local args = {}
 		if gindex then
 			args = {
