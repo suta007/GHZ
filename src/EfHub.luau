@@ -24,6 +24,7 @@ function EfHub.Initialize()
 	-- Initialize Modules
 	Registry.Utils.Initialize(Registry)
 	Registry.Main.Initialize(Registry)
+	Registry.Process.Initialize(Registry)
 
 	-- Initialize UI
 	Registry.Window.Initialize(Registry)
