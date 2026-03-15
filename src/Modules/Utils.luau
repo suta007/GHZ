@@ -172,4 +172,19 @@ function Utils.TweenToTarget(targetCFrame, speed)
 	return true
 end
 
+function Utils.ParseFruitUuid(rawUuid)
+	local gUuid = 0
+	local gindex = 0
+	if type(rawUuid) == "string" then
+		local split = string.split(rawUuid, ":")
+		if #split == 2 then
+			gUuid = tonumber(split[1])
+			gindex = tonumber(split[2])
+		end
+	elseif type(rawUuid) == "number" then
+		gUuid = rawUuid
+	end
+	return gUuid, gindex
+end
+
 return Utils
