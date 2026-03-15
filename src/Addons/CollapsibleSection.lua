@@ -156,6 +156,14 @@ return function(FluentLibrary)
 			end)
 		end
 
+		-- [[ เชื่อมต่อกับ Addon: EfDropdown ]] --
+		function Section:AddEfDropdown(...)
+			local args = { ... }
+			return Section:Wrap(function()
+				return ParentTab:AddEfDropdown(unpack(args))
+			end)
+		end
+
 		-- [[ 🌟 ฟังก์ชันใหม่: Searchable Dropdown ]] --
 		function Section:AddSearchableDropdown(ID, Config)
 			local originalValues = Config.Values or {}
