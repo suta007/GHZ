@@ -41,7 +41,7 @@ function MainTab.Initialize(reg)
 			Options.ddPlantsSeeds:SetValue({})
 		end,
 	})
-	Options.ddPlantsSeeds = PlantsSection:AddSearchableDropdown("ddPlantsSeeds", {
+	Options.ddPlantsSeeds = PlantsSection:AddDropdown("ddPlantsSeeds", {
 		Title = "Select Seeds",
 		Values = sData.PlantDataTable,
 		Multi = true,
