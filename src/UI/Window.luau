@@ -23,7 +23,7 @@ function Window.Initialize(Registry)
 		Size = UDim2.fromOffset(580, 360),
 		Resize = false,
 		MinSize = Vector2.new(580, 400),
-		Acrylic = true,
+		Acrylic = false,
 		Theme = "VS Dark",
 		MinimizeKey = Enum.KeyCode.RightControl,
 	})

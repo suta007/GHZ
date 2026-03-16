@@ -75,6 +75,21 @@ function Utils.GetRandomPlantPosition()
 	return CFrame.new(finalX, finalY, finalZ)
 end
 
+function Utils.GetCenterPlots()
+	if #MyPlantableParts < 2 then
+		if not InitializePlotData() then return nil, nil end
+	end
+
+	local part1 = MyPlantableParts[1]
+	local part2 = MyPlantableParts[2]
+
+	local center1 = CFrame.new(part1.Position.X, part1.Position.Y, part1.Position.Z)
+
+	local center2 = CFrame.new(part2.Position.X, part2.Position.Y, part2.Position.Z)
+
+	return { center1, center2 }
+end
+
 function Utils.SafeTeleport(targetCFrame)
 	local humanoid = Character:FindFirstChild("Humanoid")
 	local rootPart = Character:FindFirstChild("HumanoidRootPart")
