@@ -26,7 +26,7 @@ function Strange.Initialize(registry, tab)
 				end)
 			else
 				if StrangeTask then
-					StrangeTask:Cancel()
+					task.cancel(StrangeTask)
 					StrangeTask = nil
 				end
 			end
@@ -35,13 +35,17 @@ function Strange.Initialize(registry, tab)
 	})
 end
 
+local isLaunched = false
+
 function Strange.doEvent()
 	local fVar = reg.fVar
 	local Pos = fVar.Pos.Strange
 	local Options = reg.Options
-	local isLaunched = false
 	local Utils = reg.Utils
-	local TargetMutants = "Strange"
+
+	-- 🌟 ปรับเป็น Table รองรับอนาคตตามที่พี่เอฟต้องการค่ะ
+	local TargetMutants = { "Strange" }
+
 	local EventCropList = {}
 	local TweenToTarget = reg.Utils.TweenToTarget
 	local ParseFruitUuid = reg.Utils.ParseFruitUuid
@@ -49,8 +53,9 @@ function Strange.doEvent()
 	local HarvestFruit = RemoteEvents:WaitForChild("HarvestFruit")
 
 	if not Options.tgStrangeEnable.Value then return end
-	table.clear(EventCropList)
+
 	local currentMin = os.date("*t").min
+
 	if currentMin >= 15 and currentMin <= 20 then
 		if not isLaunched then
 			isLaunched = true
@@ -60,6 +65,7 @@ function Strange.doEvent()
 			for _, pos in centerPos do
 				Utils.SafeTeleport(pos)
 				task.wait(0.2)
+
 				local ClientPlants = workspace:FindFirstChild("ClientPlants")
 				if ClientPlants then
 					for _, plant in ClientPlants:GetChildren() do
@@ -68,14 +74,27 @@ function Strange.doEvent()
 							local CropsTable = plant:GetAttribute("HarvestablePlant") and { plant } or plant:GetChildren()
 							for _, crop in CropsTable do
 								local cropMutants = crop:GetAttribute("Mutation")
-								local cropMutantsTable = string.split(cropMutants, ",")
-								if table.find(cropMutantsTable, TargetMutants) and not table.find(EventCropList, crop) then table.insert(EventCropList, crop) end
+
+								if cropMutants then
+									-- 🌟 วนลูปเช็คว่ามีคำที่ตรงกับใน Table TargetMutants ไหม
+									local isTargetMutant = false
+									for _, mutantName in ipairs(TargetMutants) do
+										if string.find(cropMutants, mutantName) then
+											isTargetMutant = true
+											break -- ถ้าเจอแล้วก็หยุดค้นหาในชื่ออื่นต่อได้เลย ประหยัดเวลาค่ะ
+										end
+									end
+
+									-- ถ้าตรงเงื่อนไขและยังไม่เคยเก็บลง List ก็จัดการเพิ่มเข้าไป
+									if isTargetMutant and not table.find(EventCropList, crop) then table.insert(EventCropList, crop) end
+								end
 							end
 						end
 					end
 				end
 			end
 
+			-- เริ่มเก็บเกี่ยวผลไม้ที่เจอ
 			if #EventCropList > 0 then
 				for _, fruit in EventCropList do
 					local prompt = fruit:FindFirstChild("HarvestPrompt", true)
@@ -84,33 +103,23 @@ function Strange.doEvent()
 
 						TweenToTarget(targetCFrame, 100)
 						task.wait(0.1)
+
 						local gUuid, gindex = ParseFruitUuid(fruit:GetAttribute("Uuid"))
 						local args = {}
 						if gindex then
-							args = {
-								{
-									{
-										GrowthAnchorIndex = gindex,
-										Uuid = gUuid,
-									},
-								},
-							}
+							args = { { { GrowthAnchorIndex = gindex, Uuid = gUuid } } }
 						else
-							args = {
-								{
-									{
-										Uuid = gUuid,
-									},
-								},
-							}
+							args = { { { Uuid = gUuid } } }
 						end
-						HarvestFruit:FireServer(unpack(args))
+
+						HarvestFruit:FireServer(table.unpack(args))
 						task.wait(0.1)
 					end
 				end
 			end
+
+			-- ส่งเควสและกลับจุดเซฟ
 			if #EventCropList > 0 then
-				table.clear(EventCropList)
 				SafeTeleport(Pos)
 				task.wait(0.2)
 				game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("IGMATurnIn"):InvokeServer("TurnInAll")
@@ -118,6 +127,7 @@ function Strange.doEvent()
 				SafeTeleport(reg.MySpawnPoint)
 				task.wait(0.2)
 			end
+
 			fVar.ResetControlVar()
 		end
 	elseif isLaunched then
