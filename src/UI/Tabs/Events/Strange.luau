@@ -58,7 +58,7 @@ function Strange.doEvent()
 
 	local currentMin = os.date("*t").min
 
-	if currentMin >= 15 and currentMin < 20 then
+	if (currentMin >= 11 and currentMin < 15) or (currentMin >= 41 and currentMin < 45) then
 		if not isLaunched then
 			isLaunched = true
 			reg.MiscTab.NewPlayerAutoSell()
@@ -68,7 +68,7 @@ function Strange.doEvent()
 			local centerPos = Utils.GetCenterPlots()
 			for _, cpos in centerPos do
 				Utils.SafeTeleport(cpos)
-				task.wait(0.2)
+				task.wait(5)
 
 				local ClientPlants = workspace:FindFirstChild("ClientPlants")
 				if ClientPlants then

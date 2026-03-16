@@ -17,9 +17,6 @@ local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
 local PlantSeed = RemoteEvents:WaitForChild("PlantSeed") :: RemoteFunction
 local HarvestFruit = RemoteEvents:WaitForChild("HarvestFruit") :: RemoteEvent
 local SellItems = RemoteEvents:WaitForChild("SellItems") :: RemoteFunction
-local GetShopData = RemoteEvents:WaitForChild("GetShopData") :: RemoteFunction
-local PurchaseShopItem = RemoteEvents:WaitForChild("PurchaseShopItem") :: RemoteFunction
-local ClaimQuest = RemoteEvents:WaitForChild("ClaimQuest") :: RemoteEvent
 
 local CollectionService = game:GetService("CollectionService")
 
@@ -113,30 +110,6 @@ local function GetHarvestConfig()
 			ripeness = GetSelectedItems(Options.ddBlackRipeness.Value),
 			variant = GetSelectedItems(Options.ddBlackVariant.Value),
 			mutants = GetSelectedItems(Options.ddHarvestBlackMutants.Value),
-		},
-	}
-end
-
-local function GetRemoveConfig()
-	local Options = reg.Options
-	return {
-		mode = "Remove",
-		wl = {
-			crops = GetSelectedItems(Options.ddRemoveCrops.Value),
-			mutants = GetSelectedItems(Options.ddRemoveMutants.Value),
-			ripeness = GetSelectedItems(Options.ddRemoveRipeness.Value),
-			ripenessMulti = tonumber(Options.ipRemoveRipenessMulti.Value) or 0,
-			variant = GetSelectedItems(Options.ddRemoveVariant.Value),
-			weightCondition = Options.ddRemoveWeight.Value,
-			weightValue = tonumber(Options.ipRemoveWeight.Value) or 0,
-			scaleCondition = Options.ddRemoveScale.Value,
-			scaleValue = tonumber(Options.ipRemoveScale.Value) or 0,
-		},
-		bl = {
-			crops = GetSelectedItems(Options.ddRemoveBlackCrops.Value),
-			ripeness = GetSelectedItems(Options.ddRemoveBlackRipeness.Value),
-			variant = GetSelectedItems(Options.ddRemoveBlackVariant.Value),
-			mutants = GetSelectedItems(Options.ddRemoveBlackMutants.Value),
 		},
 	}
 end

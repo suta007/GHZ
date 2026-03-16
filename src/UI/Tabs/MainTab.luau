@@ -8,7 +8,7 @@ local sData
 local fVar
 local Main
 local actionQueue
-local TaskPlantsSeeds, TaskHarvestCrops, TaskSellCrops
+local TaskPlantsSeeds, TaskHarvestCrops
 function MainTab.Initialize(reg)
 	Interface = reg.Interface
 	Tabs = reg.Tabs

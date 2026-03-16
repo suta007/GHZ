@@ -24,6 +24,9 @@ fVar.isSelling = false
 fVar.HarvestPause = false
 fVar.Harvesting = false
 fVar.isQuestClaiming = false
+fVar.isRemovePlants = false
+fVar.isRemoveCrops = false
+
 
 function fVar.ResetControlVar()
 	fVar.isPlanting = false
@@ -34,6 +37,9 @@ function fVar.ResetControlVar()
 	fVar.HarvestPause = false
 	fVar.Harvesting = false
 	fVar.isQuestClaiming = false
+	fVar.isRemovePlants = false
+	fVar.isRemoveCrops = false
+
 
 	table.clear(fVar.actionQueue)
 end
@@ -46,7 +52,10 @@ function fVar.LockDownControlVar()
 	fVar.isSelling = true
 	fVar.HarvestPause = true
 	fVar.Harvesting = true
+	fVar.isRemovePlants = true
+	fVar.isRemoveCrops = true
 end
+
 
 function fVar.IsBuying()
 	return fVar.isBuyingSeed or fVar.isBuyingGear or fVar.isSelling

@@ -1,6 +1,7 @@
 local EventDrive = {}
 local reg
-local ClaimQuest = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ClaimQuest") :: RemoteEvent
+-- Remote variables moved to specific modules
+
 
 function EventDrive.Initialize(Registry)
 	reg = Registry
@@ -56,22 +57,8 @@ local function RemoteNotification(args)
 	end
 end
 
-local function AutoClaimQuest(QuestData)
-	local fVar = reg.fVar
-	if fVar.isQuestClaiming or not QuestData then return end
+-- Removed local AutoClaimQuest and replaced with reg.Auto.AutoClaimQuest in hookIncoming
 
-	fVar.isQuestClaiming = true
-	local Daily = QuestData.Daily.Active
-	for index, qDaily in pairs(Daily) do
-		if qDaily.CompletedAt and not qDaily.Claimed then ClaimQuest:FireServer("Daily", index) end
-	end
-
-	local Weekly = QuestData.Weekly.Active
-	for index, qWeekly in pairs(Weekly) do
-		if qWeekly.CompletedAt and not qWeekly.Claimed then ClaimQuest:FireServer("Weekly", index) end
-	end
-	fVar.isQuestClaiming = false
-end
 
 function EventDrive.hookIncoming(remote)
 	local actionQueue = reg.fVar.actionQueue
@@ -85,9 +72,10 @@ function EventDrive.hookIncoming(remote)
 				RemoteNotification(args)
 			elseif RemoteName == "UpdateQuests" then
 				table.insert(actionQueue, {
-					FuncName = AutoClaimQuest,
+					FuncName = reg.Auto.AutoClaimQuest,
 					args = args[1],
 				})
+
 				--[[ elseif RemoteName == "MannyMishapScoreUpdate" then
 				if tonumber(args[1]) >= 300 then
 					MannyMishapEnable = false

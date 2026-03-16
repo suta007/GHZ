@@ -16,13 +16,16 @@ local function LoadModules()
 	Registry.Main = GHZ_REMOTE("Modules/Main")
 	Registry.Shop = GHZ_REMOTE("Modules/Shop")
 	Registry.Process = GHZ_REMOTE("Modules/Process")
+	Registry.Auto = GHZ_REMOTE("Modules/Auto")
 	Registry.EventDrive = GHZ_REMOTE("Modules/EventDrive")
+
 	-- 3. UI Modules
 	Registry.Window = GHZ_REMOTE("UI/Window")
 	Registry.MainTab = GHZ_REMOTE("UI/Tabs/MainTab")
 	Registry.ShopTab = GHZ_REMOTE("UI/Tabs/ShopTab")
 	Registry.MiscTab = GHZ_REMOTE("UI/Tabs/MiscTab")
 	Registry.EventsTab = GHZ_REMOTE("UI/Tabs/EventsTab")
+	Registry.AutoTab = GHZ_REMOTE("UI/Tabs/AutoTab")
 
 	return Registry
 end
@@ -38,12 +41,14 @@ function EfHub.Initialize()
 	Registry.Main.Initialize(Registry)
 	Registry.Shop.Initialize(Registry)
 	Registry.Process.Initialize(Registry)
+	Registry.Auto.Initialize(Registry)
 	Registry.EventDrive.Initialize(Registry)
 
 	Registry.MainTab.Initialize(Registry)
 	Registry.ShopTab.Initialize(Registry)
 	Registry.MiscTab.Initialize(Registry)
 	Registry.EventsTab.Initialize(Registry)
+	Registry.AutoTab.Initialize(Registry)
 
 	Registry.Window.Finalize()
 	return Registry

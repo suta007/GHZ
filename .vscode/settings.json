@@ -11,5 +11,8 @@
     "luau-lsp.diagnostics.globals": [
         "GHZ_REMOTE",
         "getgenv"
-    ]
+    ],
+    "luau-lsp.sourcemap.autogenerate": false,
+    "luau-lsp.sourcemap.enabled": false,
+    "luau-lsp.sourcemap.includeNonScripts": false
 }
