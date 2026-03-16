@@ -76,4 +76,59 @@ function Misc.AntiLag()
 	end)
 end
 
+local function SetVisibility(obj, isHidden)
+	if obj:IsA("BasePart") or obj:IsA("Decal") or obj:IsA("Texture") then
+		if isHidden then
+			if not obj:GetAttribute("OriginalTrans") then obj:SetAttribute("OriginalTrans", obj.Transparency) end
+			obj.Transparency = 1
+
+			if obj:IsA("BasePart") then
+				if obj:GetAttribute("OriginalCollide") == nil then obj:SetAttribute("OriginalCollide", obj.CanCollide) end
+				obj.CanCollide = false
+			end
+		else
+			local origTrans = obj:GetAttribute("OriginalTrans")
+			if origTrans then obj.Transparency = origTrans end
+
+			if obj:IsA("BasePart") then
+				local origCollide = obj:GetAttribute("OriginalCollide")
+				if origCollide ~= nil then obj.CanCollide = origCollide end
+			end
+		end
+	elseif obj:IsA("ParticleEmitter") or obj:IsA("Sparkles") or obj:IsA("Fire") or obj:IsA("Trail") then
+		if isHidden then
+			if obj:GetAttribute("OriginalEnabled") == nil then obj:SetAttribute("OriginalEnabled", obj.Enabled) end
+			obj.Enabled = false
+		else
+			local origEnabled = obj:GetAttribute("OriginalEnabled")
+			if origEnabled ~= nil then obj.Enabled = origEnabled end
+		end
+	end
+end
+
+local function UpdateVisibilityFromAnchor(anchorName, state, isPlantCheck)
+	local ClientPlants = workspace:FindFirstChild("ClientPlants")
+	if not ClientPlants then return end
+
+	for _, obj in ipairs(ClientPlants:GetDescendants()) do
+		if obj.Name == anchorName then
+			local parent = obj.Parent
+			if parent then
+				if isPlantCheck and parent:FindFirstChild("FruitAnchor") then continue end
+				for _, sibling in ipairs(parent:GetChildren()) do
+					SetVisibility(sibling, state)
+				end
+			end
+		end
+	end
+end
+
+function Misc.HidePlant(state)
+	UpdateVisibilityFromAnchor("PlantAnchor", state, true)
+end
+
+function Misc.HideFruit(state)
+	UpdateVisibilityFromAnchor("FruitAnchor", state, false)
+end
+
 return Misc

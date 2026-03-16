@@ -52,15 +52,14 @@ function Main.AutoPlantsSeeds()
 			if not Options.tgPlantsEnable.Value or fVar.IsBuying() then break end
 			if item:GetAttribute("Type") == "Seeds" and (table.find(SeedList, "ALL") or table.find(SeedList, item:GetAttribute("PlantType"))) then
 				fVar.isPlanting = true
-				pcall(function()
-					Humanoid:EquipTool(item)
-				end)
+
 				local ItemCount = item:GetAttribute("ItemCount") or 0
 				for i = 1, ItemCount do
 					if not Options.tgPlantsEnable.Value or fVar.IsBuying() then
 						fVar.isPlanting = false
 						break
 					end
+
 					if ddPlantsPos == "Player" then
 						PlantPos = Character:GetPivot()
 					else
@@ -72,12 +71,18 @@ function Main.AutoPlantsSeeds()
 						end
 						TweenToTarget(CFrame.new(PlantPos.X + 3, PlantPos.Y, PlantPos.Z), 100)
 					end
+					pcall(function()
+						Humanoid:EquipTool(item)
+					end)
 					local args = {
 						item:GetAttribute("PlantType"),
 						PlantPos.Position,
 					}
 					PlantSeed:InvokeServer(unpack(args))
 					task.wait(0.3)
+					pcall(function()
+						Humanoid:UnequipTools()
+					end)
 				end
 				pcall(function()
 					Humanoid:UnequipTools()

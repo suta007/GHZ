@@ -1,8 +1,5 @@
 local MiscTab = {}
 local reg
-local HideFruitsTask
-local HidePlantsTask
-local AntiLagTask
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
@@ -15,6 +12,7 @@ function MiscTab.Initialize(Registry)
 	local Tabs = Registry.Tabs
 	local QuickSave = Registry.Window.QuickSave
 	local actionQueue = Registry.fVar.actionQueue
+	local Misc = Registry.Misc
 
 	local AutoSellTask
 
@@ -56,50 +54,34 @@ function MiscTab.Initialize(Registry)
 		Title = "AntiLag",
 		Default = false,
 		Callback = function(Value)
-			if Value then reg.Misc.AntiLag() end
+			if Value then Misc.AntiLag() end
 			--QuickSave()
 		end,
 	})
 
 	--hide fruits toggle
-	local HideFruitsSection = Tabs.MiscTab:AddCollapsibleSection("Hide Fruits", false)
-	HideFruitsSection:AddToggle("tgHideFruits", {
+	local HideObjectSection = Tabs.MiscTab:AddCollapsibleSection("Hide Fruits", false)
+	HideObjectSection:AddToggle("tgHideFruits", {
 		Title = "Hide Fruits",
 		Default = false,
 		Callback = function(Value)
 			if Value then
-				HideFruitsTask = task.spawn(function()
-					while true do
-						task.wait(1)
-					end
-				end)
+				Misc.HideFruit(true)
 			else
-				if HideFruitsTask then
-					task.cancel(HideFruitsTask)
-					HideFruitsTask = nil
-				end
+				Misc.HideFruit(false)
 			end
 			QuickSave()
 		end,
 	})
 
-	--hide plants toggle
-	local HidePlantsSection = Tabs.MiscTab:AddCollapsibleSection("Hide Plants", false)
-	HidePlantsSection:AddToggle("tgHidePlants", {
+	HideObjectSection:AddToggle("tgHidePlants", {
 		Title = "Hide Plants",
 		Default = false,
 		Callback = function(Value)
 			if Value then
-				HidePlantsTask = task.spawn(function()
-					while true do
-						task.wait(1)
-					end
-				end)
+				Misc.HidePlant(true)
 			else
-				if HidePlantsTask then
-					task.cancel(HidePlantsTask)
-					HidePlantsTask = nil
-				end
+				Misc.HidePlant(false)
 			end
 			QuickSave()
 		end,
