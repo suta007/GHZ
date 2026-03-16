@@ -27,3 +27,11 @@ local EfHub = GetRemote("EfHub")
 local Registry = EfHub.Initialize()
 task.wait(1)
 EfHub.RunTask(Registry)
+
+-- Anti AFK
+local LocalPlayer = game:GetService("Players").LocalPlayer
+local VirtualUser = game:GetService("VirtualUser")
+LocalPlayer.Idled:Connect(function()
+	VirtualUser:CaptureController()
+	VirtualUser:ClickButton2(Vector2.new())
+end)
