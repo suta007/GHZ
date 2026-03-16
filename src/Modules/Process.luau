@@ -16,8 +16,8 @@ function Process.processQueue()
 	while #fVar.actionQueue > 0 do
 		local taskData = table.remove(fVar.actionQueue, 1)
 		--pcall(function()
-			if taskData.Args ~= nil then
-				taskData.FuncName(taskData.Args)
+			if taskData.args ~= nil then
+				taskData.FuncName(taskData.args)
 			else
 				taskData.FuncName()
 			end
