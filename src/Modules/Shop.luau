@@ -19,7 +19,7 @@ function Shop.AutoBuyItem(ShopType, Items, DropdownValue)
 	local MySpawnPoint = reg.MySpawnPoint
 
 	if not Items then return end
-
+print("found items")
 	if ShopType == "SeedShop" then
 		fVar.isBuyingSeed = true
 	else
@@ -27,11 +27,14 @@ function Shop.AutoBuyItem(ShopType, Items, DropdownValue)
 	end
 
 	local BuyList = GetSelectedItems(DropdownValue)
+	print("get buy list")
 	SafeTeleport(Pos[ShopType])
+	print("teleport")
 	task.wait(0.5)
 
 	for Name, itemData in pairs(Items) do
 		if table.find(BuyList, "ALL") or table.find(BuyList, Name) then
+			print("buy "..Name)
 			for i = 1, tonumber(itemData.Amount) or 0 do
 				PurchaseShopItem:InvokeServer(ShopType, Name)
 				task.wait(0.2)
