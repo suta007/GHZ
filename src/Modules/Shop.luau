@@ -17,7 +17,7 @@ function Shop.AutoBuyItem(ShopType, Items, DropdownValue)
 
 	local Pos = fVar.Pos
 	local MySpawnPoint = reg.MySpawnPoint
-
+print("check item")
 	if not Items then return end
 print("found items")
 	if ShopType == "SeedShop" then
