@@ -3,13 +3,15 @@ local reg
 local EventsTab
 local StrangeTask
 
+local IGMATurnIn = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("IGMATurnIn") :: RemoteFunction
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
 
 function Strange.Initialize(registry, tab)
 	reg = registry
 	EventsTab = tab
-	local Options = reg.Options
+	local Options = reg.Options --ใช้ใน UI
 	local QuickSave = reg.Window.QuickSave
 
 	local StrangeSection = EventsTab:AddCollapsibleSection("Strange", false)
@@ -74,8 +76,7 @@ function Strange.doEvent()
 							local CropsTable = plant:GetAttribute("HarvestablePlant") and { plant } or plant:GetChildren()
 							for _, crop in CropsTable do
 								local cropMutants = crop:GetAttribute("Mutation")
-
-								if cropMutants then
+								if cropMutants and crop:GetAttribute("Favorited") ~= true then
 									-- 🌟 วนลูปเช็คว่ามีคำที่ตรงกับใน Table TargetMutants ไหม
 									local isTargetMutant = false
 									for _, mutantName in ipairs(TargetMutants) do
@@ -122,7 +123,7 @@ function Strange.doEvent()
 			if #EventCropList > 0 then
 				SafeTeleport(Pos)
 				task.wait(0.2)
-				game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("IGMATurnIn"):InvokeServer("TurnInAll")
+				IGMATurnIn:InvokeServer("TurnInAll")
 				task.wait(1)
 				SafeTeleport(reg.MySpawnPoint)
 				task.wait(0.2)

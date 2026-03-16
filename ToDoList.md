@@ -1,2 +1,2 @@
 #HarvestCrops
-- Check No Favorise ด้วย GetAttribute("Favorited)
+- [x] Check No Favorise ด้วย GetAttribute("Favorited)

@@ -3,7 +3,7 @@ local reg
 local fVar
 
 local RemoteEvents = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents")
-local PurchaseShopItem = RemoteEvents:WaitForChild("PurchaseShopItem")
+local PurchaseShopItem = RemoteEvents:WaitForChild("PurchaseShopItem") :: RemoteFunction
 
 function Shop.Initialize(Registry)
 	reg = Registry

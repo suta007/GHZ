@@ -1,4 +1,15 @@
 {
     "stylua.targetReleaseVersion": "latest",
-    "luau-lsp.plugin.enabled": true
+    "luau-lsp.plugin.enabled": true,
+    "luau-lsp.platform.type": "roblox",
+    "luau-lsp.types": {
+        "definitionFiles": [
+            "definitions/unc.d.luau"
+        ]
+    },
+    "luau-lsp.completion.imports.enabled": true,
+    "luau-lsp.diagnostics.globals": [
+        "GHZ_REMOTE",
+        "getgenv"
+    ]
 }

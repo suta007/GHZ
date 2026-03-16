@@ -14,12 +14,12 @@ local Humanoid = Character:WaitForChild("Humanoid")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
-local PlantSeed = RemoteEvents:WaitForChild("PlantSeed")
-local HarvestFruit = RemoteEvents:WaitForChild("HarvestFruit")
-local SellItems = RemoteEvents:WaitForChild("SellItems")
-local GetShopData = RemoteEvents:WaitForChild("GetShopData")
-local PurchaseShopItem = RemoteEvents:WaitForChild("PurchaseShopItem")
-local ClaimQuest = RemoteEvents:WaitForChild("ClaimQuest")
+local PlantSeed = RemoteEvents:WaitForChild("PlantSeed") :: RemoteFunction
+local HarvestFruit = RemoteEvents:WaitForChild("HarvestFruit") :: RemoteEvent
+local SellItems = RemoteEvents:WaitForChild("SellItems") :: RemoteFunction
+local GetShopData = RemoteEvents:WaitForChild("GetShopData") :: RemoteFunction
+local PurchaseShopItem = RemoteEvents:WaitForChild("PurchaseShopItem") :: RemoteFunction
+local ClaimQuest = RemoteEvents:WaitForChild("ClaimQuest") :: RemoteEvent
 
 local CollectionService = game:GetService("CollectionService")
 
@@ -302,7 +302,6 @@ function Main.CheckSellItem(item, config)
 	local itemValue = tonumber(item:GetAttribute("FruitValue")) or 0
 
 	-- 1. Crops (Names)
-	if not table.find(config.wl.crops, "ALL") and not table.find(config.wl.crops, itemName) then return false end
 	if not table.find(config.bl.crops, "NONE") and table.find(config.bl.crops, itemName) then return false end
 
 	-- 2. Ripeness

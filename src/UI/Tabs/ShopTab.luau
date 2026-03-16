@@ -3,7 +3,7 @@ local reg
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
-local GetShopData = RemoteEvents:WaitForChild("GetShopData")
+local GetShopData = RemoteEvents:WaitForChild("GetShopData") :: RemoteFunction
 function ShopTab.Initialize(Registry)
 	reg = Registry
 	local Options = reg.Options

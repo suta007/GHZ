@@ -1,6 +1,12 @@
 {
+    "workspace.library": [
+        "d:/LuaCode/ghz/unc.d.luau"
+    ],
     "diagnostics.globals": [
         "GHZ_REMOTE",
-        "getgenv"
-    ]
+        "getgenv",
+        "game",
+        "task"
+    ],
+    "languageServer.luau.enabled": true
 }

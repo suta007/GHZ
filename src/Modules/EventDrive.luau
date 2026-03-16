@@ -1,5 +1,6 @@
 local EventDrive = {}
 local reg
+local ClaimQuest = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ClaimQuest") :: RemoteEvent
 
 function EventDrive.Initialize(Registry)
 	reg = Registry
@@ -62,12 +63,12 @@ local function AutoClaimQuest(QuestData)
 	fVar.isQuestClaiming = true
 	local Daily = QuestData.Daily.Active
 	for index, qDaily in pairs(Daily) do
-		if qDaily.CompletedAt and not qDaily.Claimed then game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ClaimQuest"):FireServer("Daily", index) end
+		if qDaily.CompletedAt and not qDaily.Claimed then ClaimQuest:FireServer("Daily", index) end
 	end
 
 	local Weekly = QuestData.Weekly.Active
 	for index, qWeekly in pairs(Weekly) do
-		if qWeekly.CompletedAt and not qWeekly.Claimed then game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("ClaimQuest"):FireServer("Weekly", index) end
+		if qWeekly.CompletedAt and not qWeekly.Claimed then ClaimQuest:FireServer("Weekly", index) end
 	end
 	fVar.isQuestClaiming = false
 end

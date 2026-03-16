@@ -3,7 +3,7 @@ local reg
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
-local SellItems = RemoteEvents:WaitForChild("SellItems")
+local SellItems = RemoteEvents:WaitForChild("SellItems") :: RemoteFunction
 
 function MiscTab.Initialize(Registry)
 	reg = Registry

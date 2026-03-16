@@ -1,4 +1,6 @@
----@diagnostic disable-next-line: undefined-global
+--!native
+--!optimize 2
+
 local GHZ_REMOTE = GHZ_REMOTE or getgenv().GHZ_REMOTE
 local EfHub = {}
 
