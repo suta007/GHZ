@@ -17,22 +17,19 @@ end
 
 local function RemoteReplicaSet(args)
 	local fVar = reg.fVar
-
 	local actionQueue = fVar.actionQueue
-	local AutoBuySeed = reg.Shop.AutoBuySeed
-	local AutoBuyGear = reg.Shop.AutoBuyGear
 
 	if type(args[2]) ~= "table" then return end
 	local fType = args[2][1]
 	local fData = args[3]
 	if fType == "SeedShop" and not fVar.isBuyingSeed then
 		table.insert(actionQueue, {
-			FuncName = AutoBuySeed,
+			FuncName = reg.Shop.AutoBuySeed,
 			args = fData.Items,
 		})
 	elseif fType == "GearShop" and not fVar.isBuyingGear then
 		table.insert(actionQueue, {
-			FuncName = AutoBuyGear,
+			FuncName = reg.Shop.AutoBuyGear,
 			args = fData.Items,
 		})
 	elseif fType == "Money" then
