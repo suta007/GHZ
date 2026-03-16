@@ -55,7 +55,7 @@ function MiscTab.Initialize(Registry)
 		Default = false,
 		Callback = function(Value)
 			if Value then Misc.AntiLag() end
-			--QuickSave()
+			QuickSave()
 		end,
 	})
 

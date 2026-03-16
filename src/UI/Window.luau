@@ -20,10 +20,10 @@ function Window.Initialize(Registry)
 		Title = "Garden Horizons",
 		SubTitle = "by EfHub - Hide Fruits",
 		TabWidth = 100,
-		Size = UDim2.fromOffset(580, 360),
+		Size = UDim2.fromOffset(600, 360),
 		Resize = false,
 		MinSize = Vector2.new(580, 400),
-		Acrylic = false,
+		Acrylic = true,
 		Theme = "VS Dark",
 		MinimizeKey = Enum.KeyCode.RightControl,
 	})
@@ -46,7 +46,7 @@ function Window.Initialize(Registry)
 	local ToggleButton = Instance.new("TextButton")
 	local UICorner = Instance.new("UICorner")
 
-	ToggleGui.Name = "EfHub_Toggle"
+	ToggleGui.Name = "Ef_Toggle"
 	ToggleGui.Parent = game:GetService("CoreGui")
 	ToggleGui.ResetOnSpawn = false
 
@@ -55,7 +55,7 @@ function Window.Initialize(Registry)
 	ToggleButton.BackgroundColor3 = Color3.fromRGB(20, 20, 100)
 	ToggleButton.Position = UDim2.new(0, 10, 0.5, 0)
 	ToggleButton.Size = UDim2.new(0, 50, 0, 50)
-	ToggleButton.Text = "EfHub"
+	ToggleButton.Text = "EF"
 	ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 	ToggleButton.Draggable = true -- สำหรับ Delta Executor ตัวนี้ยังใช้ได้ดีค่ะ
 	ToggleButton.Active = true
