@@ -18,13 +18,13 @@ function Window.Initialize(Registry)
 
 	Registry.Interface = Fluent:CreateWindow({
 		Title = "Garden Horizons",
-		SubTitle = "by EfHub - BuyGear",
+		SubTitle = "by EfHub - Events",
 		TabWidth = 100,
-		Size = UDim2.fromOffset(580, 300),
+		Size = UDim2.fromOffset(580, 360),
 		Resize = false,
 		MinSize = Vector2.new(580, 400),
 		Acrylic = true,
-		Theme = "Darker",
+		Theme = "VS Dark",
 		MinimizeKey = Enum.KeyCode.RightControl,
 	})
 
