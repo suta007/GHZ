@@ -20,6 +20,8 @@ function EventsTab.Initialize(registry)
 
 	local Events = LoadEvents()
 	Events.Strange.Initialize(reg, Tabs.Events)
+
+	--return Events
 end
 
 return EventsTab
