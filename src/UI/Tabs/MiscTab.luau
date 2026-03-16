@@ -25,7 +25,8 @@ function MiscTab.Initialize(Registry)
 				AutoSellTask = task.spawn(function()
 					while true do
 						table.insert(actionQueue, { FuncName = MiscTab.NewPlayerAutoSell, Args = {} })
-						task.wait(tonumber(Options.ipNewPlayerSell.Value) or 5)
+						local delayTime = (tonumber(Options.ipNewPlayerSell.Value) or 5) * 60
+						task.wait(delayTime)
 					end
 				end)
 			else
@@ -38,7 +39,7 @@ function MiscTab.Initialize(Registry)
 		end,
 	})
 	NewPlayerSection:AddInput("ipNewPlayerSell", {
-		Title = "Auto Sell Delay",
+		Title = "Auto Sell Delay (Minutes)",
 		Default = 5,
 		Numeric = true,
 		Finished = true,
