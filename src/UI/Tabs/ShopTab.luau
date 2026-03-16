@@ -16,12 +16,27 @@ function ShopTab.Initialize(Registry)
 	Tabs.Shop = Interface:AddTab({ Title = "Shop", Icon = "shopping-cart" })
 	local BuySeedSection = Tabs.Shop:AddCollapsibleSection("Buy Seed", false)
 
-	local function tempBuySeed()
+	--[[ 	local function tempBuySeed()
 		local SeedShop = GetShopData:InvokeServer("SeedShop")
 		if not SeedShop then return end
 		table.insert(actionQueue, {
 			FuncName = reg.Shop.AutoBuySeed,
 			args = SeedShop.Items,
+		})
+	end ]]
+
+	local function tempBuy(ShopName)
+		local Shop = GetShopData:InvokeServer(ShopName)
+		if not Shop then return end
+		local ShopFunc
+		if ShopName == "SeedShop" then
+			ShopFunc = reg.Shop.AutoBuySeed
+		elseif ShopName == "GearShop" then
+			ShopFunc = reg.Shop.AutoBuyGear
+		end
+		table.insert(actionQueue, {
+			FuncName = ShopFunc,
+			args = Shop.Items,
 		})
 	end
 
@@ -30,7 +45,7 @@ function ShopTab.Initialize(Registry)
 		Default = false,
 		Callback = function(Value)
 			if Value then
-				if tempBuySeed then tempBuySeed() end
+				if tempBuy then tempBuy("SeedShop") end
 			end
 			QuickSave()
 		end,
@@ -57,6 +72,9 @@ function ShopTab.Initialize(Registry)
 		Title = "Auto Buy Gear",
 		Default = false,
 		Callback = function(Value)
+			if Value then
+				if tempBuy then tempBuy("GearShop") end
+			end
 			QuickSave()
 		end,
 	})
