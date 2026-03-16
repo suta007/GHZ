@@ -59,9 +59,7 @@ function MiscTab.Initialize(Registry)
 		end,
 	})
 
-	--hide fruits toggle
-	local HideObjectSection = Tabs.MiscTab:AddCollapsibleSection("Hide Fruits", false)
-	HideObjectSection:AddToggle("tgHideFruits", {
+	AntiLagSection:AddToggle("tgHideFruits", {
 		Title = "Hide Fruits",
 		Default = false,
 		Callback = function(Value)
@@ -74,7 +72,7 @@ function MiscTab.Initialize(Registry)
 		end,
 	})
 
-	HideObjectSection:AddToggle("tgHidePlants", {
+	AntiLagSection:AddToggle("tgHidePlants", {
 		Title = "Hide Plants",
 		Default = false,
 		Callback = function(Value)

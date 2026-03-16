@@ -58,7 +58,7 @@ function Strange.doEvent()
 
 	local currentMin = os.date("*t").min
 
-	if currentMin >= 15 and currentMin <= 20 then
+	if currentMin >= 15 and currentMin < 20 then
 		if not isLaunched then
 			isLaunched = true
 			reg.MiscTab.NewPlayerAutoSell()
