@@ -61,11 +61,13 @@ function Strange.doEvent()
 	if currentMin >= 15 and currentMin <= 20 then
 		if not isLaunched then
 			isLaunched = true
+			reg.MiscTab.NewPlayerAutoSell()
+			task.wait(0.2)
 			fVar.LockDownControlVar()
 
 			local centerPos = Utils.GetCenterPlots()
-			for _, pos in centerPos do
-				Utils.SafeTeleport(pos)
+			for _, cpos in centerPos do
+				Utils.SafeTeleport(cpos)
 				task.wait(0.2)
 
 				local ClientPlants = workspace:FindFirstChild("ClientPlants")
