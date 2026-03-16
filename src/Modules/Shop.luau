@@ -11,14 +11,15 @@ function Shop.Initialize(Registry)
 end
 
 function Shop.AutoBuyItem(ShopType, Items, DropdownValue)
+	print("in buy item")
 	local GetSelectedItems = reg.Utils.GetSelectedItems
 	local SafeTeleport = reg.Utils.SafeTeleport
 
 	local Pos = fVar.Pos
 	local MySpawnPoint = reg.MySpawnPoint
-
+print("check item")
 	if not Items then return end
-
+print("found items")
 	if ShopType == "SeedShop" then
 		fVar.isBuyingSeed = true
 	else
@@ -26,11 +27,14 @@ function Shop.AutoBuyItem(ShopType, Items, DropdownValue)
 	end
 
 	local BuyList = GetSelectedItems(DropdownValue)
+	print("get buy list")
 	SafeTeleport(Pos[ShopType])
+	print("teleport")
 	task.wait(0.5)
 
 	for Name, itemData in pairs(Items) do
 		if table.find(BuyList, "ALL") or table.find(BuyList, Name) then
+			print("buy "..Name)
 			for i = 1, tonumber(itemData.Amount) or 0 do
 				PurchaseShopItem:InvokeServer(ShopType, Name)
 				task.wait(0.2)
@@ -50,8 +54,10 @@ function Shop.AutoBuyItem(ShopType, Items, DropdownValue)
 end
 
 function Shop.AutoBuySeed(Items)
+	print("in autobuyseed")
 	local Options = reg.Options
 	if not Options.tgBuySeedEnable.Value then return end
+	print("run autoby item by seedshop")
 	Shop.AutoBuyItem("SeedShop", Items, Options.ddBuySeeds.Value)
 end
 
