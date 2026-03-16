@@ -131,4 +131,50 @@ function Misc.HideFruit(state)
 	UpdateVisibilityFromAnchor("FruitAnchor", state, false)
 end
 
+function Misc.SetupTracker()
+	local Options = reg.Options
+	local ClientPlants = workspace:FindFirstChild("ClientPlants")
+	if not ClientPlants then return end
+
+	ClientPlants.DescendantAdded:Connect(function(newPlant)
+		task.wait(0.5)
+
+		for _, obj in ipairs(newPlant:GetDescendants()) do
+			if obj.Name == "PlantAnchor" then
+				local parent = obj.Parent
+
+				--[[ 				if Options.tgPlantsESP.Value then
+					if parent:GetAttribute("HarvestablePlant") then
+						Misc.SetespFruit(obj)
+					else
+						Misc.SetespPlant(obj)
+					end
+				end ]]
+
+				if parent:GetAttribute("HarvestablePlant") then
+					if Options.tgHideFruits.Value then
+						for _, sibling in ipairs(obj.Parent:GetChildren()) do
+							SetVisibility(sibling, true)
+						end
+					end
+				else
+					if Options.tgHidePlants.Value then
+						for _, sibling in ipairs(parent:GetChildren()) do
+							SetVisibility(sibling, true)
+						end
+					end
+				end
+			elseif obj.Name == "FruitAnchor" then
+				local parent = obj.Parent
+				--if Options.tgFruitESP.Value then SetespFruit(obj) end
+				if Options.tgHideFruits.Value then
+					for _, sibling in ipairs(parent:GetChildren()) do
+						SetVisibility(sibling, true)
+					end
+				end
+			end
+		end
+	end)
+end
+
 return Misc
