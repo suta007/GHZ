@@ -12,6 +12,7 @@ local function LoadModules()
 
 	-- 2. Functional Modules
 	Registry.Utils = GHZ_REMOTE("Modules/Utils")
+	Registry.Misc = GHZ_REMOTE("Modules/Misc")
 	Registry.Main = GHZ_REMOTE("Modules/Main")
 	Registry.Shop = GHZ_REMOTE("Modules/Shop")
 	Registry.Process = GHZ_REMOTE("Modules/Process")
@@ -33,6 +34,7 @@ function EfHub.Initialize()
 
 	-- Initialize Modules (ตอนนี้ Registry.Options มีค่าแล้ว)
 	Registry.Utils.Initialize(Registry)
+	Registry.Misc.Initialize(Registry)
 	Registry.Main.Initialize(Registry)
 	Registry.Shop.Initialize(Registry)
 	Registry.Process.Initialize(Registry)

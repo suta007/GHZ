@@ -56,19 +56,8 @@ function MiscTab.Initialize(Registry)
 		Title = "AntiLag",
 		Default = false,
 		Callback = function(Value)
-			if Value then
-				AntiLagTask = task.spawn(function()
-					while true do
-						task.wait(1)
-					end
-				end)
-			else
-				if AntiLagTask then
-					task.cancel(AntiLagTask)
-					AntiLagTask = nil
-				end
-			end
-			QuickSave()
+			if Value then reg.Misc.AntiLag() end
+			--QuickSave()
 		end,
 	})
 
