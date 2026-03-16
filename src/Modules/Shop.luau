@@ -11,6 +11,7 @@ function Shop.Initialize(Registry)
 end
 
 function Shop.AutoBuyItem(ShopType, Items, DropdownValue)
+	print("in buy item")
 	local GetSelectedItems = reg.Utils.GetSelectedItems
 	local SafeTeleport = reg.Utils.SafeTeleport
 
@@ -50,8 +51,10 @@ function Shop.AutoBuyItem(ShopType, Items, DropdownValue)
 end
 
 function Shop.AutoBuySeed(Items)
+	print("in autobuyseed")
 	local Options = reg.Options
 	if not Options.tgBuySeedEnable.Value then return end
+	print("run autoby item by seedshop")
 	Shop.AutoBuyItem("SeedShop", Items, Options.ddBuySeeds.Value)
 end
 
