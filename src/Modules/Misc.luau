@@ -10,6 +10,7 @@ local Lighting = game:GetService("Lighting")
 function Misc.Initialize(Registry)
 	reg = Registry
 	fVar = reg.fVar
+	Misc.SetupTracker()
 end
 
 function Misc.AntiLag()
