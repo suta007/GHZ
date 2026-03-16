@@ -18,6 +18,7 @@ local function LoadModules()
 	Registry.Window = GHZ_REMOTE("UI/Window")
 	Registry.MainTab = GHZ_REMOTE("UI/Tabs/MainTab")
 	Registry.ShopTab = GHZ_REMOTE("UI/Tabs/ShopTab")
+	Registry.MiscTab = GHZ_REMOTE("UI/Tabs/MiscTab")
 
 	return Registry
 end
@@ -36,6 +37,7 @@ function EfHub.Initialize()
 
 	Registry.MainTab.Initialize(Registry)
 	Registry.ShopTab.Initialize(Registry)
+	Registry.MiscTab.Initialize(Registry)
 
 	Registry.Window.Finalize()
 	return Registry

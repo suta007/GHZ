@@ -395,11 +395,11 @@ function Main.AutoSellCrops()
 		else
 			-- Sell everything at once
 			SellItems:InvokeServer("SellAll")
-			task.wait(1)
 		end
 
 		-- Teleport back
-		SafeTeleport(reg.MySpawnPoint or Character:GetPivot())
+		task.wait(2)
+		SafeTeleport(reg.MySpawnPoint)
 		task.wait(0.3)
 		fVar.isSelling = false
 		fVar.HarvestPause = false

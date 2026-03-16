@@ -18,7 +18,7 @@ function MainTab.Initialize(reg)
 	fVar = reg.fVar
 	Main = reg.Main
 	actionQueue = reg.fVar.actionQueue
-	Tabs.Main = Interface:AddTab({ Title = "Main", Icon = "rbxassetid://10723345661" })
+	Tabs.Main = Interface:AddTab({ Title = "Main", Icon = "dices" })
 	local PlantsSection = Tabs.Main:AddCollapsibleSection("Plants", false)
 	PlantsSection:AddToggle("tgPlantsEnable", {
 		Title = "Auto Plants",
