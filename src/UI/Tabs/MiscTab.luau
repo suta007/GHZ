@@ -98,11 +98,7 @@ function MiscTab.Initialize(Registry)
 		Title = "Esp Crops",
 		Default = false,
 		Callback = function(Value)
-			if Value then
-				Misc.EspCrops()
-			else
-				Misc.EspCrops(false)
-			end
+			Misc.EspCrops(Value)
 			QuickSave()
 		end,
 	})
@@ -126,11 +122,7 @@ function MiscTab.Initialize(Registry)
 		Title = "Esp Plants",
 		Default = false,
 		Callback = function(Value)
-			if Value then
-				Misc.EspPlants()
-			else
-				Misc.EspPlants(false)
-			end
+			Misc.EspPlants(Value)
 			QuickSave()
 		end,
 	})
