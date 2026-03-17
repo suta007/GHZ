@@ -226,7 +226,7 @@ function Strange.doEvent()
 
 	local currentMin = os.date("*t").min
 
-	if (currentMin >= 5 and currentMin < 15) or (currentMin >= 35 and currentMin < 45) then
+	if (currentMin >= 6 and currentMin < 15) or (currentMin >= 36 and currentMin < 45) then
 		if not isLaunched then
 			isLaunched = true
 
