@@ -10,12 +10,9 @@ function LogTab.Initialize(Registry)
 	local Fluent = Registry.Fluent
 
 	Tabs.Log = Interface:AddTab({ Title = "Log", Icon = "scroll" })
-	reg.fDisplay = Tabs.Log:AddParagraph("ActivityLogs", {
-		Title = "Activity Logs",
-		Content = "Waiting for system to start...\n",
-	})
+
 	Tabs.Log:AddButton({
-		Title = "Clear Log",
+		Title = "❌ Clear Log",
 		Description = "ล้างประวัติข้อความทั้งหมดบนหน้าจอ",
 		Callback = function()
 			logHistory = ""
@@ -25,7 +22,7 @@ function LogTab.Initialize(Registry)
 	})
 
 	Tabs.Log:AddButton({
-		Title = "Copy Log",
+		Title = "📑 Copy Log",
 		Description = "คัดลอกประวัติข้อความทั้งหมดไปที่ Clipboard",
 		Callback = function()
 			if logHistory ~= "" then
@@ -38,6 +35,11 @@ function LogTab.Initialize(Registry)
 				})
 			end
 		end,
+	})
+
+	reg.fDisplay = Tabs.Log:AddParagraph("ActivityLogs", {
+		Title = "📃 Activity Logs",
+		Content = "Waiting for system to start...\n",
 	})
 end
 getgenv().fLog = function(message)
