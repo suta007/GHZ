@@ -1,10 +1,14 @@
 {
     "workspace.library": [
-        "d:/LuaCode/ghz/unc.d.luau"
+        "definitions/unc.d.luau"
     ],
     "diagnostics.globals": [
         "GHZ_REMOTE",
         "getgenv",
+        "gethui",
+        "fLog",
+        "CoreGui",
+        "CollectionService",
         "game",
         "task"
     ],

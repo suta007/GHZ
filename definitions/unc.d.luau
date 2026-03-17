@@ -37,6 +37,9 @@ declare function require(module: ModuleScript | number): any
 --// Custom GHZ Functions
 declare GHZ_REMOTE: (path: string) -> any
 
+--// Custom EfHub Functions
+declare function fLog(message: any): ()
+
 --// Global Services (Exploit Environment)
 declare CoreGui: Instance
 declare CollectionService: any
