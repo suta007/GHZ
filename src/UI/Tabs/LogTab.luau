@@ -53,7 +53,7 @@ getgenv().fLog = function(message)
 		logCount = 100
 	end
 
-	if reg and reg.fDisplay then reg.fDisplay:SetDesc(logHistory) end
+	if reg and reg.fDisplay then reg.fDisplay:SetValue(logHistory) end
 end
 
 return LogTab
