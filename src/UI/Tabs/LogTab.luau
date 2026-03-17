@@ -17,7 +17,7 @@ function LogTab.Initialize(Registry)
 		Callback = function()
 			logHistory = ""
 			logCount = 0
-			if reg and reg.fDisplay then reg.fDisplay:SetDesc("Waiting for new activity...\n") end
+			if reg and reg.fDisplay then reg.fDisplay:SetValue("Waiting for new activity...\n") end
 		end,
 	})
 
