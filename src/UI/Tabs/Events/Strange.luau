@@ -238,8 +238,9 @@ function Strange.doEvent()
 				task.wait(3)
 				local BlackList = GetSelectedItems(Options.ddStrangeBlackList.Value)
 				task.wait(0.2)
-
-				for _, cpos in PlotPos do
+				local TargetPos = reg.Utils.GetCenterPlots()
+				table.insert(TargetPos, reg.MySpawnPoint)
+				for _, cpos in TargetPos do
 					SafeTeleport(cpos)
 					task.wait(5)
 
