@@ -45,6 +45,7 @@ function AutoTab.Initialize(registry)
 					task.cancel(TaskRemovePlants)
 					TaskRemovePlants = nil
 				end
+				fVar.isRemovePlants = false
 			end
 			QuickSave()
 		end,
@@ -102,6 +103,7 @@ function AutoTab.Initialize(registry)
 					task.cancel(TaskRemoveFruit)
 					TaskRemoveFruit = nil
 				end
+				fVar.isRemoveCrops = false
 			end
 			QuickSave()
 		end,
