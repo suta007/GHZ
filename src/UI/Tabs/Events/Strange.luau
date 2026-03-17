@@ -3,6 +3,7 @@ local reg
 local EventsTab
 local StrangeTask
 local Pos
+local isLaunched = false
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
 local GetIGMAData = RemoteEvents:WaitForChild("GetIGMAData") :: RemoteFunction
@@ -40,6 +41,7 @@ function Strange.Initialize(registry, tab)
 					end
 				end)
 			else
+				isLaunched = false -- Reset status when disabled
 				if StrangeTask then
 					task.cancel(StrangeTask)
 					StrangeTask = nil
@@ -51,7 +53,7 @@ function Strange.Initialize(registry, tab)
 	StrangeSection:AddButton({
 		Title = "Clear Selected Plants",
 		Callback = function()
-			Options.ddStrangeBlackList.Value = { "NONE" }
+			Options.ddStrangeBlackList:SetValue({ "NONE" }) -- Use SetValue for UI update
 		end,
 	})
 	StrangeSection:AddDropdown("ddStrangeBlackList", {
@@ -203,22 +205,18 @@ local function AutoClaimMissingRewards()
 	end
 end
 
-local isLaunched = false
-
 function Strange.doEvent()
 	local fVar = reg.fVar
-
 	local Options = reg.Options
 	local Utils = reg.Utils
 	local GetSelectedItems = Utils.GetSelectedItems
+	local SafeTeleport = Utils.SafeTeleport
+	local TweenToTarget = Utils.TweenToTarget
+	local ParseFruitUuid = Utils.ParseFruitUuid
+	local HarvestFruit = RemoteEvents:WaitForChild("HarvestFruit")
 
 	local TargetMutants = { "Strange" }
-
 	local EventCropList = {}
-	local TweenToTarget = reg.Utils.TweenToTarget
-	local ParseFruitUuid = reg.Utils.ParseFruitUuid
-	local SafeTeleport = reg.Utils.SafeTeleport
-	local HarvestFruit = RemoteEvents:WaitForChild("HarvestFruit")
 
 	if not Options.tgStrangeEnable.Value then return end
 
@@ -226,78 +224,75 @@ function Strange.doEvent()
 
 	if (currentMin >= 11 and currentMin < 15) or (currentMin >= 41 and currentMin < 45) then
 		if not isLaunched then
-			isLaunched = true
-			reg.MiscTab.NewPlayerAutoSell()
-			local BlackList = GetSelectedItems(Options.ddStrangeBlackList.Value)
-			task.wait(0.2)
-			fVar.LockDownControlVar()
+			isLaunched = true -- Lock immediately
 
-			--local centerPos = Utils.GetCenterPlots()
-			for _, cpos in PlotPos do
-				Utils.SafeTeleport(cpos)
-				task.wait(5)
+			local success, err = pcall(function()
+				fVar.LockDownControlVar()
+				reg.MiscTab.NewPlayerAutoSell()
+				local BlackList = GetSelectedItems(Options.ddStrangeBlackList.Value)
+				task.wait(0.2)
 
-				local ClientPlants = workspace:FindFirstChild("ClientPlants")
-				if ClientPlants then
-					for _, plant in ClientPlants:GetChildren() do
-						local PlantType = plant:GetAttribute("PlantType")
-						if PlantType and (table.find(BlackList, "NONE") or not table.find(BlackList, PlantType)) then
-							local CropsTable = plant:GetAttribute("HarvestablePlant") and { plant } or plant:GetChildren()
-							for _, crop in CropsTable do
-								local cropMutants = crop:GetAttribute("Mutation")
-								if cropMutants and crop:GetAttribute("Favorited") ~= true then
-									local isTargetMutant = false
-									for _, mutantName in ipairs(TargetMutants) do
-										if string.find(cropMutants, mutantName) then
-											isTargetMutant = true
-											break
+				for _, cpos in PlotPos do
+					SafeTeleport(cpos)
+					task.wait(5)
+
+					local ClientPlants = workspace:FindFirstChild("ClientPlants")
+					if ClientPlants then
+						for _, plant in ClientPlants:GetChildren() do
+							local PlantType = plant:GetAttribute("PlantType")
+							if PlantType and (table.find(BlackList, "NONE") or not table.find(BlackList, PlantType)) then
+								local CropsTable = plant:GetAttribute("HarvestablePlant") and { plant } or plant:GetChildren()
+								for _, crop in CropsTable do
+									local cropMutants = crop:GetAttribute("Mutation")
+									if cropMutants and crop:GetAttribute("Favorited") ~= true then
+										local isTargetMutant = false
+										for _, mutantName in ipairs(TargetMutants) do
+											if string.find(cropMutants, mutantName) then
+												isTargetMutant = true
+												break
+											end
 										end
-									end
 
-									if isTargetMutant and not table.find(EventCropList, crop) then table.insert(EventCropList, crop) end
+										if isTargetMutant and not table.find(EventCropList, crop) then table.insert(EventCropList, crop) end
+									end
 								end
 							end
 						end
 					end
 				end
-			end
 
-			if #EventCropList > 0 then
-				if Options.tgStrangeAutoReset.Value then SafeResetIGMAQuest() end
-				for _, fruit in EventCropList do
-					local prompt = fruit:FindFirstChild("HarvestPrompt", true)
-					if prompt then
-						local targetCFrame = CFrame.new(fruit:GetPivot().Position + Vector3.new(3, 0, 0))
+				if #EventCropList > 0 then
+					if Options.tgStrangeAutoReset.Value then SafeResetIGMAQuest() end
+					for _, fruit in EventCropList do
+						local prompt = fruit:FindFirstChild("HarvestPrompt", true)
+						if prompt then
+							local targetCFrame = CFrame.new(fruit:GetPivot().Position + Vector3.new(3, 0, 0))
+							TweenToTarget(targetCFrame, 100)
+							task.wait(0.1)
 
-						TweenToTarget(targetCFrame, 100)
-						task.wait(0.1)
+							local gUuid, gindex = ParseFruitUuid(fruit:GetAttribute("Uuid"))
+							local args = gindex and { { { GrowthAnchorIndex = gindex, Uuid = gUuid } } } or { { { Uuid = gUuid } } }
 
-						local gUuid, gindex = ParseFruitUuid(fruit:GetAttribute("Uuid"))
-						local args = {}
-						if gindex then
-							args = { { { GrowthAnchorIndex = gindex, Uuid = gUuid } } }
-						else
-							args = { { { Uuid = gUuid } } }
+							HarvestFruit:FireServer(table.unpack(args))
+							task.wait(0.1)
 						end
-
-						HarvestFruit:FireServer(table.unpack(args))
-						task.wait(0.1)
 					end
 				end
-			end
 
-			if #EventCropList > 0 then
-				SafeTeleport(Pos)
-				task.wait(0.2)
-				IGMATurnIn:InvokeServer("TurnInAll")
-				task.wait(1)
-				AutoClaimMissingRewards()
-				task.wait(1)
-				SafeTeleport(reg.MySpawnPoint)
-				task.wait(0.2)
-			end
+				if #EventCropList > 0 then
+					SafeTeleport(Pos)
+					task.wait(0.2)
+					IGMATurnIn:InvokeServer("TurnInAll")
+					task.wait(1)
+					AutoClaimMissingRewards()
+					task.wait(1)
+					SafeTeleport(reg.MySpawnPoint)
+					task.wait(0.2)
+				end
+			end)
 
-			fVar.ResetControlVar()
+			fVar.ResetControlVar() -- Ensure reset
+			if not success then fLog("⚠️ Strange Event Error: " .. tostring(err)) end
 		end
 	elseif isLaunched then
 		isLaunched = false
