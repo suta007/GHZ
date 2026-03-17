@@ -2,7 +2,7 @@ local Strange = {}
 local reg
 local EventsTab
 local StrangeTask
-
+local Pos
 local IGMATurnIn = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("IGMATurnIn") :: RemoteFunction
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -13,6 +13,9 @@ function Strange.Initialize(registry, tab)
 	EventsTab = tab
 	local Options = reg.Options --ใช้ใน UI
 	local QuickSave = reg.Window.QuickSave
+	local sData = reg.sData
+	local SafeTeleport = reg.Utils.SafeTeleport
+	Pos = reg.fVar.Pos.Strange
 
 	local StrangeSection = EventsTab:AddCollapsibleSection("Strange", false)
 	StrangeSection:AddToggle("tgStrangeEnable", {
@@ -35,15 +38,37 @@ function Strange.Initialize(registry, tab)
 			QuickSave()
 		end,
 	})
+	StrangeSection:AddDropdown("ddStrangeBlackList", {
+		Title = "Blacklist Plants",
+		Values = sData.PlantDataBlackTable,
+		Default = { "NONE" },
+		Multi = true,
+		Searchable = true,
+		Callback = function(Value)
+			QuickSave()
+		end,
+	})
+	StrangeSection:AddButton({
+		Title = "Turn In Now!",
+		Callback = function()
+			SafeTeleport(Pos)
+			task.wait(0.2)
+			IGMATurnIn:InvokeServer("TurnInAll")
+			task.wait(1)
+			SafeTeleport(reg.MySpawnPoint)
+			task.wait(0.2)
+		end,
+	})
 end
 
 local isLaunched = false
 
 function Strange.doEvent()
 	local fVar = reg.fVar
-	local Pos = fVar.Pos.Strange
+
 	local Options = reg.Options
 	local Utils = reg.Utils
+	local GetSelectedItems = Utils.GetSelectedItems
 
 	-- 🌟 ปรับเป็น Table รองรับอนาคตตามที่พี่เอฟต้องการค่ะ
 	local TargetMutants = { "Strange" }
@@ -62,6 +87,7 @@ function Strange.doEvent()
 		if not isLaunched then
 			isLaunched = true
 			reg.MiscTab.NewPlayerAutoSell()
+			local BlackList = GetSelectedItems(Options.ddStrangeBlackList.Value)
 			task.wait(0.2)
 			fVar.LockDownControlVar()
 
@@ -74,7 +100,7 @@ function Strange.doEvent()
 				if ClientPlants then
 					for _, plant in ClientPlants:GetChildren() do
 						local PlantType = plant:GetAttribute("PlantType")
-						if PlantType then
+						if PlantType and (table.find(BlackList, "NONE") or not table.find(BlackList, PlantType)) then
 							local CropsTable = plant:GetAttribute("HarvestablePlant") and { plant } or plant:GetChildren()
 							for _, crop in CropsTable do
 								local cropMutants = crop:GetAttribute("Mutation")

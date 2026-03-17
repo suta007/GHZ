@@ -17,6 +17,13 @@ function MiscTab.Initialize(Registry)
 	local AutoSellTask
 
 	Tabs.MiscTab = Interface:AddTab({ Title = "Misc", Icon = "flower" })
+	local MiscSection = Tabs.MiscTab:AddCollapsibleSection("Misc", false)
+	MiscSection:AddButton({
+		Title = "Reset Control Var",
+		Callback = function()
+			reg.fVar.ResetControlVar()
+		end,
+	})
 	local NewPlayerSection = Tabs.MiscTab:AddCollapsibleSection("New Player", false)
 	NewPlayerSection:AddToggle("tgNewPlayerSell", {
 		Title = "New Playe Auto Sell",

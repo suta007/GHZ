@@ -18,7 +18,7 @@ function Window.Initialize(Registry)
 
 	Registry.Interface = Fluent:CreateWindow({
 		Title = "Garden Horizons",
-		SubTitle = "by EfHub - Remove",
+		SubTitle = "2569.03.17-09.14",
 		TabWidth = 100,
 		Size = UDim2.fromOffset(600, 360),
 		Resize = false,
