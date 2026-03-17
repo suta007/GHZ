@@ -285,7 +285,7 @@ function Misc.SetEspCrops(obj)
 			arg = 1
 		end
 		if Weight > 0 then
-			CreatESP(ESPFolder, fruit, uuid, "🍎" .. fruitName, string.format("Weight : %.2f kg", Weight), arg)
+			CreatESP(ESPFolder, fruit, uuid, "🍎" .. fruitName, string.format("Weight : %.2f kg, Scale : %.2f", Weight, scale), arg)
 		else
 			CreatESP(ESPFolder, fruit, uuid, "🍎" .. fruitName, string.format("Scale : %.2f", scale), arg)
 		end
@@ -334,13 +334,13 @@ function Misc.SetupTracker()
 			if obj.Name == "PlantAnchor" then
 				local parent = obj.Parent
 
-				--[[ 				if Options.tgEspPlants.Value then
+				if Options.tgEspPlants.Value then
 					if parent:GetAttribute("HarvestablePlant") then
 						Misc.SetEspCrops(obj)
 					else
 						Misc.SetEspPlant(obj)
 					end
-				end ]]
+				end
 
 				if parent:GetAttribute("HarvestablePlant") then
 					if Options.tgHideFruits.Value then
@@ -357,7 +357,7 @@ function Misc.SetupTracker()
 				end
 			elseif obj.Name == "FruitAnchor" then
 				local parent = obj.Parent
-				--if Options.tgFruitESP.Value then SetespFruit(obj) end
+				if Options.tgEspCrops.Value then Misc.SetEspCrops(obj) end
 				if Options.tgHideFruits.Value then
 					for _, sibling in ipairs(parent:GetChildren()) do
 						SetVisibility(sibling, true)
