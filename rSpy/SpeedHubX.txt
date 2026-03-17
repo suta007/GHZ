@@ -1,0 +1,297 @@
+📋 Script initialized successfully.
+[firesignal] : function: 0xdb2e960575dd210e
+[makefolder] : function: 0xcbe9fe793b6e974e
+[getsenv] : function: 0xadee0b38c954659e
+[detourfunction] : function: 0xdc2750734258730e
+[cansignalreplicate] : function: 0x0acf6935d79f87be
+[isscriptable] : function: 0x36e8335eb8ca64ee
+[raknet] : (Table)
+  [desync] : function: 0xa5f9422e77a0144e
+[DELTA_VERSION_NUM] : 71100
+[debug] : (Table)
+  [dumpheap] : function: 0xd1ceeeef8a2e9fde
+  [getconstants] : function: 0x8141760b2930b51e
+  [getproto] : function: 0x6a760615a74ca65e
+  [setmemorycategory] : function: 0x48f15e093c26dc1e
+  [profilebegin] : function: 0xa201a510a304d42e
+  [loadmodule] : function: 0x18d91909a26a138e
+  [traceback] : function: 0xb8a6901e4092993e
+  [getstack] : function: 0x7a567b2d050c054e
+  [getregistry] : function: 0xebe9a677ee7a0c9e
+  [setmetatable] : function: 0x6f4b55755515316e
+  [getupvalues] : function: 0xef39cb07bbe9368e
+  [getupvalue] : function: 0x0c8b9806b81e057e
+  [getmemorycategory] : function: 0xb66e440746c4da7e
+  [resetmemorycategory] : function: 0xc39b382ccb781ebe
+  [setupvalue] : function: 0x4626e504b88549ee
+  [validlevel] : function: 0xaa114d239c36ad0e
+  [isvalidlevel] : function: 0x74b3a62ddbdb48de
+  [dumpcodesize] : function: 0x5f01d4e8d9d4e0fe
+  [setstack] : function: 0x2111ec3a2da7383e
+  [getconstant] : function: 0x5cec01120e5ea2ce
+  [profileend] : function: 0xffdc2e7b8ff9235e
+  [info] : function: 0xd5fc4d2f2022c64e
+  [getinfo] : function: 0xd37eb93857480bae
+  [getprotos] : function: 0xa4935330cad2b72e
+  [setconstant] : function: 0x3e094c2f2af733be
+  [getmetatable] : function: 0x209e00689480a1fe
+  [dumprefs] : function: 0x3c6362fd9940dc0e
+[getfflag] : function: 0x7560e5e7e429466e
+[consolecreate] : function: 0xd8fbec5d5dd017ce
+[queue_on_teleport] : function: 0xa72617b6f3506d7e
+[getexecutorname] : function: 0x6d06538171980f2e
+[lz4decompress] : function: 0x22c3cb8970c66e8e
+[consoledestroy] : function: 0x6556ba7d140a54ae
+[getmousepos] : function: 0x85442d78d6655ece
+[isgameactive] : function: 0x183a4553e8825dee
+[http] : (Table)
+  [request] : function: 0xe69b11ddfaf29b2e
+[crypt] : (Table)
+  [encrypt] : function: 0x77f525fa8735706e
+  [hash] : function: 0xf8a0113b02c27d2e
+  [base64decode] : function: 0xb77ae5b5381770be
+  [generatekey] : function: 0x1e05462e65747a3e
+  [base64encode] : function: 0xfcefc062b710761e
+  [generatebytes] : function: 0x3d6efddfdde97b4e
+  [base64] : (Table)
+    [encode] : function: 0x095341c5ce567a0e
+    [decode] : function: 0xd48e31c3aba062fe
+  [base64_decode] : function: 0x848e69b6396804ae
+  [base64_encode] : function: 0x13c41da838be67ce
+  [decrypt] : function: 0xd8b869cc5c9a039e
+[setthreadcontext] : function: 0x9fc5c2f3f2cc6dfe
+[getallthreads] : function: 0x1f6c3e66e1ae9e4e
+[mouse1press] : function: 0x0e8ff9651d495fae
+[toclipboard] : function: 0xc3d51f6f14c350de
+[newcclosure] : function: 0x579c4ed51db4775e
+[gethiddenproperties] : function: 0x2842dae89c20036e
+[request] : function: 0x3d35846255194ace
+[is_c_closure] : function: 0xea7e8063f8fd600e
+[getthreadcontext] : function: 0x99940e415c76628e
+[isfunctionhooked] : function: 0xb4371f20a0008a9e
+[shared] : (Table)
+  [FluentRenewed] : (Table)
+[replacefunction] : function: 0x593d7a19036289ae
+[cloneref] : function: 0x0442a3738741380e
+[setproximitypromptduration] : function: 0x0316cf91efe0699e
+[setscriptable] : function: 0xaec086712a974abe
+[http_request] : function: 0xd97eb762dde46bbe
+[getproximitypromptduration] : function: 0xdeb39baa93754a6e
+[getprotos] : function: 0xfdc0014373a2ae2e
+[hookfunction] : function: 0x61ad171d9a448f7e
+[getrendersteppedlist] : function: 0x3fd1bd03fa6855fe
+[isfile] : function: 0xb07cd093399d512e
+[getproto] : function: 0x409f75b9f013515e
+[isrbxactive] : function: 0xff7496498837217e
+[make_readonly] : function: 0xbd322a390f7b495e
+[get_thread_identity] : function: 0x16f3e45595300dee
+[getrunningscripts] : function: 0x2399d3600167513e
+[getupvalue] : function: 0xd7a999d0f1ff487e
+[consolesettitle] : function: 0x7fcdd3e20fb46d2e
+[setidentity] : function: 0xf2a28efa71a1490e
+[httpget] : function: 0xd9695d77de862c7e
+[mouse1click] : function: 0x482156661ade1fbe
+[setupvalue] : function: 0x70ff35ea6e6aaaee
+[isfolder] : function: 0x66d3aea6aeb1588e
+[ishooked] : function: 0xd76aca1c80b2736e
+[gethiddenproperty] : function: 0x650df131c706630e
+[identifyexecutor] : function: 0xd7dc7b8f728e6d4e
+[get_comm_channel] : function: 0x1f3d2fcda79d8bee
+[getscripts] : function: 0xee47442db9fa966e
+[getnilinstances] : function: 0xc297fc323902075e
+[isvalidlevel] : function: 0x3a8ad5b1d57895de
+[iscclosure] : function: 0x6db54ea2796273de
+[keypress] : function: 0x48b862f431615a2e
+[getproperties] : function: 0xf287bce7cb4e7a4e
+[getscriptsthatrun] : function: 0xf54cf36a424b5b5e
+[rnet] : (Table)
+  [desync] : function: 0xef0e5c2c495a522e
+[getupvalues] : function: 0xbb0aedcf70840d8e
+[rconsoleclear] : function: 0x888046a59318547e
+[script_key] : cNsgHNQYAkTgmyNACoSujtkANxlZvkZg
+[getobjects] : function: 0xdefc654aa7a3ae1e
+[httppost] : function: 0x7db6f0705b312eee
+[replacefunc] : function: 0x8182ef7426cb4ade
+[bit] : (Table)
+  [band] : function: 0xe7a2c7bad2dcc7be
+  [extract] : function: 0x3431cb83532ec56e
+  [byteswap] : function: 0x20ee7067ce7eeeee
+  [bor] : function: 0xac19af9791eed4de
+  [bnot] : function: 0x234f9bb6517887ae
+  [countrz] : function: 0xafc3e766abeaec7e
+  [bxor] : function: 0xe99a33949012e10e
+  [arshift] : function: 0x54010ba06fa216ce
+  [rshift] : function: 0x510ecfabbc30cd5e
+  [rrotate] : function: 0x39db03bdbda6122e
+  [replace] : function: 0xdc58578e354ce33e
+  [lshift] : function: 0x7f2ee39f32f8d44e
+  [lrotate] : function: 0xdbf37f8c2e66889e
+  [btest] : function: 0x516f078ad08015fe
+  [countlz] : function: 0xec609ba2b484898e
+[setstack] : function: 0x55634c44f754af3e
+[isreadonly] : function: 0x070b854e5d35604e
+[getstack] : function: 0xb0beb94972c9484e
+[deletefolder] : function: 0xbf8804a9a7eaa3ee
+[getinfo] : function: 0xe72a79965c0d48ae
+[sethiddenproperty] : function: 0x683d2049ab4b701e
+[writefile] : function: 0x5aa2a581aa40046e
+[base64_encode] : function: 0xe4cfe96d4ac9718e
+[loadfile] : function: 0xf1be9ef21c1c1cce
+[replicatesignal] : function: 0x817b4118ed4214de
+[getconstant] : function: 0xad9151e0173153ce
+[cleardrawcache] : function: 0xf02414fd78854bce
+[filtergc] : function: 0xcfde1ac14edc9ede
+[setrawmetatable] : function: 0x7a58f052d480773e
+[clonefunc] : function: 0x39bd52c4847c74ee
+[getsignalarguments] : function: 0x5e8fe9713054525e
+[getconnections] : function: 0xb3d29c5a37f9232e
+[Delta] : (Table)
+  [is_android] : function: 0x362ec2b2894a1c1e
+  [is_ios] : function: 0x24fb96aa9a2561ce
+  [is_vng] : function: 0x9e4f3cefdb059eae
+  [roblox_version] : function: 0x1701c6ed2c781c0e
+  [is_mac] : function: 0xe139a89c5eb05ebe
+  [version] : function: 0x4a6c7cd04cc720fe
+  [version_num] : function: 0xd452c145b30e1c3e
+  [version_hash] : function: 0x34a212fe17eb5fde
+  [architecture_str] : function: 0xc1f95ac6b2239d9e
+  [architecture] : function: 0x8cbae8d5b5525e6e
+  [get_platform] : function: 0xd35070b5e8f958ee
+[getscriptclosure] : function: 0x1d8d4b090ec496be
+[getactors] : function: 0x30174f119d0c6c6e
+[make_writeable] : function: 0x1a70b9266ac8758e
+[is_delta_closure] : function: 0x8a1fd5eeafa67d7e
+[checkcaller] : function: 0xf2cb38c7dd2e878e
+[setsimulationradius] : function: 0xab7c17dae31d470e
+[rconsoledestroy] : function: 0xa20c8750157f60be
+[getrenv] : function: 0x7a374b5640009e9e
+[run_on_actor] : function: 0xb51c8bf6415f61be
+[isparallel] : function: 0x864947c4a0b014ce
+[setreadonly] : function: 0x91d51d541415862e
+[create_comm_channel] : function: 0x90c787303e6d608e
+[getscriptfromthread] : function: 0xcb9d28bc66bc7abe
+[isdeltafunction] : function: 0x15b4b1ebb64c7d1e
+[getactorfromthread] : function: 0x2a881f6a2541492e
+[getactorthreads] : function: 0x20372060ccaf8e3e
+[setrenderproperty] : function: 0x7eab673b66318e0e
+[checkparallel] : function: 0xebfdb764a3e66f4e
+[get_actors] : function: 0x96b09a17847b6f9e
+[WebSocket] : (Table)
+  [connect] : function: 0x92cf79bcf9a8128e
+[setconstant] : function: 0x60dfede513a604be
+[pibble] : (Table)
+  [gmail] : function: 0xca2eb686e7ae538e
+  [is_detected] : function: 0xb0a0e79ee579864e
+  [washington] : function: 0x44bbdf7bfe94142e
+  [is_pibble] : function: 0x01788a857b03635e
+  [getpibbles] : function: 0x9a0e738d45ef593e
+[isrenderobj] : function: 0x8004d20e0ac46dde
+[getinstances] : function: 0x05cd62d50a7d702e
+[getconstants] : function: 0x2d3201fbd2c4a21e
+[firetouchinterest] : function: 0x281dcb5615026aae
+[cache] : (Table)
+  [replace] : function: 0x4120965562323bde
+  [iscached] : function: 0x8e87fb46c1ad32ae
+  [invalidate] : function: 0xf46a0c476108a2be
+[set_thread_identity] : function: 0x069b2886d3fb709e
+[_G] : (Table)
+  [Speed_AntiAFK] : true
+[getsignalwhitelist] : function: 0xec01b52c9e8b211e
+[isnetworkowner] : function: 0xe5e98fbdec21676e
+[compareinstances] : function: 0x56a7307a63ecb4fe
+[Drawing] : (Table)
+  [Fonts] : (Table)
+    [UI] : 0
+    [Monospace] : 3
+    [Plex] : 2
+    [System] : 1
+  [new] : function: 0xaaebd11879a272ee
+[getsignalargumentsinfo] : function: 0x21ba1d6fd1b7597e
+[getcbvalue] : function: 0xde76890c0e2d79ae
+[getrawmetatable] : function: 0xfb54fdb7308473ae
+[getrenderproperty] : function: 0x0ac34808cbfe6cbe
+[readfile] : function: 0xfdc1318a8eaf56fe
+[hookmetamethod] : function: 0x56df8db0303360de
+[gethui] : function: 0x487a16e82fd8653e
+[setnamecallmethod] : function: 0x8e4029409649796e
+[consoleprint] : function: 0x893b8a367a41606e
+[getfpscap] : function: 0x95e55a43aa9a696e
+[is_our_closure] : function: 0xcfa4799fd40d7e8e
+[isourclosure] : function: 0x0342ed8914987e5e
+[checkclosure] : function: 0xc63e5d821d7a7f2e
+[getthreadidentity] : function: 0xf664e3520bb6043e
+[getfunctionhash] : function: 0xb58581835def603e
+[isexecutorclosure] : function: 0xfe5e19976b33799e
+[is_l_closure] : function: 0x5b95ea768faa7a6e
+[getcustomasset] : function: 0xb8bb5c3f63987ade
+[newlclosure] : function: 0xdca78ffceb23605e
+[getnamecallmethod] : function: 0x3185d14b2f5e750e
+[getcallingscript] : function: 0xc2e3feda6feb601e
+[clonefunction] : function: 0x5c6624c16497467e
+[getsafedir] : function: 0x15b1a2a84922045e
+[is_function_hooked] : function: 0xeeb3772b236e753e
+[detour_function] : function: 0x7bdd8769a12763fe
+[delfolder] : function: 0xe05ed8a68a5c9b7e
+[getgenv] : function: 0x0a48eecae2795f0e
+[keyrelease] : function: 0x0e4eac9730f2155e
+[replaceclosure] : function: 0xf4c7d7062f906dbe
+[setthreadidentity] : function: 0x29a528e0708d6fae
+[consoleinput] : function: 0x120c60434b3d4a0e
+[getscripthash] : function: 0x6318b323b80f48fe
+[restorefunc] : function: 0xaf12bf38a4aa6f1e
+[restorefunction] : function: 0xecd022129dd94fee
+[loadstring] : function: 0x397afbe846ce6c8e
+[set_thread_context] : function: 0x8c2f92841c874b3e
+[rconsolename] : function: 0xdb2227dbe80f4a3e
+[rconsolesettitle] : function: 0x41eddf36f9fc539e
+[base64_decode] : function: 0xa1a45a7fae7e047e
+[rconsoleprint] : function: 0x4f76f745f6d612fe
+[dumpstring] : function: 0x8758a30345ea041e
+[mousescroll] : function: 0x97f5f6fb31cc9b3e
+[fireproximityprompt] : function: 0x553723a05c59700e
+[glooperror] : function: 0xafe58df0eb15214e
+[keyclick] : function: 0x4d25b8964f8d618e
+[getscriptfunction] : function: 0x9a375bf5472357de
+[islclosure] : function: 0xa730757868087cfe
+[get_thread_context] : function: 0x6c68deba73de6ece
+[rconsolecreate] : function: 0x734660aad243461e
+[mouse2press] : function: 0xe2ae26bd8c875dfe
+[restoreclosure] : function: 0x53aa8405440560ce
+[listfiles] : function: 0x001c698c37d3579e
+[get_nil_instances] : function: 0x78128b393991778e
+[mousemoverel] : function: 0xf2ae4c8232c65c4e
+[mousemoveabs] : function: 0x1850989cb65b609e
+[lz4compress] : function: 0xe9bcbf9bf06b4e5e
+[base64] : (Table)
+  [encode] : function: 0x3226a925c3a47c8e
+  [decode] : function: 0x08fb9616671f7f7e
+[appendfile] : function: 0x8eca0d7238f8a63e
+[getscriptbytecode] : function: 0x0e061b0f9cb0627e
+[consoleclear] : function: 0xd66d12a396ba86ee
+[mouse2release] : function: 0x3d15aa8fb3ec1d6e
+[setfflag] : function: 0x928359f54cba159e
+[getgc] : function: 0x8b0338cfe5229dae
+[getloadedmodules] : function: 0x352c633487ee1ffe
+[getsimulationradius] : function: 0x10967ff721ea55ae
+[mouse2click] : function: 0x687910b2d41e990e
+[setfpscap] : function: 0x0f5e705e2bb4050e
+[mouse1release] : function: 0xd3244c9855a45cde
+[delfile] : function: 0x5aebf2d35b6b531e
+[DeltaSignal] : (Table)
+  [new] : function: 0xb6dc0a661a6d498e
+[is_executor_closure] : function: 0x3aff25e1b1f67ace
+[setclipboard] : function: 0x86302a781c7263ae
+[get_fps_cap] : function: 0xb93e28c1b974649e
+[fireclickdetector] : function: 0x4d2d4570808a7fee
+[decompile] : function: 0xba179e04257959ce
+[rconsoleinput] : function: 0xe8d32f4aef8889de
+[getmenv] : function: 0x91037e2f2ec1514e
+[getreg] : function: 0x6b3a7c92d5ac655e
+[validlevel] : function: 0x503c0db495e6a60e
+[getidentity] : function: 0x3f1bc344dc886a5e
+[gethwid] : function: 0x19c5722085d498fe
+[dofile] : function: 0x5660acf905b759be
+[iswindowactive] : function: 0x46ef30544bf0991e
+[queueonteleport] : function: 0x5ee86fa9928a0d1e
+[set_fps_cap] : function: 0x72088748ce2f49fe
+[getcallbackvalue] : function: 0xd8935d0bc15170ce

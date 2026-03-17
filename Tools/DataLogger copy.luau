@@ -153,5 +153,32 @@ local function ShowData(tbl, indent)
 	end
 end
 
-local path = game:GetService("Players").LocalPlayer.PlayerScripts.NPCs.IGMANPC
-ShowData(getsenv(path))
+ShowData(getgc())
+
+print("--- เริ่มการสแกน Memory หา Speed Hub X ---")
+
+local target_keyword = "Speed" -- เปลี่ยนคำค้นหาตรงนี้ได้ค่ะ เช่น "Key", "AntiAFK"
+local found_count = 0
+
+-- วนลูปอ่านทุกอย่างใน Garbage Collector
+for _, obj in pairs(getgc()) do
+	-- กรองเอาเฉพาะ "ฟังก์ชันที่เป็น Lua" (islclosure) เพื่อป้องกันเกมค้างจากฟังก์ชัน C
+	if type(obj) == "function" and islclosure(obj) then
+		-- ใช้ pcall เผื่อดึงข้อมูลไม่ได้จะได้ไม่ error
+		local success, constants = pcall(getconstants, obj)
+
+		if success and constants then
+			-- วนลูปดูค่าคงที่ (Constants) ข้างในฟังก์ชันนั้น
+			for _, const in pairs(constants) do
+				-- ถ้าเจอข้อความที่ตรงกับ Keyword ของเรา
+				if type(const) == "string" and string.find(string.lower(const), string.lower(target_keyword)) then
+					print("🎯 เจอเบาะแสใน Function: " .. tostring(obj))
+					print("   -> ข้อความที่ดึงได้: " .. const)
+					found_count = found_count + 1
+				end
+			end
+		end
+	end
+end
+
+print("--- สแกนเสร็จสิ้น! เจอเป้าหมายทั้งหมด: " .. tostring(found_count) .. " รายการ ---")
