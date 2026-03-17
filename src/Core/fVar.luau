@@ -12,7 +12,7 @@ fVar.Pos = {
 	Botanist = CFrame.new(214.00, 205.50, 621.05),
 	Sell = CFrame.new(149.40, 205.50, 672.00),
 	Quest = CFrame.new(111.52, 205.50, 635.02),
-	Strange = CFrame.new(169.072, 269.116, 772.818),
+	Strange = CFrame.new(168.74, 270.57, 768.77),
 }
 
 --Control Variable
