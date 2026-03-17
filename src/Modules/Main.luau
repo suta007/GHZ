@@ -114,7 +114,6 @@ local function GetHarvestConfig()
 	}
 end
 
-
 function Main.CheckCrops(fruit, config)
 	local fruitName = fruit:GetAttribute("PlantType") or (fruit.Parent and fruit.Parent:GetAttribute("PlantType")) or "Fruit"
 	local fruitRipeness = fruit:GetAttribute("RipenessStage")
@@ -272,7 +271,6 @@ local function GetSellConfig()
 		},
 	}
 end
-
 
 function Main.CheckSellItem(item, config)
 	local itemName = item:GetAttribute("BaseName") or item.Name

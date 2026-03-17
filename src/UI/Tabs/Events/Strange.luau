@@ -27,6 +27,7 @@ function Strange.Initialize(registry, tab)
 	local sData = reg.sData
 	local SafeTeleport = reg.Utils.SafeTeleport
 	Pos = reg.fVar.Pos.Strange
+	local fVar = reg.fVar
 
 	local StrangeSection = EventsTab:AddCollapsibleSection("Strange", false)
 	StrangeSection:AddToggle("tgStrangeEnable", {
@@ -69,12 +70,15 @@ function Strange.Initialize(registry, tab)
 	StrangeSection:AddButton({
 		Title = "Turn In Now!",
 		Callback = function()
+			fVar.LockDownControlVar()
+			task.wait(1)
 			SafeTeleport(Pos)
-			task.wait(0.2)
+			task.wait(1)
 			IGMATurnIn:InvokeServer("TurnInAll")
 			task.wait(1)
 			SafeTeleport(reg.MySpawnPoint)
-			task.wait(0.2)
+			task.wait(1)
+			fVar.ResetControlVar()
 		end,
 	})
 	StrangeSection:AddToggle("tgStrangeAutoReset", {
@@ -224,11 +228,14 @@ function Strange.doEvent()
 
 	if (currentMin >= 5 and currentMin < 15) or (currentMin >= 35 and currentMin < 45) then
 		if not isLaunched then
-			isLaunched = true -- Lock immediately
+			isLaunched = true
 
 			local success, err = pcall(function()
 				fVar.LockDownControlVar()
+				task.wait(2)
 				reg.MiscTab.NewPlayerAutoSell()
+				fVar.LockDownControlVar()
+				task.wait(3)
 				local BlackList = GetSelectedItems(Options.ddStrangeBlackList.Value)
 				task.wait(0.2)
 
@@ -280,8 +287,10 @@ function Strange.doEvent()
 				end
 
 				if #EventCropList > 0 then
+					fVar.LockDownControlVar()
+					task.wait(1)
 					SafeTeleport(Pos)
-					task.wait(0.2)
+					task.wait(1)
 					IGMATurnIn:InvokeServer("TurnInAll")
 					task.wait(1)
 					AutoClaimMissingRewards()
