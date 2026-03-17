@@ -7,6 +7,12 @@ local IGMATurnIn = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEven
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
+local PlotPos = {
+	CFrame.new(426, 213, 405),
+	CFrame.new(465, 213, 405),
+	CFrame.new(465, 213, 345),
+	CFrame.new(426, 213, 345),
+}
 
 function Strange.Initialize(registry, tab)
 	reg = registry
@@ -91,8 +97,8 @@ function Strange.doEvent()
 			task.wait(0.2)
 			fVar.LockDownControlVar()
 
-			local centerPos = Utils.GetCenterPlots()
-			for _, cpos in centerPos do
+			--local centerPos = Utils.GetCenterPlots()
+			for _, cpos in PlotPos do
 				Utils.SafeTeleport(cpos)
 				task.wait(5)
 
