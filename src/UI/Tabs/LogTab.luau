@@ -10,7 +10,7 @@ function LogTab.Initialize(Registry)
 	local Fluent = Registry.Fluent
 
 	Tabs.Log = Interface:AddTab({ Title = "Log", Icon = "scroll" })
-	reg.fDisplay = Tabs.Log:AddParagraph({
+	reg.fDisplay = Tabs.Log:AddParagraph("ActivityLogs", {
 		Title = "Activity Logs",
 		Content = "Waiting for system to start...\n",
 	})
