@@ -270,7 +270,6 @@ function Strange.doEvent()
 				end
 
 				if #EventCropList > 0 then
-					if Options.tgStrangeAutoReset.Value then SafeResetIGMAQuest() end
 					for _, fruit in EventCropList do
 						local prompt = fruit:FindFirstChild("HarvestPrompt", true)
 						if prompt then
@@ -295,6 +294,8 @@ function Strange.doEvent()
 					IGMATurnIn:InvokeServer("TurnInAll")
 					task.wait(1)
 					AutoClaimMissingRewards()
+					task.wait(1)
+					if Options.tgStrangeAutoReset.Value then SafeResetIGMAQuest() end
 					task.wait(1)
 					SafeTeleport(reg.MySpawnPoint)
 					task.wait(0.2)
