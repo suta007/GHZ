@@ -102,8 +102,8 @@ local function GetHarvestConfig()
 			variant = GetSelectedItems(Options.ddVariant.Value),
 			weightCondition = Options.ddWeight.Value,
 			weightValue = tonumber(Options.ipWeight.Value) or 0,
-			scaleCondition = "", --Options.ddScale.Value,
-			scaleValue = 0, --tonumber(Options.ipScale.Value) or 0,
+			scaleCondition = "",
+			scaleValue = 0,
 		},
 		bl = {
 			crops = GetSelectedItems(Options.ddHarvestBlackCrops.Value),
@@ -113,6 +113,7 @@ local function GetHarvestConfig()
 		},
 	}
 end
+
 
 function Main.CheckCrops(fruit, config)
 	local fruitName = fruit:GetAttribute("PlantType") or (fruit.Parent and fruit.Parent:GetAttribute("PlantType")) or "Fruit"
@@ -271,6 +272,7 @@ local function GetSellConfig()
 		},
 	}
 end
+
 
 function Main.CheckSellItem(item, config)
 	local itemName = item:GetAttribute("BaseName") or item.Name

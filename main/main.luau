@@ -2055,8 +2055,9 @@ task.spawn(function()
 		-- 5. Watch Dog (Run every 3600 seconds)
 		if clock - lastWalkDog >= 3600 then
 			lastWalkDog = clock
-			if Options.tgPlantsESP and Options.tgPlantsESP.Value == true then Options.tgPlantsESP:SetValue(false) end
-			if Options.tgFruitESP and Options.tgFruitESP.Value == true then Options.tgFruitESP:SetValue(false) end
+			if Options.tgEspPlants and Options.tgEspPlants.Value == true then Options.tgEspPlants:SetValue(false) end
+			if Options.tgEspCrops and Options.tgEspCrops.Value == true then Options.tgEspCrops:SetValue(false) end
+
 			if ResetControlVariable then ResetControlVariable() end
 		end
 	end

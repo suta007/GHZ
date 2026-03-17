@@ -13,6 +13,7 @@ function MiscTab.Initialize(Registry)
 	local QuickSave = Registry.Window.QuickSave
 	local actionQueue = Registry.fVar.actionQueue
 	local Misc = Registry.Misc
+	local sData = Registry.sData
 
 	local AutoSellTask
 
@@ -88,6 +89,64 @@ function MiscTab.Initialize(Registry)
 			else
 				Misc.HidePlant(false)
 			end
+			QuickSave()
+		end,
+	})
+
+	local EspSection = Tabs.MiscTab:AddCollapsibleSection("Esp", false)
+	EspSection:AddToggle("tgEspCrops", {
+		Title = "Esp Crops",
+		Default = false,
+		Callback = function(Value)
+			if Value then
+				Misc.EspCrops()
+			else
+				Misc.EspCrops(false)
+			end
+			QuickSave()
+		end,
+	})
+	EspSection:AddButton({
+		Title = "Clear Selected Crops",
+		Callback = function()
+			Options.ddEspCrops.Value = { ALL = true }
+		end,
+	})
+	EspSection:AddDropdown("ddEspCrops", {
+		Title = "Select Crops",
+		Values = sData.PlantDataTable,
+		Default = { "ALL" },
+		Multi = true,
+		Searchable = true,
+		Callback = function(Value)
+			QuickSave()
+		end,
+	})
+	EspSection:AddToggle("tgEspPlants", {
+		Title = "Esp Plants",
+		Default = false,
+		Callback = function(Value)
+			if Value then
+				Misc.EspPlants()
+			else
+				Misc.EspPlants(false)
+			end
+			QuickSave()
+		end,
+	})
+	EspSection:AddButton({
+		Title = "Clear Selected Plants",
+		Callback = function()
+			Options.ddEspPlants.Value = { ALL = true }
+		end,
+	})
+	EspSection:AddDropdown("ddEspPlants", {
+		Title = "Select Plants",
+		Values = sData.PlantDataTable,
+		Default = { "ALL" },
+		Multi = true,
+		Searchable = true,
+		Callback = function(Value)
 			QuickSave()
 		end,
 	})

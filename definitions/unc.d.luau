@@ -11,6 +11,8 @@ declare function getnilinstances(): { Instance }
 declare function getscripts(): { LocalScript | ModuleScript }
 declare function getloadedmodules(): { ModuleScript }
 declare function getconnections(signal: RBXScriptSignal): { any }
+declare function gethui(): Instance
+
 declare function fireclickdetector(detector: ClickDetector, distance: number?): ()
 declare function firetouchinterest(part: BasePart, toucher: BasePart, touch: number): ()
 declare function gethiddenproperty(object: Instance, property: string): (any, boolean)
@@ -19,7 +21,6 @@ declare function setclipboard(data: string): ()
 declare function identifyexecutor(): (string, string)
 declare function lz4compress(data: string): string
 declare function lz4decompress(data: string, size: number): string
-
 --// File System & Network
 declare function readfile(path: string): string
 declare function writefile(path: string, data: string): ()
@@ -31,6 +32,11 @@ declare function delfile(path: string): ()
 declare function delfolder(path: string): ()
 declare function listfiles(path: string): { string }
 declare function loadstring(source: string, chunkname: string?): ( ...any ) -> ( ...any )
+declare function require(module: ModuleScript | number): any
 
 --// Custom GHZ Functions
 declare GHZ_REMOTE: (path: string) -> any
+
+--// Global Services (Exploit Environment)
+declare CoreGui: Instance
+declare CollectionService: any

@@ -44,6 +44,12 @@ function Strange.Initialize(registry, tab)
 			QuickSave()
 		end,
 	})
+	StrangeSection:AddButton({
+		Title = "Clear Selected Plants",
+		Callback = function()
+			Options.ddStrangeBlackList.Value = { "NONE" }
+		end,
+	})
 	StrangeSection:AddDropdown("ddStrangeBlackList", {
 		Title = "Blacklist Plants",
 		Values = sData.PlantDataBlackTable,

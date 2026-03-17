@@ -46,9 +46,9 @@ function EfHub.Initialize()
 
 	Registry.MainTab.Initialize(Registry)
 	Registry.ShopTab.Initialize(Registry)
-	Registry.MiscTab.Initialize(Registry)
-	Registry.EventsTab.Initialize(Registry)
 	Registry.AutoTab.Initialize(Registry)
+	Registry.EventsTab.Initialize(Registry)
+	Registry.MiscTab.Initialize(Registry)
 
 	Registry.Window.Finalize()
 	return Registry

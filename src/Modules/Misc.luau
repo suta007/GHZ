@@ -7,9 +7,18 @@ local AntiLagConnections = {}
 local Terrain = workspace.Terrain
 local Lighting = game:GetService("Lighting")
 
+local PlantsESPFolderName = "PlantsESP"
+local FruitESPFolderName = "FruitESP"
+local ESPFruitConnection
+local bGuiSession = {}
+local CollectionService = game:GetService("CollectionService")
+local CoreGui = game:GetService("CoreGui")
+local GetSelectedItems
+
 function Misc.Initialize(Registry)
 	reg = Registry
 	fVar = reg.fVar
+	GetSelectedItems = reg.Utils.GetSelectedItems
 	Misc.SetupTracker()
 end
 
@@ -132,23 +141,204 @@ function Misc.HideFruit(state)
 	UpdateVisibilityFromAnchor("FruitAnchor", state, false)
 end
 
-function Misc.SetupTracker()
+local function CreatESP(espfolder, obj, uuid, txt1, txt2, arg)
+	if not (espfolder and obj and uuid and txt1) then return end
+	local priority = arg or 0
+	if bGuiSession[uuid] then
+		bGuiSession[uuid]:Destroy()
+		bGuiSession[uuid] = nil
+	end
+
+	local bgui = Instance.new("BillboardGui")
+	bgui.Name = "ESP_" .. uuid
+	bgui.Adornee = obj
+	bgui.Size = UDim2.new(0, 200, 0, 80)
+	bgui.StudsOffset = Vector3.new(0, 3.5, 0)
+	bgui.AlwaysOnTop = true
+	bgui.LightInfluence = 0
+	bgui.Parent = espfolder
+
+	local textLabel = Instance.new("TextLabel")
+	textLabel.Parent = bgui
+	textLabel.Size = UDim2.new(1, 0, 0, 0)
+	textLabel.AutomaticSize = Enum.AutomaticSize.XY
+	textLabel.BackgroundTransparency = 1
+	textLabel.TextWrapped = false
+	if txt2 and txt2 ~= "" then
+		textLabel.Text = string.format("%s\n%s", tostring(txt1), tostring(txt2))
+	else
+		textLabel.Text = tostring(txt1)
+	end
+
+	if priority == 3 then
+		textLabel.TextColor3 = Color3.fromRGB(200, 200, 10)
+	elseif priority == 2 then
+		textLabel.TextColor3 = Color3.fromRGB(200, 50, 10)
+	elseif priority == 1 then
+		textLabel.TextColor3 = Color3.fromRGB(10, 200, 10)
+	else
+		textLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+	end
+
+	textLabel.TextStrokeTransparency = 0
+	textLabel.TextSize = 16
+	textLabel.Font = Enum.Font.FredokaOne
+
+	textLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+	textLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
+	bGuiSession[uuid] = bgui
+end
+
+function Misc.SetEspPlant(obj)
 	local Options = reg.Options
+	if not Options.tgEspPlants.Value then return end
+
+	local plant = (obj:IsA("Model") and obj) or obj:FindFirstAncestorOfClass("Model")
+	if not plant then return end
+	local plantName = plant:GetAttribute("PlantType")
+	if not plantName then return end
+
+	local TargetFolder = gethui and gethui() or CoreGui
+	local ESPFolder = TargetFolder:FindFirstChild(PlantsESPFolderName)
+	local espPlantsList = GetSelectedItems(Options.ddEspPlants.Value)
+
+	if table.find(espPlantsList, "NONE") then return end
+
+	if table.find(espPlantsList, plantName) then
+		local uuid = plant:GetAttribute("Uuid") or plant.Name
+		local scale = plant:GetAttribute("HiddenNumber") or 0
+		local Weight = plant:GetAttribute("PlantWeight") or 0
+		local arg = 0
+		if scale >= 2 then
+			arg = 3
+		elseif scale >= 1.5 then
+			arg = 2
+		elseif scale >= 1 then
+			arg = 1
+		end
+		if Weight > 0 then
+			CreatESP(ESPFolder, plant, uuid, "🌱 " .. plantName, string.format("Weight : %.2f kg", Weight), arg)
+		else
+			CreatESP(ESPFolder, plant, uuid, "🌱 " .. plantName, string.format("Scale : %.2f", scale), arg)
+		end
+	end
+end
+
+function Misc.EspPlants(State)
+	local Options = reg.Options
+
+	local TargetFolder = gethui and gethui() or CoreGui
+
+	local oldFolder = TargetFolder:FindFirstChild(PlantsESPFolderName)
+	if oldFolder then oldFolder:Destroy() end
+
+	if State ~= true then return end
+	local espPlantsList = GetSelectedItems(Options.ddEspPlants.Value)
+	if table.find(espPlantsList, "NONE") then return end
+
+	local ESPFolder = Instance.new("Folder")
+	ESPFolder.Name = PlantsESPFolderName
+	ESPFolder.Parent = TargetFolder
+
 	local ClientPlants = workspace:FindFirstChild("ClientPlants")
+	if ClientPlants then
+		for _, plant in pairs(ClientPlants:GetChildren()) do
+			Misc.SetEspPlant(plant)
+		end
+	end
+end
+
+function Misc.SetEspCrops(obj)
+	local Options = reg.Options
+	if not Options.tgEspCrops.Value then return end
+
+	local fruit = (obj:IsA("Model") and obj) or obj:FindFirstAncestorOfClass("Model")
+	if not fruit then return end
+
+	local fruitName = fruit:GetAttribute("PlantType") or (fruit.Parent and fruit.Parent:GetAttribute("PlantType"))
+	if not fruitName then return end
+
+	local TargetFolder = gethui and gethui() or CoreGui
+	local ESPFolder = TargetFolder:FindFirstChild(FruitESPFolderName)
+	local espFruitList = GetSelectedItems(Options.ddEspCrops.Value)
+
+	if table.find(espFruitList, "NONE") then return end
+
+	if table.find(espFruitList, fruitName) then
+		local uuid = fruit:GetAttribute("Uuid") or fruitName
+		local Weight = 0
+		for i = 1, 3 do
+			Weight = fruit:GetAttribute("FruitWeight") or fruit:GetAttribute("PlantWeight") or 0
+
+			if Weight > 0 then break end
+
+			task.wait(1)
+		end
+
+		local scale = fruit:GetAttribute("HiddenNumber") or 0
+		local arg = 0
+		if scale >= 2 then
+			arg = 3
+		elseif scale >= 1.5 then
+			arg = 2
+		elseif scale >= 1 then
+			arg = 1
+		end
+		if Weight > 0 then
+			CreatESP(ESPFolder, fruit, uuid, "🍎" .. fruitName, string.format("Weight : %.2f kg", Weight), arg)
+		else
+			CreatESP(ESPFolder, fruit, uuid, "🍎" .. fruitName, string.format("Scale : %.2f", scale), arg)
+		end
+	end
+end
+
+function Misc.EspCrops(State)
+	local Options = reg.Options
+
+	local TargetFolder = gethui and gethui() or CoreGui
+
+	local oldFolder = TargetFolder:FindFirstChild(FruitESPFolderName)
+	if oldFolder then oldFolder:Destroy() end
+	if ESPFruitConnection then
+		ESPFruitConnection:Disconnect()
+		ESPFruitConnection = nil
+	end
+	if State ~= true then return end
+
+	local espFruitList = GetSelectedItems(Options.ddEspCrops.Value)
+	if table.find(espFruitList, "NONE") then return end
+
+	local ESPFolder = Instance.new("Folder")
+	ESPFolder.Name = FruitESPFolderName
+	ESPFolder.Parent = TargetFolder
+
+	for _, prompt in pairs(CollectionService:GetTagged("HarvestPrompt")) do
+		--if prompt.Enabled then Misc.SetEspCrops(prompt) end
+		Misc.SetEspCrops(prompt)
+	end
+	ESPFruitConnection = CollectionService:GetInstanceAddedSignal("HarvestPrompt"):Connect(function(obj)
+		Misc.SetEspCrops(obj)
+	end)
+end
+
+function Misc.SetupTracker()
+	local ClientPlants = workspace:FindFirstChild("ClientPlants")
+
 	if not ClientPlants then return end
 
 	ClientPlants.DescendantAdded:Connect(function(newPlant)
+		local Options = reg.Options
 		task.wait(0.5)
 
 		for _, obj in ipairs(newPlant:GetDescendants()) do
 			if obj.Name == "PlantAnchor" then
 				local parent = obj.Parent
 
-				--[[ 				if Options.tgPlantsESP.Value then
+				--[[ 				if Options.tgEspPlants.Value then
 					if parent:GetAttribute("HarvestablePlant") then
-						Misc.SetespFruit(obj)
+						Misc.SetEspCrops(obj)
 					else
-						Misc.SetespPlant(obj)
+						Misc.SetEspPlant(obj)
 					end
 				end ]]
 
