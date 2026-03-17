@@ -2,7 +2,6 @@ local EventDrive = {}
 local reg
 -- Remote variables moved to specific modules
 
-
 function EventDrive.Initialize(Registry)
 	reg = Registry
 
@@ -25,13 +24,11 @@ local function RemoteReplicaSet(args)
 	local fType = args[2][1]
 	local fData = args[3]
 	if fType == "SeedShop" and not fVar.isBuyingSeed then
-		print("In seed shop")
 		table.insert(actionQueue, {
 			FuncName = reg.Shop.AutoBuySeed,
 			args = fData.Items,
 		})
 	elseif fType == "GearShop" and not fVar.isBuyingGear then
-		print("in gear shop")
 		table.insert(actionQueue, {
 			FuncName = reg.Shop.AutoBuyGear,
 			args = fData.Items,
@@ -58,7 +55,6 @@ local function RemoteNotification(args)
 end
 
 -- Removed local AutoClaimQuest and replaced with reg.Auto.AutoClaimQuest in hookIncoming
-
 
 function EventDrive.hookIncoming(remote)
 	local actionQueue = reg.fVar.actionQueue
