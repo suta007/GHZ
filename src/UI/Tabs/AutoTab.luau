@@ -94,7 +94,7 @@ function AutoTab.Initialize(registry)
 			if Value then
 				TaskRemoveFruit = task.spawn(function()
 					while true do
-						if not fVar.isRemoveCrops then Auto.RemoveCrops() end
+						if not fVar.isRemovePlants then Auto.RemoveCrops() end
 						task.wait(0.5)
 					end
 				end)
@@ -276,7 +276,9 @@ function AutoTab.Initialize(registry)
 		Default = false,
 		Callback = function(Value)
 			if Value then
-				Auto.disablePackAnimations()
+				pcall(function()
+					Auto.disablePackAnimations()
+				end)
 			else
 				pcall(function()
 					Auto.enablePackAnimations()

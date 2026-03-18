@@ -12,7 +12,7 @@ local ClaimQuest = RemoteEvents:WaitForChild("ClaimQuest") :: RemoteEvent
 local RemovePlant = RemoteEvents:WaitForChild("RemovePlant") :: RemoteEvent
 
 local modulePath = ReplicatedStorage:WaitForChild("RNGPacks"):WaitForChild("RNGPackManager")
-local RNGPackManager = require(modulePath)
+require(modulePath)
 
 local RequestSpin = ReplicatedStorage:WaitForChild("RemoteEvents"):WaitForChild("RequestSpin")
 
@@ -23,7 +23,6 @@ end
 
 local function GetRemoveConfig()
 	local Options = reg.Options
-	local Utils = reg.Utils
 	return {
 		mode = "Remove",
 		wl = {

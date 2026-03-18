@@ -17,6 +17,7 @@ function Shop.AutoBuyItem(ShopType, Items, DropdownValue)
 	local Pos = fVar.Pos
 	local MySpawnPoint = reg.MySpawnPoint
 	if not Items then return end
+	fVar.HarvestPause = true
 	if ShopType == "SeedShop" then
 		fVar.isBuyingSeed = true
 	else

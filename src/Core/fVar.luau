@@ -22,7 +22,7 @@ fVar.isBuyingGear = false
 fVar.isProcessing = false
 fVar.isSelling = false
 fVar.HarvestPause = false
-fVar.Harvesting = false
+fVar.isHarvesting = false
 fVar.isQuestClaiming = false
 fVar.isRemovePlants = false
 fVar.isRemoveCrops = false
@@ -34,7 +34,7 @@ function fVar.ResetControlVar()
 	fVar.isProcessing = false
 	fVar.isSelling = false
 	fVar.HarvestPause = false
-	fVar.Harvesting = false
+	fVar.isHarvesting = false
 	fVar.isQuestClaiming = false
 	fVar.isRemovePlants = false
 	fVar.isRemoveCrops = false
@@ -49,7 +49,8 @@ function fVar.LockDownControlVar()
 	fVar.isProcessing = true
 	fVar.isSelling = true
 	fVar.HarvestPause = true
-	fVar.Harvesting = true
+	fVar.isHarvesting = true
+	fVar.isQuestClaiming = true
 	fVar.isRemovePlants = true
 	fVar.isRemoveCrops = true
 end
