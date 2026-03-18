@@ -239,9 +239,8 @@ function Auto.OpenPack()
 	if not Backpack then fLog("No Backpack") end
 	for _index, item in pairs(Backpack:GetChildren()) do
 		if not Options.tgOpenPackEnable.Value then return end
-		if not item.Name then continue end
-		fLog(item.Name)
-		if table.find(PackList, item.Name) then
+		local ItemName = item:GetAttribute("BaseName")
+		if table.find(PackList, ItemName) then
 			local ItemCount = item:GetAttribute("ItemCount") or 0
 			for i = 1, ItemCount do
 				if not Options.tgOpenPackEnable.Value then return end
@@ -260,10 +259,10 @@ function Auto.OpenPack()
 			end
 		end
 	end
-	--[[ 	if Options.tgOpenPackEnable.Value then
+	if Options.tgOpenPackEnable.Value then
 		Options.tgOpenPackEnable:SetValue(false) -- สั่งให้สวิตช์ใน Fluent UI เด้งกลับไปสถานะปิด
 		fLog("✅ เปิดซองทั้งหมดเรียบร้อยแล้ว ระบบพักการทำงาน")
-	end ]]
+	end
 end
 
 return Auto
