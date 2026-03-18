@@ -158,39 +158,71 @@ function Auto.RemoveCrops()
 	fVar.isRemoveCrops = false
 end
 
+-- สร้างที่เก็บ Backup ไว้ด้านบนของสคริปต์
+Auto.BackupFuncs = Auto.BackupFuncs or {
+	RNGManager = nil,
+	CutsceneManager = nil,
+	Originals = {},
+}
+
 function Auto.disablePackAnimations()
-	for _, v in pairs(getgc(true)) do
-		if type(v) == "table" then
-			if rawget(v, "RunSpinAnimation") then
-				v.RunSpinAnimation = function()
-					return
+	-- วนลูปหาแค่ครั้งเดียวแล้วเก็บ Backup
+	if not Auto.BackupFuncs.RNGManager then
+		for _, v in pairs(getgc(true)) do
+			if type(v) == "table" then
+				if rawget(v, "RunSpinAnimation") then
+					Auto.BackupFuncs.RNGManager = v
+					Auto.BackupFuncs.Originals["RunSpinAnimation"] = v.RunSpinAnimation
+					Auto.BackupFuncs.Originals["ShowcaseRewards"] = v.ShowcaseRewards
+					Auto.BackupFuncs.Originals["Initiate"] = v.Initiate
 				end
-				v.ShowcaseRewards = function()
-					return
+				if rawget(v, "Play") and rawget(v, "Preload") then
+					Auto.BackupFuncs.CutsceneManager = v
+					Auto.BackupFuncs.Originals["Play"] = v.Play
 				end
-				v.Initiate = function()
-					return
-				end
-			end
-
-			if rawget(v, "Play") and rawget(v, "Preload") then
-				v.Play = function()
-					return
-				end
-				print("✅ ปิด Cutscene เรียบร้อย")
 			end
 		end
 	end
 
-	local lp = game:GetService("Players").LocalPlayer
-	local pgui = lp:FindFirstChild("PlayerGui")
-	if pgui then
-		local uiToForceEnable = { "BackpackGui", "Hud_UI", "ShillingsCurrency" }
-		for _, name in ipairs(uiToForceEnable) do
-			local ui = pgui:FindFirstChild(name)
-			if ui then ui.Enabled = true end
+	-- ปิดการทำงาน (Overwrite)
+	local rng = Auto.BackupFuncs.RNGManager
+	if rng then
+		rng.RunSpinAnimation = function()
+			return
+		end
+		rng.ShowcaseRewards = function()
+			return
+		end
+		rng.Initiate = function()
+			return
 		end
 	end
+
+	local cut = Auto.BackupFuncs.CutsceneManager
+	if cut then cut.Play = function()
+		return
+	end end
+
+	fLog("🚫 ปิดแอนิเมชันแล้ว")
+
+	-- ส่วนของการ Force เปิด UI ที่พี่เอฟเขียนไว้ คงไว้เหมือนเดิมได้เลยค่ะ
+end
+
+function Auto.enablePackAnimations()
+	-- คืนค่าจากที่ Backup ไว้
+	local rng = Auto.BackupFuncs.RNGManager
+	local orig = Auto.BackupFuncs.Originals
+
+	if rng and orig["RunSpinAnimation"] then
+		rng.RunSpinAnimation = orig["RunSpinAnimation"]
+		rng.ShowcaseRewards = orig["ShowcaseRewards"]
+		rng.Initiate = orig["Initiate"]
+	end
+
+	local cut = Auto.BackupFuncs.CutsceneManager
+	if cut and orig["Play"] then cut.Play = orig["Play"] end
+
+	fLog("🎬 เปิดแอนิเมชันกลับมาเหมือนเดิมแล้ว")
 end
 
 function Auto.OpenPack()
@@ -200,7 +232,7 @@ function Auto.OpenPack()
 	local Utils = reg.Utils
 
 	if not Options.tgOpenPackEnable.Value then return end
-	local PackList = GetSelectedItems(Options.ddOpenPack.Value)
+	local PackList = GetSelectedItems(Options.ddOpenPackSelect.Value)
 	if table.find(PackList, "ALL") then PackList = sData.PackList end
 	Utils.UnequipTools()
 	task.wait()
@@ -221,8 +253,13 @@ function Auto.OpenPack()
 				else
 					fLog("❌ เปิดไม่สำเร็จ (อาจจะไม่มีซองในมือ หรือติด Cooldown)")
 				end
+				task.wait(0.5)
 			end
 		end
+	end
+	if Options.tgOpenPackEnable.Value then
+		Options.tgOpenPackEnable:SetValue(false) -- สั่งให้สวิตช์ใน Fluent UI เด้งกลับไปสถานะปิด
+		fLog("✅ เปิดซองทั้งหมดเรียบร้อยแล้ว ระบบพักการทำงาน")
 	end
 end
 

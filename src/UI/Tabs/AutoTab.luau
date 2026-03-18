@@ -271,6 +271,18 @@ function AutoTab.Initialize(registry)
 		end,
 	})
 	local OpenPackSection = Tabs.Auto:AddCollapsibleSection("Open Pack", false)
+	OpenPackSection:AddToggle("tgOpenPackAnimation", {
+		Title = "Disable Animation",
+		Default = false,
+		Callback = function(Value)
+			if Value then
+				Auto.disablePackAnimations()
+			else
+				Auto.enablePackAnimations() -- เรียกฟังก์ชันคืนค่าเมื่อปิดสวิตช์
+			end
+			QuickSave()
+		end,
+	})
 	-- toggle enable
 	OpenPackSection:AddToggle("tgOpenPackEnable", {
 		Title = "Auto Open Pack",
