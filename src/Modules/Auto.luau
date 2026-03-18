@@ -233,7 +233,7 @@ function Auto.OpenPack()
 
 	if not Options.tgOpenPackEnable.Value then return end
 	local PackList = GetSelectedItems(Options.ddOpenPackSelect.Value)
-	if table.find(PackList, "ALL") then PackList = sData.PackList end
+	if table.find(PackList, "ALL") then PackList = sData.SeedPackTable end
 	Utils.UnequipTools()
 	task.wait()
 	for _index, item in pairs(Backpack:GetChildren()) do
