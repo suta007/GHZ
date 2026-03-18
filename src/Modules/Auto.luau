@@ -238,6 +238,8 @@ function Auto.OpenPack()
 	task.wait()
 	for _index, item in pairs(Backpack:GetChildren()) do
 		if not Options.tgOpenPackEnable.Value then return end
+		if not item.Name then continue end
+		fLog(item.Name)
 		if table.find(PackList, item.Name) then
 			local ItemCount = item:GetAttribute("ItemCount") or 0
 			for i = 1, ItemCount do
