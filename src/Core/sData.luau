@@ -3,6 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ShopData = ReplicatedStorage:WaitForChild("Shop"):WaitForChild("ShopData")
 local PlantData = ReplicatedStorage:WaitForChild("Plants"):WaitForChild("Definitions"):WaitForChild("PlantDataDefinitions")
 local MutationData = ReplicatedStorage:WaitForChild("Plants"):WaitForChild("Definitions"):WaitForChild("MutationDataDefinitions")
+local SeedPackDefinitions = ReplicatedStorage:WaitForChild("RNGPacks"):WaitForChild("SeedPackDefinitions")
 
 local function getShopData(path)
 	local names = { "ALL" }
@@ -38,5 +39,11 @@ sData.PlantDataBlackTable[1] = "NONE"
 
 sData.MutationDataBlackTable = table.clone(sData.MutationDataTable)
 sData.MutationDataBlackTable[1] = "NONE"
+
+sData.SeedPackTable = { "ALL" }
+local seedPackData = require(SeedPackDefinitions)
+for SeedPackName, _ in pairs(seedPackData) do
+	table.insert(sData.SeedPackTable, SeedPackName)
+end
 
 return sData

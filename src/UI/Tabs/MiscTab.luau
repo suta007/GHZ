@@ -105,13 +105,13 @@ function MiscTab.Initialize(Registry)
 	EspSection:AddButton({
 		Title = "Clear Selected Crops",
 		Callback = function()
-			Options.ddEspCrops:SetValue({ ALL = true })
+			Options.ddEspCrops:SetValue({ NONE = true })
 		end,
 	})
 	EspSection:AddDropdown("ddEspCrops", {
 		Title = "Select Crops",
-		Values = sData.PlantDataTable,
-		Default = { "ALL" },
+		Values = sData.PlantDataBlackTable,
+		Default = { "NONE" },
 		Multi = true,
 		Searchable = true,
 		Callback = function(Value)
@@ -129,13 +129,13 @@ function MiscTab.Initialize(Registry)
 	EspSection:AddButton({
 		Title = "Clear Selected Plants",
 		Callback = function()
-			Options.ddEspPlants:SetValue({ ALL = true })
+			Options.ddEspPlants:SetValue({ NONE = true })
 		end,
 	})
 	EspSection:AddDropdown("ddEspPlants", {
 		Title = "Select Plants",
-		Values = sData.PlantDataTable,
-		Default = { "ALL" },
+		Values = sData.PlantDataBlackTable,
+		Default = { "NONE" },
 		Multi = true,
 		Searchable = true,
 		Callback = function(Value)

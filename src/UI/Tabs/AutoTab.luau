@@ -270,6 +270,33 @@ function AutoTab.Initialize(registry)
 			QuickSave()
 		end,
 	})
+	local OpenPackSection = Tabs.Auto:AddCollapsibleSection("Open Pack", false)
+	-- toggle enable
+	OpenPackSection:AddToggle("tgOpenPackEnable", {
+		Title = "Auto Open Pack",
+		Default = false,
+		Callback = function(Value)
+			if Value then
+				fVar.LockDownControlVar()
+				Auto.OpenPack()
+				fVar.ResetControlVar()
+			else
+				fVar.ResetControlVar()
+			end
+			QuickSave()
+		end,
+	})
+	-- dropdown select seed pack
+	OpenPackSection:AddDropdown("ddOpenPackSelect", {
+		Title = "Select Seed Pack",
+		Values = sData.SeedPackTable,
+		Default = { "ALL" },
+		Multi = true,
+		Searchable = true,
+		Callback = function(Value)
+			QuickSave()
+		end,
+	})
 end
 
 return AutoTab

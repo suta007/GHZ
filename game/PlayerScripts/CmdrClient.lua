@@ -1,0 +1,6 @@
+local v1 = game:GetService("ReplicatedStorage")
+local v2 = require(v1:WaitForChild("CmdrClient"))
+local v3 = require(v1:WaitForChild("Util"):WaitForChild("GroupUtils"))
+v3.WaitForRankCache(game.Players.LocalPlayer)
+v2:SetEnabled(v3.IsGroupAdmin(game.Players.LocalPlayer) or v3.IsAdminAbuseGuest(game.Players.LocalPlayer))
+v2:SetActivationKeys({ Enum.KeyCode.F2 })
