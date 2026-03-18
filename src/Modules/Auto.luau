@@ -259,10 +259,10 @@ function Auto.OpenPack()
 			end
 		end
 	end
-	if Options.tgOpenPackEnable.Value then
+	--[[ 	if Options.tgOpenPackEnable.Value then
 		Options.tgOpenPackEnable:SetValue(false) -- สั่งให้สวิตช์ใน Fluent UI เด้งกลับไปสถานะปิด
 		fLog("✅ เปิดซองทั้งหมดเรียบร้อยแล้ว ระบบพักการทำงาน")
-	end
+	end ]]
 end
 
 return Auto
