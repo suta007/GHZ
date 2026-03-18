@@ -210,19 +210,21 @@ end
 
 function Auto.enablePackAnimations()
 	-- คืนค่าจากที่ Backup ไว้
-	local rng = Auto.BackupFuncs.RNGManager
-	local orig = Auto.BackupFuncs.Originals
+	if Auto.BackupFuncs.RNGManager then
+		local rng = Auto.BackupFuncs.RNGManager
+		local orig = Auto.BackupFuncs.Originals
 
-	if rng and orig["RunSpinAnimation"] then
-		rng.RunSpinAnimation = orig["RunSpinAnimation"]
-		rng.ShowcaseRewards = orig["ShowcaseRewards"]
-		rng.Initiate = orig["Initiate"]
+		if rng and orig["RunSpinAnimation"] then
+			rng.RunSpinAnimation = orig["RunSpinAnimation"]
+			rng.ShowcaseRewards = orig["ShowcaseRewards"]
+			rng.Initiate = orig["Initiate"]
+		end
+
+		local cut = Auto.BackupFuncs.CutsceneManager
+		if cut and orig["Play"] then cut.Play = orig["Play"] end
+
+		fLog("🎬 เปิดแอนิเมชันกลับมาเหมือนเดิมแล้ว")
 	end
-
-	local cut = Auto.BackupFuncs.CutsceneManager
-	if cut and orig["Play"] then cut.Play = orig["Play"] end
-
-	fLog("🎬 เปิดแอนิเมชันกลับมาเหมือนเดิมแล้ว")
 end
 
 function Auto.OpenPack()

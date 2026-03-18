@@ -278,11 +278,15 @@ function AutoTab.Initialize(registry)
 			if Value then
 				Auto.disablePackAnimations()
 			else
-				Auto.enablePackAnimations() -- เรียกฟังก์ชันคืนค่าเมื่อปิดสวิตช์
+				pcall(function()
+					Auto.enablePackAnimations()
+				end)
 			end
-			QuickSave()
+			--QuickSave()
 		end,
 	})
+
+	Options.tgOpenPackAnimation:SetValue(false)
 	-- toggle enable
 	OpenPackSection:AddToggle("tgOpenPackEnable", {
 		Title = "Auto Open Pack",
