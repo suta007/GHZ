@@ -228,7 +228,6 @@ end
 function Auto.OpenPack()
 	local Options = reg.Options
 	local sData = reg.sData
-	local Backpack = LocalPlayer.Backpack
 	local Utils = reg.Utils
 
 	if not Options.tgOpenPackEnable.Value then return end
@@ -236,6 +235,8 @@ function Auto.OpenPack()
 	if table.find(PackList, "ALL") then PackList = sData.SeedPackTable end
 	Utils.UnequipTools()
 	task.wait()
+	local Backpack = LocalPlayer.Backpack
+	if not Backpack then fLog("No Backpack") end
 	for _index, item in pairs(Backpack:GetChildren()) do
 		if not Options.tgOpenPackEnable.Value then return end
 		if not item.Name then continue end
