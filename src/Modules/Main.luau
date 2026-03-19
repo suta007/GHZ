@@ -203,19 +203,21 @@ function Main.ScanCrops()
 end
 function Main.ScanCrops2()
 	local Options = reg.Options
-	if fVar.isPlanting or fVar.IsBuying() then return end
-	if fVar.HarvestPause or fVar.isProcessing or fVar.isHarvesting or not Options.tgHarvestEnable.Value then return end
+	if fVar.isPlanting or fVar.IsBuying() or fVar.isProcessing or fVar.HarvestPause then return end
+	if fVar.isHarvesting or not Options.tgHarvestEnable.Value then return end
 
 	table.clear(HarVestCropsList)
 
 	local TargetPos = reg.Utils.GetCenterPlots()
 	table.insert(TargetPos, reg.MySpawnPoint)
 	for _, cpos in TargetPos do
+		if fVar.isPlanting or fVar.IsBuying() or fVar.isProcessing or fVar.HarvestPause then return end
 		SafeTeleport(cpos)
 		task.wait(3)
 		local ClientPlants = workspace:FindFirstChild("ClientPlants")
 		if ClientPlants then
 			for _, plant in ClientPlants:GetChildren() do
+				if fVar.isPlanting or fVar.IsBuying() or fVar.isProcessing or fVar.HarvestPause then return end
 				local dynHarvestConfig = GetHarvestConfig()
 				local CropsTable = plant:GetAttribute("HarvestablePlant") and { plant } or plant:GetChildren()
 				for _, fruit in ipairs(CropsTable) do
