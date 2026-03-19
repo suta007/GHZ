@@ -203,7 +203,9 @@ function Main.ScanCrops()
 end
 function Main.ScanCrops2()
 	local Options = reg.Options
-	if not Options.tgHarvestEnable.Value then return end
+	if fVar.isPlanting or fVar.IsBuying() then return end
+	if fVar.HarvestPause or fVar.isProcessing or fVar.isHarvesting or not Options.tgHarvestEnable.Value then return end
+
 	table.clear(HarVestCropsList)
 
 	local TargetPos = reg.Utils.GetCenterPlots()
