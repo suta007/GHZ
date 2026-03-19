@@ -252,7 +252,8 @@ function Strange.doEvent()
 								local CropsTable = plant:GetAttribute("HarvestablePlant") and { plant } or plant:GetChildren()
 								for _, crop in CropsTable do
 									local cropMutants = crop:GetAttribute("Mutation")
-									if cropMutants and crop:GetAttribute("Favorited") ~= true then
+									local FullyGrown = crop:GetAttribute("FullyGrown")
+									if FullyGrown and cropMutants and crop:GetAttribute("Favorited") ~= true then
 										local isTargetMutant = false
 										for _, mutantName in ipairs(TargetMutants) do
 											if string.find(cropMutants, mutantName) then

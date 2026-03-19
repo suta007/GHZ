@@ -77,12 +77,12 @@ function MainTab.Initialize(reg)
 		Callback = function(Value)
 			if Value then
 				TaskHarvestCrops = task.spawn(function()
-					while task.wait(1) do
+					while task.wait(0.3) do
 						if not fVar.isHarvesting and not fVar.HarvestPause then
 							if #reg.HarVestCropsList > 0 then
 								Main.HarvestCrops()
 							else
-								Main.ScanCrops()
+								Main.ScanCrops2()
 							end
 						end
 					end

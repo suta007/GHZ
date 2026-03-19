@@ -201,6 +201,31 @@ function Main.ScanCrops()
 	end
 	reg.HarVestCropsList = HarVestCropsList
 end
+function Main.ScanCrops2()
+	local Options = reg.Options
+	if not Options.tgHarvestEnable.Value then return end
+	table.clear(HarVestCropsList)
+
+	local TargetPos = reg.Utils.GetCenterPlots()
+	table.insert(TargetPos, reg.MySpawnPoint)
+	for _, cpos in TargetPos do
+		SafeTeleport(cpos)
+		task.wait(3)
+		local ClientPlants = workspace:FindFirstChild("ClientPlants")
+		if ClientPlants then
+			for _, plant in ClientPlants:GetChildren() do
+				local dynHarvestConfig = GetHarvestConfig()
+				local CropsTable = plant:GetAttribute("HarvestablePlant") and { plant } or plant:GetChildren()
+				for _, fruit in ipairs(CropsTable) do
+					local FullyGrown = fruit:GetAttribute("FullyGrown")
+					if FullyGrown then
+						if Main.CheckCrops(fruit, dynHarvestConfig) then table.insert(HarVestCropsList, fruit) end
+					end
+				end
+			end
+		end
+	end
+end
 
 function Main.HarvestCrops()
 	local Options = reg.Options
