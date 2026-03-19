@@ -84,6 +84,8 @@ function MainTab.Initialize(reg)
 							else
 								Main.ScanCrops2()
 							end
+						elseif fVar.HarvestPause then
+							if #reg.HarVestCropsList > 0 then table.clear(reg.HarVestCropsList) end
 						end
 					end
 				end)
@@ -91,6 +93,7 @@ function MainTab.Initialize(reg)
 				if TaskHarvestCrops then
 					task.cancel(TaskHarvestCrops)
 					TaskHarvestCrops = nil
+					table.clear(reg.HarVestCropsList)
 				end
 				fVar.isHarvesting = false
 			end

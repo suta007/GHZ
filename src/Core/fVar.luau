@@ -1,4 +1,5 @@
 local fVar = {}
+local reg
 
 --Action Queue
 fVar.actionQueue = {}
