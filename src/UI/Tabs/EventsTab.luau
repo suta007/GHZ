@@ -10,7 +10,7 @@ local function LoadEvents()
 	if getgenv().DEV_MODE then
 		Events.Strange = GHZ_REMOTE("UI/Tabs/Events/Strange")
 	else
-		Events.Strange = require("./UI/Tabs/Events/Strange.luau")
+		Events.Strange = require("./Events/Strange.luau")
 	end
 	return Events
 end
