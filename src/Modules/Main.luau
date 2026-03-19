@@ -270,7 +270,9 @@ function Main.HarvestCrops()
 				},
 			}
 		end
-		HarvestFruit:FireServer(unpack(args))
+		pcall(function()
+			HarvestFruit:FireServer(unpack(args))
+		end)
 		task.wait(0.1)
 	end
 	fVar.isHarvesting = false
