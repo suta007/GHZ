@@ -1,0 +1,15 @@
+{
+    "rules": [
+        "compute_expression",
+        "remove_empty_do",
+        "remove_unused_if_branch",
+        "remove_unused_while",
+        "filter_after_early_return",
+        "remove_comments",
+        "remove_spaces",
+        "rename_variables"
+    ],
+    "bundle": {
+        "require_mode": "path"
+    }
+}

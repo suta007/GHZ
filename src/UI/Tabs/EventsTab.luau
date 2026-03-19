@@ -1,3 +1,5 @@
+--!nocheck
+
 local GHZ_REMOTE = GHZ_REMOTE or getgenv().GHZ_REMOTE
 local EventsTab = {}
 local reg
@@ -5,7 +7,11 @@ local Tabs
 
 local function LoadEvents()
 	local Events = {}
-	Events.Strange = GHZ_REMOTE("UI/Tabs/Events/Strange")
+	if getgenv().DEV_MODE then
+		Events.Strange = GHZ_REMOTE("UI/Tabs/Events/Strange")
+	else
+		Events.Strange = require("./UI/Tabs/Events/Strange.luau")
+	end
 	return Events
 end
 

@@ -1,0 +1,37 @@
+name: Build and Release EfHub
+
+# ให้ทำงานอัตโนมัติเมื่อพี่เอฟกด Publish Release ใหม่บน GitHub
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install Darklua
+        run: |
+          wget https://github.com/seaofvoices/darklua/releases/latest/download/darklua-linux-x86_64.zip
+          unzip darklua-linux-x86_64.zip
+          chmod +x darklua
+          sudo mv darklua /usr/local/bin/
+
+      - name: Auto Switch to Release Mode
+        # ฟังก์ชันพิเศษ! ค้นหาคำว่า getgenv().DEV_MODE = true ในไฟล์ loader แล้วเปลี่ยนเป็น false ให้อัตโนมัติ
+        run: |
+          sed -i 's/getgenv().DEV_MODE = true/getgenv().DEV_MODE = false/g' src/loader.luau
+
+      - name: Bundle Code with Darklua
+        # สั่งให้ Darklua เริ่มมัดรวมไฟล์ โดยเริ่มจาก loader.luau ไล่ไปจนจบ แล้วออกมาเป็นไฟล์ EfHub_Release.lua
+        run: darklua process src/loader.luau EfHub_Release.lua
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          # นำไฟล์ที่มัดรวมเสร็จแล้ว ไปแนบไว้ที่หน้า Release นั้น
+          files: EfHub_Release.lua
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
